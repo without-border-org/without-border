@@ -1,5 +1,6 @@
 import { Component, Input, Output, EventEmitter, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Observable } from 'rxjs';
 import { AiService } from '../../../core/services/ai.service';
 
 type AiTab = 'summary' | 'action-plan' | 'report';
@@ -145,11 +146,11 @@ export class AiPanelComponent {
     this.result.set('');
     this.error.set('');
 
-    const obs = type === 'summary'
+    const obs: Observable<Record<string, unknown>> = (type === 'summary'
       ? this.aiSvc.generateSummary(this.channelId)
       : type === 'action-plan'
         ? this.aiSvc.generateActionPlan(this.channelId)
-        : this.aiSvc.generateReport(this.channelId);
+        : this.aiSvc.generateReport(this.channelId)) as Observable<Record<string, unknown>>;
 
     obs.subscribe({
       next: (res: Record<string, unknown>) => {
@@ -157,8 +158,8 @@ export class AiPanelComponent {
         this.generatedAt.set(new Date());
         this.loading.set(false);
       },
-      error: (e) => {
-        this.error.set(e.error?.detail || 'Generation failed. Is Gemma 4 running?');
+      error: (e: unknown) => {
+        this.error.set((e as any)?.error?.detail || 'Generation failed. Is Gemma 4 running?');
         this.loading.set(false);
       },
     });

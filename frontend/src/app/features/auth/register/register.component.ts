@@ -2,9 +2,9 @@ import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
-import { AuthService } from '../../core/services/auth.service';
-import { UserService } from '../../core/services/user.service';
-import { LANGUAGE_MAP } from '../../core/models';
+import { AuthService } from '../../../core/services/auth.service';
+import { UserService } from '../../../core/services/user.service';
+import { LANGUAGE_MAP } from '../../../core/models';
 
 @Component({
   selector: 'wb-register',
@@ -143,9 +143,9 @@ export class RegisterComponent {
     const { email, username, password, preferredLanguage } = this.form.value;
     this.auth.register(email!, username!, password!, preferredLanguage!).subscribe({
       next: () => this.userSvc.loadMe().subscribe(() => this.router.navigate(['/chat'])),
-      error: (e) => {
+      error: (e: unknown) => {
         this.loading.set(false);
-        this.error.set(e.error?.detail || 'Registration failed. Please try again.');
+        this.error.set((e as any)?.error?.detail || 'Registration failed. Please try again.');
       },
     });
   }

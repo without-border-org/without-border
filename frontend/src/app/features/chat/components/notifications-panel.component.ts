@@ -1,12 +1,11 @@
 import { Component, Output, EventEmitter, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink } from '@angular/router';
 import { UserService } from '../../../core/services/user.service';
 
 @Component({
   selector: 'wb-notifications-panel',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule],
   template: `
     <div class="fixed bottom-16 left-2 w-80 bg-surface-850/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-glass z-50 animate-scale-in overflow-hidden">
 

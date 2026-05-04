@@ -16,7 +16,7 @@ export class UserService {
   readonly unreadCount = signal<number>(0);
 
   loadMe() {
-    return this.http.get<User>(`${this.base}/me`).pipe(
+    return this.http.get<Record<string, unknown>>(`${this.base}/me`).pipe(
       tap(user => {
         this.auth.setUser(this._mapUser(user));
       })
@@ -29,13 +29,13 @@ export class UserService {
     if (payload.preferredLanguage !== undefined) body['preferred_language'] = payload.preferredLanguage;
     if (payload.agenticEnabled !== undefined) body['agentic_enabled'] = payload.agenticEnabled;
     if (payload.agenticPersona !== undefined) body['agentic_persona'] = payload.agenticPersona;
-    return this.http.put<User>(`${this.base}/me`, body).pipe(
+    return this.http.put<Record<string, unknown>>(`${this.base}/me`, body).pipe(
       tap(user => this.auth.setUser(this._mapUser(user)))
     );
   }
 
   updateStatus(status: 'active' | 'agentic' | 'inactive') {
-    return this.http.put<User>(`${this.base}/me/status`, { status }).pipe(
+    return this.http.put<Record<string, unknown>>(`${this.base}/me/status`, { status }).pipe(
       tap(user => this.auth.setUser(this._mapUser(user)))
     );
   }
@@ -45,10 +45,10 @@ export class UserService {
   }
 
   loadNotifications() {
-    return this.http.get<Notification[]>(`${this.base}/me/notifications`).pipe(
+    return this.http.get<Record<string, unknown>[]>(`${this.base}/me/notifications`).pipe(
       tap(notifs => {
-        this._notifications.set(notifs.map(this._mapNotif));
-        this.unreadCount.set(notifs.filter(n => !n.is_read).length);
+        this._notifications.set(notifs.map(n => this._mapNotif(n)));
+        this.unreadCount.set(notifs.filter(n => !n['is_read']).length);
       })
     );
   }

@@ -1,6 +1,5 @@
 import { Component, inject, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 import { ChannelService } from '../../../core/services/channel.service';
 import { LANGUAGE_MAP } from '../../../core/models';
@@ -8,7 +7,7 @@ import { LANGUAGE_MAP } from '../../../core/models';
 @Component({
   selector: 'wb-welcome',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule],
   template: `
     <div class="flex-1 flex flex-col items-center justify-center p-8 text-center relative overflow-hidden">
       <!-- BG orbs -->

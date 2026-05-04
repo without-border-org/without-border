@@ -151,7 +151,7 @@ export class ProfileComponent implements OnInit {
 
   languages = Object.entries(LANGUAGE_MAP).map(([code, val]) => ({ code, ...val }));
 
-  statusOptions = [
+  statusOptions: { value: 'active' | 'agentic' | 'inactive'; label: string; icon: string; desc: string; activeClass: string }[] = [
     { value: 'active', label: 'Active', icon: '🟢', desc: 'Available', activeClass: 'bg-accent-green/15 border-accent-green/30 text-accent-green' },
     { value: 'agentic', label: 'Agentic', icon: '🤖', desc: 'AI replies', activeClass: 'bg-accent-violet/15 border-accent-violet/30 text-accent-violet' },
     { value: 'inactive', label: 'Inactive', icon: '⚫', desc: 'Away', activeClass: 'bg-gray-500/15 border-gray-500/30 text-gray-400' },

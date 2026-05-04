@@ -1,5 +1,6 @@
 import { Component, inject, signal, computed, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { RouterLink, RouterOutlet, Router, ActivatedRoute } from '@angular/router';
 import { ChannelService } from '../../../core/services/channel.service';
 import { UserService } from '../../../core/services/user.service';
@@ -12,7 +13,7 @@ import { NotificationsPanelComponent } from '../components/notifications-panel.c
 @Component({
   selector: 'wb-chat-layout',
   standalone: true,
-  imports: [CommonModule, RouterLink, RouterOutlet, CreateChannelModalComponent, NotificationsPanelComponent],
+  imports: [CommonModule, FormsModule, RouterLink, RouterOutlet, CreateChannelModalComponent, NotificationsPanelComponent],
   template: `
     <div class="flex h-screen bg-surface-900 overflow-hidden">
 

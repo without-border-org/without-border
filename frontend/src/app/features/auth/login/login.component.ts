@@ -2,8 +2,8 @@ import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
-import { AuthService } from '../../core/services/auth.service';
-import { UserService } from '../../core/services/user.service';
+import { AuthService } from '../../../core/services/auth.service';
+import { UserService } from '../../../core/services/user.service';
 
 @Component({
   selector: 'wb-login',
@@ -126,9 +126,9 @@ export class LoginComponent {
     const { email, password } = this.form.value;
     this.auth.login(email!, password!).subscribe({
       next: () => this.userSvc.loadMe().subscribe(() => this.router.navigate(['/chat'])),
-      error: (e) => {
+      error: (e: unknown) => {
         this.loading.set(false);
-        this.error.set(e.error?.detail || 'Login failed. Please check your credentials.');
+        this.error.set((e as any)?.error?.detail || 'Login failed. Please check your credentials.');
       },
     });
   }

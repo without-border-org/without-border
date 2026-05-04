@@ -276,7 +276,7 @@ export class ConversationComponent implements OnInit, OnDestroy, AfterViewChecke
     this.loading.set(true);
     this.msgSvc.getMessages(this.channelId, this.currentPage()).subscribe({
       next: (data) => {
-        this.messages.set(data.items.reverse ? data.items : data.items);
+        this.messages.set(data.items.slice().reverse());
         this.hasMore.set(data.hasMore);
         this.loading.set(false);
         this.shouldScroll = true;
@@ -313,8 +313,8 @@ export class ConversationComponent implements OnInit, OnDestroy, AfterViewChecke
     this.shouldScroll = true;
   }
 
-  onEnter(e: KeyboardEvent) {
-    if (!e.shiftKey) { e.preventDefault(); this.sendMessage(); }
+  onEnter(e: Event) {
+    if (!(e as KeyboardEvent).shiftKey) { e.preventDefault(); this.sendMessage(); }
   }
 
   onTyping() {

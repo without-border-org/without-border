@@ -93,7 +93,7 @@ const EMOJI_QUICK = ['👍', '❤️', '😂', '🔥', '👏', '🚀'];
         </div>
 
         <!-- Reactions display -->
-        <div *ngIf="message.reactions?.length" class="flex flex-wrap gap-1 mt-1.5 px-1"
+        <div *ngIf="message.reactions.length" class="flex flex-wrap gap-1 mt-1.5 px-1"
              [class]="isOwn ? 'justify-end' : 'justify-start'">
           <button *ngFor="let r of message.reactions"
             (click)="react.emit(r.emoji)"
