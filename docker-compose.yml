@@ -1,0 +1,80 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: wb_postgres
+    environment:
+      POSTGRES_DB: withoutborder
+      POSTGRES_USER: wb_user
+      POSTGRES_PASSWORD: wb_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U wb_user -d withoutborder"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  ollama:
+    image: ollama/ollama:latest
+    container_name: wb_ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    # GPU support — comment out if no GPU
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: wb_backend
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: postgresql+asyncpg://wb_user:wb_password@postgres:5432/withoutborder
+      OLLAMA_BASE_URL: http://ollama:11434
+      LLM_PROVIDER: ollama
+      LLM_MODEL: gemma4:9b
+      SECRET_KEY: change-me-in-production-use-32chars-min
+      ALGORITHM: HS256
+      ACCESS_TOKEN_EXPIRE_MINUTES: 60
+      REFRESH_TOKEN_EXPIRE_DAYS: 7
+      UPLOAD_DIR: /app/uploads
+      MAX_UPLOAD_SIZE_MB: 20
+      ALLOWED_ORIGINS: '["http://localhost:4200","http://localhost:3000"]'
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./backend:/app
+      - uploads_data:/app/uploads
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    container_name: wb_frontend
+    ports:
+      - "4200:4200"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+
+volumes:
+  postgres_data:
+  ollama_data:
+  uploads_data:
