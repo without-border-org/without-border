@@ -50,7 +50,7 @@ services:
       REFRESH_TOKEN_EXPIRE_DAYS: 7
       UPLOAD_DIR: /app/uploads
       MAX_UPLOAD_SIZE_MB: 20
-      ALLOWED_ORIGINS: '["http://localhost:4200","http://localhost:3000"]'
+      ALLOWED_ORIGINS: '["http://localhost:4200","http://localhost:3000","http://127.0.0.1:4200"]'
     depends_on:
       postgres:
         condition: service_healthy
