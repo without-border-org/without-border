@@ -156,19 +156,27 @@ async def websocket_chat(
     token: str,
     db: AsyncSession = Depends(get_db),
 ):
-    payload = decode_token(token)
-    if not payload:
-        await websocket.close(code=1008)
+    # Authenticate WebSocket via Keycloak token
+    from app.core.security.keycloak import authenticate_websocket
+    from app.services.keycloak_sync_service import KeycloakUserSyncService
+    
+    try:
+        claims = await authenticate_websocket(websocket)
+    except RuntimeError:
         return
-
-    user_id = uuid.UUID(payload["sub"])
+    
+    # Lazy-sync user
+    sync_service = KeycloakUserSyncService(db)
+    user = await sync_service.upsert_from_token(claims)
+    user_id = user.id
+    
     user_repo = UserRepository(db)
     ch_repo = ChannelRepository(db)
     msg_repo = MessageRepository(db)
     notif_repo = NotificationRepository(db)
 
-    user = await user_repo.get_by_id(user_id)
-    if not user or not await ch_repo.is_member(channel_id, user_id):
+    # Verify channel membership
+    if not await ch_repo.is_member(channel_id, user_id):
         await websocket.close(code=1008)
         return
 

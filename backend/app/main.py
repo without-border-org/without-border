@@ -5,7 +5,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 import os
 
-from app.api.v1.endpoints.auth_router import router as auth_router
 from app.api.v1.endpoints.users_router import router as users_router
 from app.api.v1.endpoints.channels_router import router as channels_router
 from app.api.v1.endpoints.messages_router import router as messages_router
@@ -46,7 +45,6 @@ def create_app() -> FastAPI:
     )
 
     prefix = "/api/v1"
-    app.include_router(auth_router, prefix=prefix)
     app.include_router(users_router, prefix=prefix)
     app.include_router(channels_router, prefix=prefix)
     app.include_router(messages_router, prefix=prefix)

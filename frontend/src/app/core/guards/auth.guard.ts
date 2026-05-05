@@ -1,11 +1,26 @@
-// auth.guard.ts
 import { inject } from '@angular/core';
-import { CanActivateFn, Router } from '@angular/router';
-import { AuthService } from '../services/auth.service';
+import { CanActivateFn } from '@angular/router';
+import { KeycloakService } from 'keycloak-angular';
+import { environment } from '../../../environments/environment';
 
-export const authGuard: CanActivateFn = () => {
-  const auth = inject(AuthService);
-  const router = inject(Router);
-  if (auth.hasToken()) return true;
-  return router.createUrlTree(['/auth/login']);
+/**
+ * Authentication Guard
+ * 
+ * Protects routes that require authentication.
+ * - AUTH_DISABLED mode: always returns true
+ * - Keycloak mode: checks if logged in, redirects to login if not
+ */
+export const authGuard: CanActivateFn = async () => {
+  if (environment.authDisabled) {
+    return true;
+  }
+
+  const keycloak = inject(KeycloakService);
+  if (await keycloak.isLoggedIn()) {
+    return true;
+  }
+
+  await keycloak.login({ redirectUri: window.location.href });
+  return false;
 };
+

@@ -20,7 +20,9 @@
     "rxjs": "^7.8.1",
     "tslib": "^2.7.0",
     "zone.js": "~0.15.0",
-    "marked": "^14.0.0"
+    "marked": "^14.0.0",
+    "keycloak-angular": "^21.0.0",
+    "keycloak-js": "^25.0.0"
   },
   "devDependencies": {
     "@angular-devkit/build-angular": "^21.0.0",
