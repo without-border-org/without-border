@@ -5,8 +5,8 @@ services:
     container_name: wb_postgres
     environment:
       POSTGRES_DB: withoutborder
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      POSTGRES_USER: wb_user
+      POSTGRES_PASSWORD: wb_password
     ports:
       - "5432:5432"
     volumes:
