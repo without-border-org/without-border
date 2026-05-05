@@ -2,7 +2,7 @@ import { Injectable, inject, signal, computed } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { KeycloakService } from 'keycloak-angular';
-import { firstValueFrom } from 'rxjs';
+import { Observable, firstValueFrom, from, of, switchMap } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { User } from '../models';
 
@@ -91,5 +91,26 @@ export class AuthService {
 
   setUser(user: User) {
     this._user.set(user);
+  }
+
+  /** Synchronous check — true if a Keycloak token is present (or AUTH_DISABLED). */
+  hasToken(): boolean {
+    if (environment.authDisabled) return true;
+    return !!this.keycloak.getKeycloakInstance().token;
+  }
+
+  /** Synchronous token read — returns raw token string or null. */
+  getAccessToken(): string | null {
+    if (environment.authDisabled) return null;
+    return this.keycloak.getKeycloakInstance().token ?? null;
+  }
+
+  /** Force-refresh the Keycloak token and return the new value. */
+  refresh(): Observable<string | null> {
+    if (environment.authDisabled) return of(null);
+    const kc = this.keycloak.getKeycloakInstance();
+    return from(kc.updateToken(-1)).pipe(
+      switchMap(() => from(this.keycloak.getToken()))
+    );
   }
 }

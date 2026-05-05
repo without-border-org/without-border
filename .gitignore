@@ -27,3 +27,6 @@ Thumbs.db
 
 # Uploads
 backend/uploads/
+
+# Scripts secrets (never commit)
+scripts/provision_keycloak.env

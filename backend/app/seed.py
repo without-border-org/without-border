@@ -7,10 +7,14 @@ the local database mirror of users that already exist in Keycloak.
 Run with:
     cd backend && python -m app.seed
 
-Demo accounts (must exist in Keycloak):
-  Email: user@without-border.ca      Username: user
-  Email: admin@without-border.ca     Username: admin
-  Email: superadmin@without-border.ca  Username: superadmin
+Demo accounts (must exist in Keycloak — run scripts/provision_keycloak.py first):
+  demo@withoutborder.app   (Sophie  — fr)
+  john@withoutborder.app   (John    — en)
+  maria@withoutborder.app  (Maria   — es)
+  li@withoutborder.app     (Li Ming — zh)
+
+⚠  UUIDs MUST match those used when provisioning Keycloak users.
+   See: scripts/provision_keycloak.py
 """
 import asyncio
 import uuid
@@ -18,41 +22,49 @@ from datetime import datetime, timezone, timedelta
 from app.core.database import AsyncSessionLocal, create_tables
 from app.models.models import User, Channel, ChannelMember, Message, MessageTranslation
 
-# UUIDs must match those in Keycloak realm export
-# These are fixed for development so tests are reproducible
+# UUIDs must match those set by scripts/provision_keycloak.py
+# These are fixed so that Keycloak sub == local user.id
 DEMO_USERS = [
     {
         "id": uuid.UUID("00000000-0000-0000-0000-000000000001"),
-        "email": "user@without-border.ca",
-        "username": "user",
-        "preferred_language": "en",
+        "email": "demo@withoutborder.app",
+        "username": "sophie",
+        "preferred_language": "fr",
         "agentic_enabled": False,
         "status": "active",
     },
     {
         "id": uuid.UUID("00000000-0000-0000-0000-000000000002"),
-        "email": "admin@without-border.ca",
-        "username": "admin",
+        "email": "john@withoutborder.app",
+        "username": "john",
         "preferred_language": "en",
         "agentic_enabled": False,
         "status": "active",
     },
     {
         "id": uuid.UUID("00000000-0000-0000-0000-000000000003"),
-        "email": "superadmin@without-border.ca",
-        "username": "superadmin",
-        "preferred_language": "en",
+        "email": "maria@withoutborder.app",
+        "username": "maria",
+        "preferred_language": "es",
+        "agentic_enabled": False,
+        "status": "active",
+    },
+    {
+        "id": uuid.UUID("00000000-0000-0000-0000-000000000004"),
+        "email": "li@withoutborder.app",
+        "username": "li",
+        "preferred_language": "zh",
         "agentic_enabled": False,
         "status": "active",
     },
 ]
 
 DEMO_MESSAGES = [
-    ("user", "Hello everyone! Welcome to our collaboration space 🎉"),
-    ("admin", "Great to have everyone here. Let's build something amazing!"),
-    ("superadmin", "The platform is ready. Let's get started!"),
-    ("user", "I'm excited to explore Gemma 4 integration."),
-    ("admin", "The auto-translation feature is working perfectly."),
+    ("sophie", "Bonjour à tous ! Bienvenue sur notre espace de collaboration 🎉"),
+    ("john",   "Great to have everyone here. Let's build something amazing!"),
+    ("maria",  "¡Hola a todos! La función de traducción automática es increíble."),
+    ("li",     "大家好！很高兴在这里和大家一起协作。"),
+    ("sophie", "La plateforme multilingue fonctionne parfaitement 🌍"),
 ]
 
 
@@ -63,7 +75,7 @@ async def seed():
     async with AsyncSessionLocal() as db:
         # Check if already seeded
         from sqlalchemy import select
-        result = await db.execute(select(User).where(User.email == "user@without-border.ca"))
+        result = await db.execute(select(User).where(User.email == "demo@withoutborder.app"))
         if result.scalar_one_or_none():
             print("✅ Already seeded — skipping.")
             print("\n📋 Demo accounts (authenticated via Keycloak):")
@@ -95,14 +107,14 @@ async def seed():
             name="General",
             description="General announcements for the whole team",
             type="team",
-            created_by=users["user"].id,
+            created_by=users["sophie"].id,
         )
         db.add(general)
         await db.flush()
 
         # Add all members
         for username, user in users.items():
-            role = "admin" if username == "admin" else "member"
+            role = "admin" if username == "john" else "member"
             db.add(ChannelMember(channel_id=general.id, user_id=user.id, role=role))
 
         # Create development team channel
@@ -111,11 +123,11 @@ async def seed():
             name="Development",
             description="Development team channel",
             type="team",
-            created_by=users["user"].id,
+            created_by=users["sophie"].id,
         )
         db.add(dev_ch)
         await db.flush()
-        for u in [users["user"], users["admin"]]:
+        for u in [users["sophie"], users["john"], users["maria"]]:
             db.add(ChannelMember(channel_id=dev_ch.id, user_id=u.id, role="member"))
 
         # Seed demo messages in general channel
@@ -140,13 +152,13 @@ async def seed():
 
     print("\n✅ Seed complete!")
     print("\n📋 Demo accounts (authenticate via Keycloak at https://auth.manga-pics.com):")
-    print("┌─────────────────────────────────┬──────────┬────────────┬──────────┐")
-    print("│ Email                           │ Username │ Language   │ Status   │")
-    print("├─────────────────────────────────┼──────────┼────────────┼──────────┤")
+    print("┌──────────────────────────────────┬──────────┬──────┬──────────┐")
+    print("│ Email                            │ Username │ Lang │ Status   │")
+    print("├──────────────────────────────────┼──────────┼──────┼──────────┤")
     for u in DEMO_USERS:
-        print(f"│ {u['email']:<31} │ {u['username']:<8} │ {u['preferred_language']:<10} │ {u['status']:<8} │")
-    print("└─────────────────────────────────┴──────────┴────────────┴──────────┘")
-    print("\n🔑 Passwords managed by Keycloak")
+        print(f"│ {u['email']:<32} │ {u['username']:<8} │ {u['preferred_language']:<4} │ {u['status']:<8} │")
+    print("└──────────────────────────────────┴──────────┴──────┴──────────┘")
+    print("\n🔑 Passwords managed by Keycloak (run scripts/provision_keycloak.py to provision)")
     print("🌐 Frontend: http://localhost:4200")
     print("📖 API docs: http://localhost:8000/docs")
 
