@@ -1,0 +1,104 @@
+{
+  "realm": "without-border",
+  "enabled": true,
+  "displayName": "WithoutBorder",
+  "registrationAllowed": false,
+  "resetPasswordAllowed": true,
+  "rememberMe": true,
+  "loginWithEmailAllowed": true,
+  "sslRequired": "none",
+  "roles": {
+    "realm": [
+      { "name": "user",       "description": "Utilisateur standard WithoutBorder" },
+      { "name": "admin",      "description": "Administrateur WithoutBorder" },
+      { "name": "superadmin", "description": "Super administrateur WithoutBorder" }
+    ]
+  },
+  "clients": [
+    {
+      "clientId": "without-border-frontend",
+      "name": "WithoutBorder Frontend",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": true,
+      "implicitFlowEnabled": false,
+      "serviceAccountsEnabled": false,
+      "redirectUris": [
+        "http://localhost:4200/*",
+        "http://127.0.0.1:4200/*"
+      ],
+      "webOrigins": [
+        "http://localhost:4200",
+        "http://127.0.0.1:4200"
+      ],
+      "attributes": {
+        "pkce.code.challenge.method": "S256"
+      }
+    }
+  ],
+  "users": [
+    {
+      "id": "00000000-0000-0000-0000-000000000001",
+      "username": "sophie",
+      "email": "demo@withoutborder.app",
+      "enabled": true,
+      "emailVerified": true,
+      "requiredActions": [],
+      "firstName": "Sophie",
+      "lastName": "",
+      "attributes": { "locale": ["fr"] },
+      "credentials": [
+        { "type": "password", "value": "demo1234", "temporary": false }
+      ],
+      "realmRoles": ["user"]
+    },
+    {
+      "id": "00000000-0000-0000-0000-000000000002",
+      "username": "john",
+      "email": "john@withoutborder.app",
+      "enabled": true,
+      "emailVerified": true,
+      "requiredActions": [],
+      "firstName": "John",
+      "lastName": "",
+      "attributes": { "locale": ["en"] },
+      "credentials": [
+        { "type": "password", "value": "demo1234", "temporary": false }
+      ],
+      "realmRoles": ["admin"]
+    },
+    {
+      "id": "00000000-0000-0000-0000-000000000003",
+      "username": "maria",
+      "email": "maria@withoutborder.app",
+      "enabled": true,
+      "emailVerified": true,
+      "requiredActions": [],
+      "firstName": "Maria",
+      "lastName": "",
+      "attributes": { "locale": ["es"] },
+      "credentials": [
+        { "type": "password", "value": "demo1234", "temporary": false }
+      ],
+      "realmRoles": ["user"]
+    },
+    {
+      "id": "00000000-0000-0000-0000-000000000004",
+      "username": "li",
+      "email": "li@withoutborder.app",
+      "enabled": true,
+      "emailVerified": true,
+      "requiredActions": [],
+      "firstName": "Li Ming",
+      "lastName": "",
+      "attributes": { "locale": ["zh"] },
+      "credentials": [
+        { "type": "password", "value": "demo1234", "temporary": false }
+      ],
+      "realmRoles": ["user"]
+    }
+  ]
+}
+

@@ -16,11 +16,9 @@ export const authGuard: CanActivateFn = async () => {
   }
 
   const keycloak = inject(KeycloakService);
-  if (await keycloak.isLoggedIn()) {
-    return true;
-  }
-
-  await keycloak.login({ redirectUri: window.location.href });
-  return false;
+  // With onLoad: 'login-required', Keycloak already handled the redirect
+  // before Angular booted — so isLoggedIn() should always be true here.
+  // This guard is kept as a safety net only.
+  return keycloak.isLoggedIn();
 };
 
