@@ -1,6 +1,4 @@
-"""
-FastAPI application factory — with auto-seed on first launch.
-"""
+"""FastAPI application factory."""
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -20,31 +18,21 @@ from app.core.database import create_tables
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await create_tables()
-    if os.getenv("AUTO_SEED", "true").lower() == "true":
+    if settings.AUTO_SEED:
         try:
             from app.seed import seed
             await seed()
         except Exception as e:
             print(f"[seed] Skipped: {e}")
+    if settings.AUTH_DISABLED:
+        print("\n⚠️  AUTH_DISABLED=true — authentication is OFF. Do not use in production.\n")
     yield
 
 
 def create_app() -> FastAPI:
     app = FastAPI(
         title="WithoutBorder API",
-        description="""
-## WithoutBorder — Multilingual AI Collaboration
-
-Powered by **Gemma 4** (open-weights).
-
-### Demo Credentials
-| Email | Password |
-|-------|----------|
-| `demo@withoutborder.app` | `demo1234` |
-| `john@withoutborder.app` | `demo1234` |
-| `maria@withoutborder.app` | `demo1234` |
-| `li@withoutborder.app` | `demo1234` |
-        """,
+        description="Multilingual real-time collaboration platform.",
         version="1.0.0",
         lifespan=lifespan,
     )
@@ -70,18 +58,10 @@ Powered by **Gemma 4** (open-weights).
 
     @app.get("/health", tags=["system"])
     async def health():
-        return {"status": "ok", "app": "WithoutBorder", "version": "1.0.0"}
-
-    @app.get("/demo-credentials", tags=["system"])
-    async def demo_credentials():
         return {
-            "accounts": [
-                {"email": "demo@withoutborder.app", "password": "demo1234", "language": "fr", "username": "sophie"},
-                {"email": "john@withoutborder.app", "password": "demo1234", "language": "en", "username": "john"},
-                {"email": "maria@withoutborder.app", "password": "demo1234", "language": "es", "username": "maria"},
-                {"email": "li@withoutborder.app", "password": "demo1234", "language": "zh", "username": "li_ming"},
-            ],
-            "note": "All accounts use password: demo1234"
+            "status": "ok",
+            "version": "1.0.0",
+            "auth_disabled": settings.AUTH_DISABLED,
         }
 
     return app

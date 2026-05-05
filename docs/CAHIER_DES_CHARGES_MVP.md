@@ -1,17 +1,12 @@
 # Cahier des Charges — WithoutBorder MVP
-## Plateforme de Collaboration Multilingue avec IA Agentique (Gemma 4)
+## Plateforme de Collaboration Multilingue avec IA
 
 **Version :** 2.0  
 **Date :** Mai 2026  
-**Hackathon :** Kaggle × Google DeepMind — Gemma 4 Good Hackathon ($200K)  
-**Deadline :** 18 Mai 2026  
 
 ---
 
-## 1. Positionnement Hackathon
 
-### 1.1 Domaines ciblés par le Gemma 4 Good Hackathon
-Le hackathon cible 3 domaines : **Santé**, **Éducation**, **Résilience Climatique**.
 
 ### 1.2 Comment WithoutBorder s'inscrit dans ces domaines
 
@@ -35,7 +30,7 @@ Le hackathon cible 3 domaines : **Santé**, **Éducation**, **Résilience Climat
 
 ---
 
-## 2. Vision Produit
+## 1. Vision Produit
 
 WithoutBorder est une plateforme de messagerie collaborative où :
 - Chaque utilisateur écrit dans sa **langue maternelle**
@@ -47,9 +42,9 @@ WithoutBorder est une plateforme de messagerie collaborative où :
 
 ---
 
-## 3. Périmètre MVP
+## 2. Périmètre MVP
 
-### 3.1 Fonctionnalités
+### 2.1 Fonctionnalités
 
 | # | Fonctionnalité | Priorité | Détail |
 |---|---|---|---|
@@ -74,7 +69,7 @@ WithoutBorder est une plateforme de messagerie collaborative où :
 | F19 | Recherche full-text dans l'historique | COULD | PostgreSQL full-text search |
 | F20 | Notifications (in-app) | COULD | Badge non-lus |
 
-### 3.2 Non-périmètre MVP
+### 2.2 Non-périmètre MVP
 - App mobile native (Angular PWA = mobile-first web)
 - Intégrations tierces (Slack, Jira, Google Drive...)
 - Appels audio/vidéo
@@ -82,9 +77,9 @@ WithoutBorder est une plateforme de messagerie collaborative où :
 
 ---
 
-## 4. Architecture Technique
+## 3. Architecture Technique
 
-### 4.1 Stack
+### 3.1 Stack
 
 | Couche | Technologie | Version |
 |---|---|---|
@@ -103,14 +98,14 @@ WithoutBorder est une plateforme de messagerie collaborative où :
 
 > **Suppression de Redis** : Le cache des traductions est géré en BDD (table `message_translations`). La session WebSocket est gérée en mémoire via le `ConnectionManager`.
 
-### 4.2 Pourquoi Angular 21
+### 3.2 Pourquoi Angular 21
 - **Signals natifs stables** : réactivité fine-grained sans Zone.js
 - **Zoneless change detection** : performances accrues
 - **Signal-based Forms** : gestion des formulaires moderne
 - **Hydration améliorée** : SSR optionnel
 - **Selectorless components** (preview) : moins de boilerplate
 
-### 4.3 Principes d'architecture
+### 3.3 Principes d'architecture
 
 **SOLID appliqué partout :**
 - **S** — Single Responsibility : 1 classe = 1 responsabilité
@@ -128,7 +123,7 @@ WithoutBorder est une plateforme de messagerie collaborative où :
 
 ---
 
-## 5. Structure des Dossiers
+## 4. Structure des Dossiers
 
 ```
 withoutborder/
@@ -136,7 +131,6 @@ withoutborder/
 │   ├── CAHIER_DES_CHARGES_MVP.md
 │   ├── API.md                    ← Swagger auto-généré + description
 │   ├── ARCHITECTURE.md
-│   └── HACKATHON_WRITEUP.md      ← Write-up technique pour Kaggle
 │
 ├── frontend/                     ← Angular 21
 │   └── src/
@@ -184,7 +178,7 @@ withoutborder/
 
 ---
 
-## 6. Modèles de Données
+## 5. Modèles de Données
 
 ### User
 ```sql
@@ -288,7 +282,7 @@ notifications (
 
 ---
 
-## 7. Flux Principaux
+## 6. Flux Principaux
 
 ### F06 — Traduction temps réel
 ```
@@ -325,7 +319,7 @@ notifications (
 
 ---
 
-## 8. API Endpoints
+## 7. API Endpoints
 
 ### Auth
 ```
@@ -389,16 +383,16 @@ GET    /api/v1/ai/health                  ← Vérifier disponibilité Gemma 4
 
 ---
 
-## 9. Design UI/UX
+## 8. Design UI/UX
 
-### 9.1 Principes
+### 8.1 Principes
 - **Mobile First** — breakpoints : 375 / 640 / 768 / 1024 / 1280 / 1440px
 - **Glassmorphism moderne** — surfaces semi-transparentes avec backdrop-blur
 - **Dark mode natif** — palette sombre par défaut, light mode optionnel
 - **Micro-animations** — transitions fluides (150-300ms)
 - **Accessible** — WCAG 2.1 AA, focus visible, aria-labels
 
-### 9.2 Composants clés
+### 8.2 Composants clés
 - `StatusBadge` : Active (vert pulse) / Agentic (violet pulse) / Inactive (gris)
 - `MessageBubble` : Bulle avec toggle original/traduit, réactions, menu contextuel
 - `AgenticBadge` : Badge "[IA]" sur les messages générés par l'agent
@@ -410,9 +404,9 @@ GET    /api/v1/ai/health                  ← Vérifier disponibilité Gemma 4
 
 ---
 
-## 10. Intégration Gemma 4
+## 9. Intégration Gemma 4
 
-### 10.1 Interface abstraite LLMProvider
+### 9.1 Interface abstraite LLMProvider
 ```python
 class LLMProvider(ABC):
     async def complete(system: str, user: str) -> str
@@ -421,7 +415,7 @@ class LLMProvider(ABC):
 ```
 → Implémentations : `OllamaProvider`, `VertexAIProvider`, `HuggingFaceProvider`
 
-### 10.2 Prompts
+### 9.2 Prompts
 
 **Traduction**
 ```
@@ -456,7 +450,7 @@ User: [conversation]
 
 ---
 
-## 11. Plan de Développement MVP
+## 10. Plan de Développement MVP
 
 ### Sprint 1 — Fondations (Jours 1-3)
 - [ ] Init Angular 21 + TailwindCSS 4
@@ -484,16 +478,13 @@ User: [conversation]
 - [ ] Upload fichiers + traduction PDF
 - [ ] Recherche full-text
 
-### Sprint 5 — Finitions Hackathon (Jours 13-15)
 - [ ] Polish UI mobile
 - [ ] Tests unitaires clés
 - [ ] Demo seeding (données de démo réalistes)
-- [ ] README Kaggle + vidéo démo
 - [ ] Déploiement Hugging Face Spaces ou Render
 
 ---
 
-## 12. Livrables Hackathon
 
 | Livrable | Statut |
 |---|---|

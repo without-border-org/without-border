@@ -1,12 +1,11 @@
 """Application settings — loaded from environment variables."""
 from pydantic_settings import BaseSettings
-import json
 
 
 class Settings(BaseSettings):
     APP_NAME: str = "WithoutBorder"
     DEBUG: bool = False
-    ALLOWED_ORIGINS: list[str] = ["http://localhost:4200"]
+    ALLOWED_ORIGINS: list[str] = ["http://localhost:4200", "http://localhost:3000", "http://127.0.0.1:4200"]
 
     DATABASE_URL: str = "postgresql+asyncpg://wb_user:wb_password@localhost:5432/withoutborder"
 
@@ -15,6 +14,13 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
 
+    # ── Auth bypass (LOCAL DEV ONLY) ─────────────────────────────────────────
+    # Set AUTH_DISABLED=true in .env to skip all authentication.
+    # NEVER enable in production.
+    AUTH_DISABLED: bool = False
+    AUTH_DISABLED_USER_ID: str = ""  # fixed user id to impersonate when auth is off
+
+    # ── LLM ──────────────────────────────────────────────────────────────────
     LLM_PROVIDER: str = "ollama"
     LLM_MODEL: str = "gemma4:9b"
     OLLAMA_BASE_URL: str = "http://localhost:11434"
@@ -24,6 +30,7 @@ class Settings(BaseSettings):
     MAX_CONTEXT_MESSAGES: int = 20
     UPLOAD_DIR: str = "./uploads"
     MAX_UPLOAD_SIZE_MB: int = 20
+    AUTO_SEED: bool = True
 
     class Config:
         env_file = ".env"

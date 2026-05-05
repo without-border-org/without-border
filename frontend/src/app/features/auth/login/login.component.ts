@@ -97,7 +97,7 @@ import { UserService } from '../../../core/services/user.service';
         <!-- Demo hint -->
         <div class="mt-4 text-center">
           <p class="text-xs text-gray-600">
-            Gemma 4 Good Hackathon — Breaking language barriers in education & health
+            Multilingual collaboration powered by Gemma 4
           </p>
         </div>
       </div>
