@@ -14,16 +14,11 @@
                     fontFamily: { sans: ['Inter', 'sans-serif'] },
                     colors: {
                         brand: {
-                            orange: '#F97316',
-                            orangeHover: '#EA580C',
-                            darkBg: '#0E0E11',
-                            darkSidebar: '#18181B',
-                            darkPanel: '#27272A',
-                            darkBorder: 'rgba(255, 255, 255, 0.06)',
-                            lightBg: '#FFFFFF',
-                            lightSidebar: '#F4F4F5',
-                            lightPanel: '#E4E4E7',
-                            lightBorder: 'rgba(0, 0, 0, 0.08)'
+                            orange: '#F97316', orangeHover: '#EA580C',
+                            darkBg: '#0E0E11', darkSidebar: '#18181B', darkPanel: '#27272A',
+                            darkBorder: 'rgba(255,255,255,0.06)',
+                            lightBg: '#FFFFFF', lightSidebar: '#F4F4F5', lightPanel: '#E4E4E7',
+                            lightBorder: 'rgba(0,0,0,0.08)'
                         }
                     }
                 }
@@ -31,474 +26,396 @@
         }
     </script>
     <style>
-        body { -webkit-font-smoothing: antialiased; }
-        .custom-scrollbar::-webkit-scrollbar { width: 5px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #3F3F46; border-radius: 10px; }
-
-        .transition-ui { transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); }
-
-        .sidebar-right-hidden { transform: translateX(100%); width: 0; opacity: 0; pointer-events: none; }
-        .sidebar-right-visible { transform: translateX(0); width: 340px; opacity: 1; }
-
-        .nav-item-active { background: rgba(249, 115, 22, 0.1) !important; color: #F97316 !important; border-left: 3px solid #F97316; border-radius: 0 8px 8px 0; }
-
-        .dark .glass-header { background: rgba(14, 14, 17, 0.8); backdrop-filter: blur(12px); border-bottom: 1px solid rgba(255, 255, 255, 0.06); }
-        .light .glass-header { background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(12px); border-bottom: 1px solid rgba(0, 0, 0, 0.06); }
-
-        .reaction-pill {
-            display: flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 99px; font-size: 10px; font-weight: 700;
-            border: 1px solid rgba(255, 255, 255, 0.1); background: rgba(255, 255, 255, 0.05); cursor: pointer; transition: all 0.2s;
-        }
-        .light .reaction-pill { border: 1px solid rgba(0, 0, 0, 0.05); background: rgba(0, 0, 0, 0.02); }
-        .reaction-pill:hover { transform: scale(1.05); background: rgba(249, 115, 22, 0.1); border-color: rgba(249, 115, 22, 0.3); }
-
-        /* Icone de traduction spécifique */
-        .translate-label::before {
-            content: "文";
-            font-size: 10px;
-            margin-right: 3px;
-        }
+        body{-webkit-font-smoothing:antialiased}
+        .custom-scrollbar::-webkit-scrollbar{width:5px}
+        .custom-scrollbar::-webkit-scrollbar-track{background:transparent}
+        .custom-scrollbar::-webkit-scrollbar-thumb{background:#3F3F46;border-radius:10px}
+        .transition-ui{transition:all .25s cubic-bezier(.4,0,.2,1)}
+        .sidebar-right-hidden{transform:translateX(100%);width:0;opacity:0;pointer-events:none}
+        .sidebar-right-visible{transform:translateX(0);width:340px;opacity:1}
+        .nav-item-active{background:rgba(249,115,22,.1)!important;color:#F97316!important;border-left:3px solid #F97316;border-radius:0 8px 8px 0}
+        .dark  .glass-header{background:rgba(14,14,17,.8);backdrop-filter:blur(12px);border-bottom:1px solid rgba(255,255,255,.06)}
+        .light .glass-header{background:rgba(255,255,255,.8);backdrop-filter:blur(12px);border-bottom:1px solid rgba(0,0,0,.06)}
+        .reaction-pill{display:flex;align-items:center;gap:4px;padding:2px 8px;border-radius:99px;font-size:10px;font-weight:700;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.05);cursor:pointer;transition:all .2s}
+        .light .reaction-pill{border:1px solid rgba(0,0,0,.05);background:rgba(0,0,0,.02)}
+        .reaction-pill:hover{transform:scale(1.05);background:rgba(249,115,22,.1);border-color:rgba(249,115,22,.3)}
+        .translate-label::before{content:"文";font-size:10px;margin-right:3px}
+        .editor-tool{display:flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:6px;color:inherit;opacity:.45;cursor:pointer;transition:opacity .15s,background .15s;flex-shrink:0}
+        .editor-tool:hover{opacity:1}
+        .dark  .editor-tool:hover{background:rgba(255,255,255,.07)}
+        .light .editor-tool:hover{background:rgba(0,0,0,.06)}
+        #send-btn{opacity:.22;cursor:not-allowed}
+        #send-btn.active{opacity:1;cursor:pointer;color:#F97316}
+        #send-btn.active:hover{background:rgba(249,115,22,.12)}
     </style>
 </head>
 <body class="h-screen flex overflow-hidden transition-colors duration-300 dark:bg-brand-darkBg bg-brand-lightBg dark:text-zinc-200 text-zinc-800">
 
-    <!-- ==================== BARRE LATÉRALE GAUCHE ==================== -->
-    <aside class="w-64 flex flex-col flex-shrink-0 dark:bg-brand-darkSidebar bg-brand-lightSidebar border-r dark:border-brand-darkBorder border-brand-lightBorder z-30">
-        <div class="h-16 flex items-center px-5 border-b dark:border-brand-darkBorder border-brand-lightBorder gap-2">
-            <span class="font-bold text-sm tracking-wide dark:text-white text-zinc-900 uppercase">WithoutBorder</span>
-            <!-- Bouton soleil pour changer de thème -->
-            <button id="theme-toggle" class="p-1.5 rounded-lg hover:bg-brand-orange/10 text-brand-orange transition-ui ml-auto" title="Changer de thème">
-                <svg id="theme-icon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m12.728 0l-.707-.707M6.343 6.343l-.707-.707M12 5a7 7 0 100 14 7 7 0 000-14z"></path>
+<!-- ============ SIDEBAR GAUCHE ============ -->
+<aside class="w-64 flex flex-col flex-shrink-0 dark:bg-brand-darkSidebar bg-brand-lightSidebar border-r dark:border-brand-darkBorder border-brand-lightBorder z-30">
+
+    <div class="h-16 flex items-center px-5 border-b dark:border-brand-darkBorder border-brand-lightBorder gap-2">
+        <span class="font-bold text-sm tracking-wide dark:text-white text-zinc-900 uppercase">WithoutBorder</span>
+        <button id="theme-toggle" class="p-1.5 rounded-lg hover:bg-brand-orange/10 text-brand-orange transition-ui ml-auto" title="Thème">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m12.728 0l-.707-.707M6.343 6.343l-.707-.707M12 5a7 7 0 100 14 7 7 0 000-14z"/>
+            </svg>
+        </button>
+    </div>
+
+    <div class="px-4 py-4">
+        <div class="relative">
+            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-zinc-500">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
                 </svg>
-            </button>
-        </div>
-
-        <div class="px-4 py-4">
-            <div class="relative group">
-                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-zinc-500">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-                </div>
-                <input type="text" id="team-search" placeholder="Rechercher..." class="w-full dark:bg-brand-darkPanel bg-white border dark:border-brand-darkBorder border-zinc-300 rounded-lg py-2 pl-9 pr-3 text-xs focus:outline-none focus:border-brand-orange/50 transition-ui">
             </div>
+            <input type="text" placeholder="Rechercher..."
+                class="w-full dark:bg-brand-darkPanel bg-white border dark:border-brand-darkBorder border-zinc-300 rounded-lg py-2 pl-9 pr-3 text-xs focus:outline-none focus:border-brand-orange/50 transition-ui">
         </div>
+    </div>
 
-        <nav class="flex-1 overflow-y-auto custom-scrollbar pr-2 space-y-6">
-            <!-- SECTION ÉQUIPES -->
+    <nav class="flex-1 overflow-y-auto custom-scrollbar pr-2 space-y-6">
+        <div>
+            <div class="px-5 mb-2"><span class="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Équipes</span></div>
+            <ul class="space-y-0.5" id="nav-teams"></ul>
+        </div>
+        <div>
+            <div class="px-5 mb-2"><span class="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Binômes</span></div>
+            <ul class="space-y-0.5" id="nav-dms"></ul>
+        </div>
+    </nav>
+
+    <div class="p-4 border-t dark:border-brand-darkBorder border-brand-lightBorder">
+        <div class="flex items-center gap-3 p-2 rounded-xl dark:bg-brand-darkPanel bg-white border dark:border-brand-darkBorder border-zinc-200 cursor-pointer hover:opacity-80 transition-ui">
+            <img src="https://ui-avatars.com/api/?name=Sophie+Martin&background=f97316&color=fff" class="w-8 h-8 rounded-lg shadow-sm" alt="Avatar">
+            <div class="flex-1 min-w-0">
+                <p class="text-xs font-bold truncate">Sophie Martin</p>
+                <p class="text-[9px] text-zinc-500 font-medium">FR · Designer</p>
+            </div>
+            <div class="w-2 h-2 rounded-full bg-green-500"></div>
+        </div>
+    </div>
+</aside>
+
+<!-- ============ ZONE PRINCIPALE ============ -->
+<main class="flex-1 flex flex-col relative min-w-0">
+
+    <header class="h-16 glass-header absolute top-0 left-0 right-0 z-20 flex items-center justify-between px-6">
+        <div class="flex items-center gap-3">
+            <div id="header-icon" class="p-2 bg-orange-500/10 rounded-lg text-brand-orange transition-ui"></div>
             <div>
-                <div class="px-5 flex items-center justify-between mb-2">
-                    <span class="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Équipes</span>
-                </div>
-                <ul class="space-y-0.5" id="nav-teams"></ul>
-            </div>
-
-            <!-- SECTION BINÔMES -->
-            <div>
-                <div class="px-5 flex items-center justify-between mb-2">
-                    <span class="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Binômes</span>
-                </div>
-                <ul class="space-y-0.5" id="nav-dms"></ul>
-            </div>
-        </nav>
-
-        <div class="p-4 border-t dark:border-brand-darkBorder border-brand-lightBorder">
-            <div class="flex items-center gap-3 p-2 rounded-xl dark:bg-brand-darkPanel bg-white border dark:border-brand-darkBorder border-zinc-200 cursor-pointer hover:opacity-80 transition-ui">
-                <img src="https://ui-avatars.com/api/?name=Sophie+Martin&background=f97316&color=fff" class="w-8 h-8 rounded-lg shadow-sm" alt="Avatar">
-                <div class="flex-1 min-w-0">
-                    <p class="text-xs font-bold truncate">Sophie Martin</p>
-                    <p class="text-[9px] text-zinc-500 font-medium">FR · Designer</p>
-                </div>
-                <div class="w-2 h-2 rounded-full bg-green-500"></div>
+                <h2 id="chat-title" class="text-sm font-bold truncate">...</h2>
+                <p id="chat-subtitle" class="text-[10px] text-zinc-500 font-medium tracking-wide">Chargement...</p>
             </div>
         </div>
-    </aside>
+        <button id="toggle-sidebar-right" class="flex -space-x-2.5 hover:opacity-80 transition-ui p-1.5 rounded-xl hover:bg-zinc-100 dark:hover:bg-white/5">
+            <div class="w-8 h-8 rounded-full bg-orange-500  border-2 dark:border-brand-darkBg border-white flex items-center justify-center text-[10px] text-white font-bold z-30 shadow-sm">SM</div>
+            <div class="w-8 h-8 rounded-full bg-blue-500   border-2 dark:border-brand-darkBg border-white flex items-center justify-center text-[10px] text-white font-bold z-20 shadow-sm">JC</div>
+            <div class="w-8 h-8 rounded-full bg-emerald-500 border-2 dark:border-brand-darkBg border-white flex items-center justify-center text-[10px] text-white font-bold z-10 shadow-sm">MG</div>
+            <div class="w-8 h-8 rounded-full bg-zinc-400   border-2 dark:border-brand-darkBg border-white flex items-center justify-center text-[10px] text-white font-bold z-0  shadow-sm">+2</div>
+        </button>
+    </header>
 
-    <!-- ==================== ZONE DE CHAT PRINCIPALE ==================== -->
-    <main class="flex-1 flex flex-col relative min-w-0">
-        <header class="h-16 glass-header absolute top-0 left-0 right-0 z-20 flex items-center justify-between px-6">
-            <div class="flex items-center gap-3">
-                <div id="header-icon" class="p-2 bg-orange-500/10 rounded-lg text-brand-orange transition-ui">
-                    <!-- Icone injectée par JS -->
-                </div>
-                <div>
-                    <h2 id="chat-title" class="text-sm font-bold truncate">...</h2>
-                    <p id="chat-subtitle" class="text-[10px] text-zinc-500 font-medium tracking-wide">Chargement...</p>
-                </div>
+    <div id="chat-messages" class="flex-1 overflow-y-auto custom-scrollbar px-6 pt-24 pb-4 space-y-6"></div>
+
+    <!-- ============ COMPOSITEUR RICH TEXT ============ -->
+    <div class="px-4 pb-4 pt-2 border-t dark:border-brand-darkBorder border-brand-lightBorder dark:bg-brand-darkBg bg-brand-lightBg">
+        <div class="dark:bg-brand-darkPanel bg-zinc-100 border dark:border-brand-darkBorder border-zinc-200 rounded-2xl transition-ui focus-within:border-brand-orange/30 overflow-hidden">
+
+            <!-- Barre formatage haut : B I U S | lien | listes | indentation code citation -->
+            <div class="flex items-center gap-0.5 px-3 pt-2.5 pb-2 border-b dark:border-white/[0.05] border-zinc-200/80">
+                <button class="editor-tool font-bold text-xs">B</button>
+                <button class="editor-tool text-xs" style="font-style:italic;font-weight:500">I</button>
+                <button class="editor-tool text-xs" style="text-decoration:underline">U</button>
+                <button class="editor-tool text-xs" style="text-decoration:line-through">S</button>
+                <div class="w-px h-3.5 dark:bg-white/10 bg-zinc-300 mx-1.5 flex-shrink-0"></div>
+                <button class="editor-tool" title="Lien">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/>
+                    </svg>
+                </button>
+                <div class="w-px h-3.5 dark:bg-white/10 bg-zinc-300 mx-1.5 flex-shrink-0"></div>
+                <button class="editor-tool" title="Liste ordonnée">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/>
+                    </svg>
+                </button>
+                <button class="editor-tool" title="Liste à puces">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/>
+                    </svg>
+                </button>
+                <div class="w-px h-3.5 dark:bg-white/10 bg-zinc-300 mx-1.5 flex-shrink-0"></div>
+                <button class="editor-tool" title="Indenter">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h10M4 18h16"/>
+                    </svg>
+                </button>
+                <button class="editor-tool" title="Code">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/>
+                    </svg>
+                </button>
+                <button class="editor-tool" title="Citation">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/>
+                    </svg>
+                </button>
             </div>
 
-            <button id="toggle-sidebar-right" class="flex -space-x-2.5 hover:opacity-80 transition-ui p-1.5 rounded-xl hover:bg-zinc-100 dark:hover:bg-white/5">
-                <div class="w-8 h-8 rounded-full bg-orange-500 border-2 dark:border-brand-darkBg border-white flex items-center justify-center text-[10px] text-white font-bold z-30 shadow-sm">SM</div>
-                <div class="w-8 h-8 rounded-full bg-blue-500 border-2 dark:border-brand-darkBg border-white flex items-center justify-center text-[10px] text-white font-bold z-20 shadow-sm">JC</div>
-                <div class="w-8 h-8 rounded-full bg-emerald-500 border-2 dark:border-brand-darkBg border-white flex items-center justify-center text-[10px] text-white font-bold z-10 shadow-sm">MG</div>
-                <div class="w-8 h-8 rounded-full bg-zinc-400 border-2 dark:border-brand-darkBg border-white flex items-center justify-center text-[10px] text-white font-bold z-0 shadow-sm">+2</div>
-            </button>
-        </header>
+            <!-- Zone de saisie -->
+            <textarea id="chat-input" rows="3"
+                class="w-full bg-transparent text-sm focus:outline-none resize-none px-4 py-3 dark:placeholder-zinc-600 placeholder-zinc-400"
+                placeholder="Envoyer un message..."></textarea>
 
-        <div id="chat-messages" class="flex-1 overflow-y-auto custom-scrollbar px-6 pt-24 pb-6 space-y-6"></div>
-
-        <div class="p-4 border-t dark:border-brand-darkBorder border-brand-lightBorder dark:bg-brand-darkBg bg-brand-lightBg">
-            <div class="max-w-4xl mx-auto flex gap-3 items-end">
-                <div class="flex-1 dark:bg-brand-darkPanel bg-zinc-100 border dark:border-brand-darkBorder border-zinc-200 rounded-xl p-3 transition-ui focus-within:border-brand-orange/40">
-                    <textarea id="chat-input" rows="1" class="w-full bg-transparent text-sm focus:outline-none resize-none" placeholder="Écrire un message..."></textarea>
-                </div>
-                <button onclick="handleSend()" class="w-10 h-10 bg-brand-orange text-white rounded-xl flex items-center justify-center shadow-lg shadow-orange-500/20 hover:bg-brand-orangeHover transition-ui active:scale-95">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>
+            <!-- Barre outils bas : attachement · format · emoji · @ · | · vidéo · micro · slash · [spacer] · envoyer -->
+            <div class="flex items-center gap-0.5 px-3 pb-2.5 pt-1">
+                <button class="editor-tool" title="Joindre un fichier">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                    </svg>
+                </button>
+                <button class="editor-tool text-[10px] font-semibold" title="Format">Aa</button>
+                <button class="editor-tool" title="Emoji">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                </button>
+                <button class="editor-tool text-[11px] font-bold" title="Mentionner">@</button>
+                <div class="w-px h-3.5 dark:bg-white/10 bg-zinc-300 mx-1.5 flex-shrink-0"></div>
+                <button class="editor-tool" title="Clip vidéo">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.069A1 1 0 0121 8.82v6.36a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                    </svg>
+                </button>
+                <button class="editor-tool" title="Message vocal">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/>
+                    </svg>
+                </button>
+                <button class="editor-tool text-[11px] font-bold" title="Commandes">/</button>
+                <div class="flex-1"></div>
+                <!-- Bouton envoi : discret par défaut, orange quand contenu présent -->
+                <button id="send-btn" onclick="handleSend()" class="editor-tool rounded-lg" title="Envoyer (Entrée)">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
+                    </svg>
                 </button>
             </div>
         </div>
-    </main>
+    </div>
+</main>
 
-    <!-- ==================== BARRE LATÉRALE DROITE (PARTICIPANTS) ==================== -->
-    <aside id="sidebar-right" class="sidebar-right-hidden flex flex-col flex-shrink-0 dark:bg-brand-darkSidebar bg-white border-l dark:border-brand-darkBorder border-zinc-200 transition-ui z-40">
-        <div class="h-16 flex items-center justify-between px-6 border-b dark:border-brand-darkBorder border-zinc-100">
-            <h3 class="text-sm font-bold tracking-tight">Participants <span id="participant-count" class="ml-1 text-zinc-400 font-normal"></span></h3>
-            <button onclick="toggleSidebarRight()" class="p-1 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg text-zinc-500">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-            </button>
+<!-- ============ SIDEBAR DROITE (PARTICIPANTS) ============ -->
+<aside id="sidebar-right" class="sidebar-right-hidden flex flex-col flex-shrink-0 dark:bg-brand-darkSidebar bg-white border-l dark:border-brand-darkBorder border-zinc-200 transition-ui z-40">
+    <div class="h-16 flex items-center justify-between px-6 border-b dark:border-brand-darkBorder border-zinc-100">
+        <h3 class="text-sm font-bold tracking-tight">Participants <span id="participant-count" class="ml-1 text-zinc-400 font-normal"></span></h3>
+        <button onclick="toggleSidebarRight()" class="p-1 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg text-zinc-500 transition-ui">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+        </button>
+    </div>
+    <div class="flex-1 overflow-y-auto custom-scrollbar p-4 space-y-1" id="participants-list"></div>
+</aside>
+
+<script>
+const state = {
+    activeChatId: 't1',
+    teams: [
+        { id: 't1', name: 'Annonces Générales',        subtitle: 'TechCorp Workspace' },
+        { id: 't2', name: 'Équipe Développement Front', subtitle: 'Projet Apollo'       },
+        { id: 't3', name: 'Design System',              subtitle: 'Charte graphique'    },
+        { id: 't4', name: 'Marketing & Com',            subtitle: 'Campagnes 2025'      }
+    ],
+    dms: [
+        { id: 'd1', name: 'John Carter',  status: 'En ligne',   color: 'blue',    initials: 'JC', role: 'Product Manager' },
+        { id: 'd2', name: 'María García', status: 'Agentic',    color: 'emerald', initials: 'MG', role: 'Lead Developer'  },
+        { id: 'd3', name: 'Kevin Lee',    status: 'Hors ligne', color: 'zinc',    initials: 'KL', role: 'Fullstack Dev'   }
+    ],
+    messages: {
+        t1: [
+            { user:'John Carter',  text:"Bonjour à toute l'équipe ! Je tenais à vous souhaiter la bienvenue sur notre nouvel espace WithoutBorder. Nous avons mis en place cet outil pour fluidifier nos échanges internationaux et supprimer les barrières linguistiques. N'oubliez pas de renseigner votre langue native dans les paramètres de votre profil afin d'activer la traduction automatique.", time:'09:12', avatar:'JC', color:'blue',   lang:'GB', reactions:[{e:'🔥',c:2},{e:'👋',c:4}] },
+            { user:'Sarah Wilson', text:"C'est une excellente nouvelle John ! Pour le lancement de la version Beta prévu lundi prochain, est-ce que nous avons déjà finalisé le listing des testeurs externes ou faut-il que je m'en occupe d'ici la fin de journée ? J'ai déjà une liste de 15 contacts issus de notre programme early-adopters que je peux mobiliser rapidement.", time:'10:45', avatar:'SW', color:'purple', lang:'US' },
+            { user:'Sophie Martin',text:"De mon côté, je suis en pleine phase de polissage des interfaces de paiement. Je devrais pouvoir soumettre ma Pull Request d'ici ce soir. Tout sera prêt pour la revue de code de demain matin. J'ai également ajouté les états d'erreur et de succès manquants sur les formulaires de facturation, ne vous inquiétez pas !", time:'11:12', avatar:'SM', color:'orange', lang:'FR', reactions:[{e:'❤️',c:5},{e:'✅',c:3}] }
+        ],
+        t2: [
+            { user:'María García', text:"Le composant de navigation que j'ai partagé hier sur le repo de staging est désormais totalement réactif. J'aimerais que vous testiez la fluidité des animations, notamment sur les navigateurs mobiles d'anciennes générations. Le code est documenté et des stories Storybook sont disponibles pour chaque variante.", time:'14:20', avatar:'MG', color:'emerald', lang:'ES', reactions:[{e:'🚀',c:1}] },
+            { user:'John Carter',  text:"Beau boulot María. Je vais libérer un créneau dans mon agenda cet après-midi pour tester ça en profondeur sur iOS Safari et Chrome Android. Si tout est correct, on pourra l'intégrer au master dès demain matin et planifier la démo client pour jeudi.", time:'14:25', avatar:'JC', color:'blue',    lang:'GB' },
+            { user:'Sophie Martin',text:"J'ai identifié une régression dans le module de gestion des tokens d'authentification sur Safari 16. Le problème semble lié à une incompatibilité avec la nouvelle politique SameSite des cookies. Je vais ouvrir un ticket Jira avec les étapes de reproduction et prioriser le correctif pour demain matin avant le standup.", time:'15:02', avatar:'SM', color:'orange',  lang:'FR', reactions:[{e:'🔍',c:2}] },
+            { user:'Kevin Lee',    text:"Rapport de tests inter-navigateurs : Chrome 120 ✓, Firefox 121 ✓, Safari 16 → bug tokens confirmé (Sophie s'en occupe), Edge 120 ✓. Sur mobile, j'ai noté un décalage de 3px sur l'alignement vertical des icônes sous Android 12. Rien de bloquant pour le lancement, mais j'ouvre un ticket P3 pour le corriger la semaine prochaine.", time:'15:48', avatar:'KL', color:'zinc',    lang:'KR' },
+            { user:'María García', text:"Merci Kevin pour ce rapport complet. Pour le bug Safari, j'ai une piste : il faudra migrer vers les headers d'autorisation Bearer plutôt que les cookies pour ce module spécifique. Je prépare un POC ce soir et je partage le lien au repo demain matin. Le ticket Android est assigné, on le traite en sprint 14.", time:'16:10', avatar:'MG', color:'emerald', lang:'ES', reactions:[{e:'👍',c:3}] }
+        ],
+        t3: [
+            { user:'Sophie Martin',text:"J'ai finalisé la première version de notre système de design tokens. Vous trouverez dans Figma les nouvelles variables pour les couleurs, la typographie et les espacements. Toutes les couleurs sont déclinées en mode sombre et clair avec des ratios de contraste conformes aux normes WCAG 2.1 AA. Le lien de review est dans le ticket DS-42.", time:'10:05', avatar:'SM', color:'orange',  lang:'FR', reactions:[{e:'🎨',c:3},{e:'❤️',c:2}] },
+            { user:'María García', text:"Super boulot Sophie ! J'ai commencé à intégrer les tokens dans la codebase via des variables CSS custom properties. Pour les animations, je propose d'ajouter deux variables : --transition-fast à 150ms et --transition-smooth à 250ms, pour standardiser les durées à travers toute l'application. Est-ce que l'équipe valide ces valeurs avant que je les merge ?", time:'10:32', avatar:'MG', color:'emerald', lang:'ES', reactions:[{e:'✅',c:4}] },
+            { user:'John Carter',  text:"Je valide la proposition de María, les durées sont cohérentes avec nos benchmarks UX. Concernant les icônes, j'ai fait une revue avec l'équipe produit et nous recommandons d'adopter Phosphor Icons comme librairie principale. Elle est plus fournie que Heroicons et sa licence MIT est compatible avec notre contexte commercial. On peut migrer progressivement.", time:'11:15', avatar:'JC', color:'blue',    lang:'GB', reactions:[{e:'🔥',c:2}] }
+        ],
+        t4: [
+            { user:'Sarah Wilson', text:"Bonne nouvelle pour la campagne Q2 : les résultats des tests A/B sur nos landing pages montrent que la variante avec un témoignage client en haut de page génère 34 % de conversions supplémentaires. Je recommande de déployer cette version sur l'ensemble de nos marchés actifs dès lundi prochain. Le rapport complet est dans Notion.", time:'09:30', avatar:'SW', color:'purple',  lang:'US', reactions:[{e:'📈',c:5},{e:'🔥',c:3}] },
+            { user:'John Carter',  text:"Excellente performance Sarah, +34 % c'est au-dessus de nos objectifs initiaux. Pour capitaliser sur ces chiffres auprès des équipes commerciales, pouvez-vous préparer un deck synthétique résumant les KPIs du trimestre ? Il nous faut quelque chose de visuel et percutant pour le board meeting du 15. On peut allouer deux jours dédiés si nécessaire.", time:'09:47', avatar:'JC', color:'blue',    lang:'GB' },
+            { user:'Kevin Lee',    text:"Pour information, j'ai finalisé l'intégration du pixel de tracking sur toutes les nouvelles pages produit lancées ce trimestre. Le flux de données vers notre CRM HubSpot est maintenant pleinement opérationnel. Vous devriez voir les premières données consolidées dans le dashboard Analytics d'ici 24 heures. Signalez-moi toute anomalie.", time:'10:15', avatar:'KL', color:'zinc',    lang:'KR', reactions:[{e:'🙌',c:2}] },
+            { user:'Sophie Martin',text:"Concernant le calendrier éditorial du mois prochain, j'ai préparé une proposition de 12 publications réparties sur 3 semaines actives. J'ai favorisé du contenu éducatif à 60 % et des cas clients à 40 % pour renforcer notre positionnement expert sur le marché de la collaboration internationale. Le document est dans la section Ressources Partagées.", time:'11:00', avatar:'SM', color:'orange',  lang:'FR', reactions:[{e:'📅',c:1}] }
+        ],
+        d1: [
+            { user:'John Carter',  text:"Salut Sophie, est-ce que tu as quelques minutes pour discuter des derniers ajustements du design ? J'ai reçu des retours client assez précis sur la taille des boutons de validation sur mobile. Certains utilisateurs sur iPhone SE trouvent la zone de tap trop petite et génèrent des erreurs de clic fréquentes.", time:'14:10', avatar:'JC', color:'blue',   lang:'GB' },
+            { user:'Sophie Martin',text:"Salut John ! Oui bien sûr, je suis d'accord avec ce retour. Sur les écrans 5 pouces le padding actuel est insuffisant. Je vais augmenter la zone tactile à 48×48 px minimum (recommandation Material Design), agrandir la police à 15px et revoir les marges internes. Je pousse le patch sur la branche fix/button-touch-targets d'ici une heure.", time:'14:15', avatar:'SM', color:'orange', lang:'FR', reactions:[{e:'🙏',c:1}] }
+        ],
+        d2: [
+            { user:'María García', text:"Bonjour Sophie ! Mode Agentic activé. J'ai analysé vos 14 derniers commits sur la branche feature/i18n et identifié plusieurs zones d'amélioration dans la documentation de l'API de traduction. Le nouveau endpoint /detect-language introduit la semaine dernière n'est pas encore couvert. Je peux rédiger les sections manquantes du README si vous le souhaitez.", time:'08:00', avatar:'MG', color:'emerald', lang:'ES', isAgentic:true },
+            { user:'Sophie Martin',text:"Parfait, c'est exactement ce dont j'avais besoin ! Peux-tu me résumer les changements structurants sur l'API de traduction depuis le sprint 11 ? Je veux aussi comprendre pourquoi le endpoint /detect-language retourne désormais un score de confiance alors qu'avant il renvoyait juste un code langue. C'est un breaking change ?", time:'08:05', avatar:'SM', color:'orange',  lang:'FR' }
+        ],
+        d3: [
+            { user:'Kevin Lee', text:"Hey Sophie, j'ai enfin isolé la cause du bug sur les z-index de la modale de profil. C'était un conflit de stacking context avec le header en position fixed et l'élément parent qui avait un transform CSS non intentionnel. Le correctif est sur la branche bugfix/profile-modal, peux-tu valider en recette avant que je fasse la PR ?", time:'Hier', avatar:'KL', color:'zinc', lang:'KR', reactions:[{e:'🐛',c:1}] }
+        ]
+    },
+    participants: [
+        { name:'Sophie Martin', initials:'SM', color:'orange',  status:'online',  role:'Designer UI/UX'  },
+        { name:'John Carter',   initials:'JC', color:'blue',    status:'online',  role:'Product Manager' },
+        { name:'María García',  initials:'MG', color:'emerald', status:'agentic', role:'Lead Developer'  },
+        { name:'Kevin Lee',     initials:'KL', color:'zinc',    status:'offline', role:'Fullstack Dev'   },
+        { name:'Sarah Wilson',  initials:'SW', color:'purple',  status:'online',  role:'Marketing Lead'  }
+    ]
+};
+
+// DOM refs
+const themeBtn     = document.getElementById('theme-toggle');
+const html         = document.documentElement;
+const teamNav      = document.getElementById('nav-teams');
+const dmNav        = document.getElementById('nav-dms');
+const chatMessages = document.getElementById('chat-messages');
+const chatInput    = document.getElementById('chat-input');
+const sidebarRight = document.getElementById('sidebar-right');
+const headerIcon   = document.getElementById('header-icon');
+const sendBtn      = document.getElementById('send-btn');
+
+// Thème
+themeBtn.addEventListener('click', () => html.classList.toggle('dark'));
+
+// Navigation
+function renderNav() {
+    teamNav.innerHTML = state.teams.map((t,i) => {
+        const active    = state.activeChatId === t.id;
+        const msgCount  = (state.messages[t.id]||[]).length;
+        return `<li><button onclick="setActiveChat('${t.id}')"
+            class="w-full flex items-center justify-between px-4 py-2 text-xs font-medium transition-ui ${active?'nav-item-active':'text-zinc-500 hover:bg-zinc-200 dark:hover:bg-zinc-800 hover:text-zinc-900 dark:hover:text-zinc-200'}">
+            <div class="flex items-center gap-3 truncate">
+                <span class="opacity-40 font-bold text-[10px] w-4 text-right flex-shrink-0">#${i+1}</span>
+                <span class="truncate">${t.name}</span>
+            </div>
+            ${msgCount?`<span class="bg-brand-orange text-white text-[9px] px-1.5 py-0.5 rounded-full font-bold shadow-sm min-w-[18px] text-center flex-shrink-0">${msgCount}</span>`:''}
+        </button></li>`;
+    }).join('');
+
+    dmNav.innerHTML = state.dms.map(d => {
+        const active    = state.activeChatId === d.id;
+        const agentic   = d.status === 'Agentic';
+        const dot       = d.status==='En ligne' ? 'bg-green-500' : agentic ? 'bg-brand-orange' : 'bg-zinc-400';
+        const sub       = agentic
+            ? `<span class="text-[8px] px-1 py-0.5 bg-brand-orange/20 text-brand-orange rounded font-bold uppercase tracking-tight">${d.status}</span>`
+            : `<span class="text-[9px] opacity-60 font-medium">${d.role}</span>`;
+        return `<li><button onclick="setActiveChat('${d.id}')"
+            class="w-full flex items-center gap-3 px-4 py-2.5 text-xs font-medium transition-ui ${active?'nav-item-active':'text-zinc-500 hover:bg-zinc-200 dark:hover:bg-zinc-800 hover:text-zinc-900 dark:hover:text-zinc-200'}">
+            <div class="relative flex-shrink-0">
+                <div class="w-8 h-8 rounded-lg bg-${d.color}-500/10 flex items-center justify-center text-[10px] font-bold text-${d.color}-500 border border-${d.color}-500/30">${d.initials}</div>
+                <div class="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 dark:border-brand-darkSidebar border-white ${dot}"></div>
+            </div>
+            <div class="flex flex-col items-start min-w-0 flex-1">
+                <span class="${active?'text-brand-orange':'dark:text-zinc-200 text-zinc-800'} font-bold text-[11px] truncate w-full text-left">${d.name}</span>
+                ${sub}
+            </div>
+        </button></li>`;
+    }).join('');
+}
+
+// Messages — ordre métadonnées : Nom · Horodatage · Langue · Traduction
+function renderMessages() {
+    const msgs = state.messages[state.activeChatId]||[];
+    chatMessages.innerHTML = msgs.map(m => {
+        const tr = m.lang && m.lang!=='FR';
+        return `
+        <div class="flex gap-4 group">
+            <div class="w-9 h-9 rounded-xl bg-${m.color||'orange'}-500/10 flex items-center justify-center text-xs font-bold text-${m.color||'orange'}-500 flex-shrink-0 shadow-sm border border-${m.color||'orange'}-500/10">${m.avatar}</div>
+            <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2 mb-1.5 flex-wrap">
+                    <span class="text-xs font-bold dark:text-zinc-100 text-zinc-900">${m.user}</span>
+                    <span class="text-[10px] text-zinc-400 font-medium">${m.time}</span>
+                    <span class="text-[9px] px-1.5 py-0.5 bg-zinc-100 dark:bg-white/10 rounded font-bold text-zinc-500 dark:text-zinc-400 border dark:border-white/5 border-zinc-200">${m.lang||'FR'}</span>
+                    ${tr?`<span class="translate-label text-[9px] flex items-center text-brand-orange font-bold px-1.5 py-0.5 rounded-full bg-brand-orange/10">traduit</span>`:''}
+                    ${m.isAgentic?`<span class="text-[8px] px-1.5 py-0.5 bg-brand-orange/20 text-brand-orange rounded-full font-bold uppercase tracking-tighter">Agentic</span>`:''}
+                </div>
+                <div class="${m.isAgentic?'bg-brand-orange text-white shadow-lg shadow-orange-500/20':'dark:bg-brand-darkPanel bg-white border dark:border-brand-darkBorder border-zinc-200'} p-3.5 rounded-2xl rounded-tl-sm text-sm block shadow-sm leading-relaxed">
+                    ${m.text}
+                </div>
+                ${m.reactions?`<div class="flex gap-1.5 mt-2 flex-wrap">${m.reactions.map(r=>`<div class="reaction-pill"><span>${r.e}</span><span>${r.c}</span></div>`).join('')}</div>`:''}
+            </div>
+        </div>`;
+    }).join('');
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+// Changer de canal
+function setActiveChat(id) {
+    state.activeChatId = id;
+    let info = state.teams.find(t=>t.id===id);
+    let isDM = false;
+    if (!info) { info = state.dms.find(d=>d.id===id); isDM=true; }
+    document.getElementById('chat-title').innerText    = info.name;
+    document.getElementById('chat-subtitle').innerText = isDM ? info.role : info.subtitle;
+    headerIcon.innerHTML = isDM
+        ? `<div class="w-5 h-5 flex items-center justify-center font-bold text-[10px] text-brand-orange">${info.initials}</div>`
+        : `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>`;
+    renderNav(); renderMessages();
+}
+
+// Envoi
+function handleSend() {
+    const text = chatInput.value.trim();
+    if (!text) return;
+    const now = new Date();
+    const t = `${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}`;
+    if (!state.messages[state.activeChatId]) state.messages[state.activeChatId]=[];
+    state.messages[state.activeChatId].push({user:'Sophie Martin',text,time:t,avatar:'SM',color:'orange',lang:'FR'});
+    chatInput.value='';
+    updateSendBtn();
+    renderNav(); renderMessages();
+}
+
+// Activation du bouton envoi
+function updateSendBtn() {
+    sendBtn.classList.toggle('active', chatInput.value.trim().length>0);
+}
+chatInput.addEventListener('input', updateSendBtn);
+chatInput.addEventListener('keydown', e => { if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();handleSend();} });
+
+// Sidebar droite
+function toggleSidebarRight() {
+    sidebarRight.classList.toggle('sidebar-right-hidden');
+    sidebarRight.classList.toggle('sidebar-right-visible');
+}
+document.getElementById('toggle-sidebar-right').addEventListener('click', toggleSidebarRight);
+
+// Participants
+document.getElementById('participant-count').innerText=`(${state.participants.length})`;
+document.getElementById('participants-list').innerHTML=state.participants.map(p=>{
+    const dot = p.status==='online'?'bg-green-500':p.status==='agentic'?'bg-brand-orange':'bg-zinc-400';
+    return `<div class="flex items-center gap-3 p-2.5 rounded-xl hover:bg-zinc-50 dark:hover:bg-white/5 cursor-pointer transition-ui">
+        <div class="relative">
+            <div class="w-9 h-9 rounded-full bg-${p.color}-500/10 flex items-center justify-center text-xs font-bold text-${p.color}-500 border border-${p.color}-500/20">${p.initials}</div>
+            <div class="absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 dark:border-brand-darkSidebar border-white ${dot}"></div>
         </div>
-        <div class="flex-1 overflow-y-auto custom-scrollbar p-4 space-y-1" id="participants-list"></div>
-    </aside>
+        <div class="flex-1 min-w-0">
+            <p class="text-xs font-bold truncate dark:text-zinc-100">${p.name}</p>
+            <p class="text-[10px] text-zinc-500 font-medium">${p.role}</p>
+        </div>
+        ${p.status==='agentic'?'<span class="text-[8px] px-1.5 py-0.5 bg-brand-orange/20 text-brand-orange rounded font-bold uppercase tracking-tight">Agentic</span>':''}
+    </div>`;
+}).join('');
 
-    <script>
-        const state = {
-            activeChatId: 't1',
-
-            // Badge = nombre exact de messages dans le flux correspondant
-            teams: [
-                { id: 't1', name: 'Annonces Générales',        subtitle: 'TechCorp Workspace', badge: 3 },
-                { id: 't2', name: 'Équipe Développement Front', subtitle: 'Projet Apollo',       badge: 5 },
-                { id: 't3', name: 'Design System',              subtitle: 'Charte graphique',    badge: 3 },
-                { id: 't4', name: 'Marketing & Com',            subtitle: 'Campagnes 2025',      badge: 4 }
-            ],
-
-            dms: [
-                { id: 'd1', name: 'John Carter',  status: 'En ligne',   color: 'blue',    initials: 'JC', role: 'Product Manager' },
-                { id: 'd2', name: 'María García', status: 'Agentic',    color: 'emerald', initials: 'MG', role: 'Lead Developer'  },
-                { id: 'd3', name: 'Kevin Lee',    status: 'Hors ligne', color: 'zinc',    initials: 'KL', role: 'Fullstack Dev'   }
-            ],
-
-            messages: {
-                // ─── t1 : 3 messages → badge 3 ────────────────────────────────────────
-                t1: [
-                    {
-                        user: 'John Carter',
-                        text: "Bonjour à toute l'équipe ! Je tenais à vous souhaiter la bienvenue sur notre nouvel espace WithoutBorder. Nous avons mis en place cet outil pour fluidifier nos échanges internationaux et supprimer les barrières linguistiques. N'oubliez pas de renseigner votre langue native dans les paramètres de votre profil utilisateur afin d'activer la traduction automatique.",
-                        time: '09:12', avatar: 'JC', color: 'blue', lang: 'GB',
-                        reactions: [{ e: '🔥', c: 2 }, { e: '👋', c: 4 }]
-                    },
-                    {
-                        user: 'Sarah Wilson',
-                        text: "C'est une excellente nouvelle John ! Pour le lancement de la version Beta prévu lundi prochain, est-ce que nous avons déjà finalisé le listing des testeurs externes ou faut-il que je m'en occupe d'ici la fin de journée ? J'ai déjà une liste de 15 contacts issus de notre programme early-adopters que je peux mobiliser rapidement.",
-                        time: '10:45', avatar: 'SW', color: 'purple', lang: 'US'
-                    },
-                    {
-                        user: 'Sophie Martin',
-                        text: "De mon côté, je suis en pleine phase de polissage des interfaces de paiement. Je devrais pouvoir soumettre ma Pull Request d'ici ce soir. Tout sera prêt pour la revue de code de demain matin. J'ai également ajouté les états d'erreur et de succès manquants sur les formulaires de facturation, ne vous inquiétez pas !",
-                        time: '11:12', avatar: 'SM', color: 'orange', lang: 'FR',
-                        reactions: [{ e: '❤️', c: 5 }, { e: '✅', c: 3 }]
-                    }
-                ],
-
-                // ─── t2 : 5 messages → badge 5 ────────────────────────────────────────
-                t2: [
-                    {
-                        user: 'María García',
-                        text: "Le composant de navigation que j'ai partagé hier sur le repo de staging est désormais totalement réactif. J'aimerais que vous testiez la fluidité des animations, notamment sur les navigateurs mobiles d'anciennes générations. Le code est documenté et des stories Storybook sont disponibles pour chaque variante.",
-                        time: '14:20', avatar: 'MG', color: 'emerald', lang: 'ES',
-                        reactions: [{ e: '🚀', c: 1 }]
-                    },
-                    {
-                        user: 'John Carter',
-                        text: "Beau boulot María. Je vais libérer un créneau dans mon agenda cet après-midi pour tester ça en profondeur sur iOS Safari et Chrome Android. Si tout est correct, on pourra l'intégrer au master dès demain matin et planifier la démo client pour jeudi.",
-                        time: '14:25', avatar: 'JC', color: 'blue', lang: 'GB'
-                    },
-                    {
-                        user: 'Sophie Martin',
-                        text: "J'ai identifié une régression dans le module de gestion des tokens d'authentification sur Safari 16. Le problème semble lié à une incompatibilité avec la nouvelle politique SameSite des cookies. Je vais ouvrir un ticket Jira avec les étapes de reproduction et prioriser le correctif pour demain matin avant le standup.",
-                        time: '15:02', avatar: 'SM', color: 'orange', lang: 'FR',
-                        reactions: [{ e: '🔍', c: 2 }]
-                    },
-                    {
-                        user: 'Kevin Lee',
-                        text: "Rapport de tests inter-navigateurs : Chrome 120 ✓, Firefox 121 ✓, Safari 16 → bug tokens confirmé (Sophie s'en occupe), Edge 120 ✓. Sur mobile, j'ai noté un décalage de 3px sur l'alignement vertical des icônes sous Android 12. Rien de bloquant pour le lancement, mais j'ouvre un ticket P3 pour le corriger la semaine prochaine.",
-                        time: '15:48', avatar: 'KL', color: 'zinc', lang: 'KR'
-                    },
-                    {
-                        user: 'María García',
-                        text: "Merci Kevin pour ce rapport complet. Pour le bug Safari, j'ai une piste : il faudra migrer vers les headers d'autorisation Bearer plutôt que les cookies pour ce module spécifique. Je prépare un POC ce soir et je partage le lien au repo demain matin. Le ticket Android est assigné, on le traite en sprint 14.",
-                        time: '16:10', avatar: 'MG', color: 'emerald', lang: 'ES',
-                        reactions: [{ e: '👍', c: 3 }]
-                    }
-                ],
-
-                // ─── t3 : 3 messages → badge 3 ────────────────────────────────────────
-                t3: [
-                    {
-                        user: 'Sophie Martin',
-                        text: "J'ai finalisé la première version de notre système de design tokens. Vous trouverez dans Figma les nouvelles variables pour les couleurs, la typographie et les espacements. Toutes les couleurs sont déclinées en mode sombre et clair avec des ratios de contraste conformes aux normes WCAG 2.1 AA. Le lien de review est dans le ticket DS-42.",
-                        time: '10:05', avatar: 'SM', color: 'orange', lang: 'FR',
-                        reactions: [{ e: '🎨', c: 3 }, { e: '❤️', c: 2 }]
-                    },
-                    {
-                        user: 'María García',
-                        text: "Super boulot Sophie ! J'ai commencé à intégrer les tokens dans la codebase via des variables CSS custom properties. Pour les animations, je propose d'ajouter deux variables : --transition-fast à 150ms et --transition-smooth à 250ms, pour standardiser les durées à travers toute l'application. Est-ce que l'équipe valide ces valeurs avant que je les merge ?",
-                        time: '10:32', avatar: 'MG', color: 'emerald', lang: 'ES',
-                        reactions: [{ e: '✅', c: 4 }]
-                    },
-                    {
-                        user: 'John Carter',
-                        text: "Je valide la proposition de María, les durées sont cohérentes avec nos benchmarks UX. Concernant les icônes, j'ai fait une revue avec l'équipe produit et nous recommandons d'adopter Phosphor Icons comme librairie principale. Elle est plus fournie que Heroicons et sa licence MIT est compatible avec notre contexte commercial. On peut migrer progressivement.",
-                        time: '11:15', avatar: 'JC', color: 'blue', lang: 'GB',
-                        reactions: [{ e: '🔥', c: 2 }]
-                    }
-                ],
-
-                // ─── t4 : 4 messages → badge 4 ────────────────────────────────────────
-                t4: [
-                    {
-                        user: 'Sarah Wilson',
-                        text: "Bonne nouvelle pour la campagne Q2 : les résultats des tests A/B sur nos landing pages montrent que la variante avec un témoignage client en haut de page génère 34 % de conversions supplémentaires. Je recommande de déployer cette version sur l'ensemble de nos marchés actifs dès lundi prochain. Le rapport complet est dans Notion.",
-                        time: '09:30', avatar: 'SW', color: 'purple', lang: 'US',
-                        reactions: [{ e: '📈', c: 5 }, { e: '🔥', c: 3 }]
-                    },
-                    {
-                        user: 'John Carter',
-                        text: "Excellente performance Sarah, +34 % c'est au-dessus de nos objectifs initiaux. Pour capitaliser sur ces chiffres auprès des équipes commerciales, pouvez-vous préparer un deck synthétique résumant les KPIs du trimestre ? Il nous faut quelque chose de visuel et percutant pour le board meeting du 15. On peut allouer deux jours dédiés si nécessaire.",
-                        time: '09:47', avatar: 'JC', color: 'blue', lang: 'GB'
-                    },
-                    {
-                        user: 'Kevin Lee',
-                        text: "Pour information, j'ai finalisé l'intégration du pixel de tracking sur toutes les nouvelles pages produit lancées ce trimestre. Le flux de données vers notre CRM HubSpot est maintenant pleinement opérationnel. Vous devriez voir les premières données consolidées dans le dashboard Analytics d'ici 24 heures. Signalez-moi toute anomalie.",
-                        time: '10:15', avatar: 'KL', color: 'zinc', lang: 'KR',
-                        reactions: [{ e: '🙌', c: 2 }]
-                    },
-                    {
-                        user: 'Sophie Martin',
-                        text: "Concernant le calendrier éditorial du mois prochain, j'ai préparé une proposition de 12 publications réparties sur 3 semaines actives. J'ai favorisé du contenu éducatif à 60 % et des cas clients à 40 % pour renforcer notre positionnement expert sur le marché de la collaboration internationale. Le document est disponible dans la section Ressources Partagées.",
-                        time: '11:00', avatar: 'SM', color: 'orange', lang: 'FR',
-                        reactions: [{ e: '📅', c: 1 }]
-                    }
-                ],
-
-                // ─── d1 : échange Sophie / John ───────────────────────────────────────
-                d1: [
-                    {
-                        user: 'John Carter',
-                        text: "Salut Sophie, est-ce que tu as quelques minutes pour discuter des derniers ajustements du design ? J'ai reçu des retours client assez précis sur la taille des boutons de validation sur mobile. Certains utilisateurs sur iPhone SE trouvent la zone de tap trop petite et génèrent des erreurs de clic fréquentes.",
-                        time: '14:10', avatar: 'JC', color: 'blue', lang: 'GB'
-                    },
-                    {
-                        user: 'Sophie Martin',
-                        text: "Salut John ! Oui bien sûr, je suis d'accord avec ce retour. Sur les écrans 5 pouces le padding actuel est insuffisant. Je vais augmenter la zone tactile à 48×48 px minimum (recommandation Material Design), agrandir la police à 15px et revoir les marges internes. Je pousse le patch sur la branche fix/button-touch-targets d'ici une heure.",
-                        time: '14:15', avatar: 'SM', color: 'orange', lang: 'FR',
-                        reactions: [{ e: '🙏', c: 1 }]
-                    }
-                ],
-
-                // ─── d2 : échange Agentic ─────────────────────────────────────────────
-                d2: [
-                    {
-                        user: 'María García',
-                        text: "Bonjour Sophie ! Mode Agentic activé. J'ai analysé vos 14 derniers commits sur la branche feature/i18n et identifié plusieurs zones d'amélioration dans la documentation de l'API de traduction. Le nouveau endpoint /detect-language introduit la semaine dernière n'est pas encore couvert. Je peux rédiger les sections manquantes du README si vous le souhaitez.",
-                        time: '08:00', avatar: 'MG', color: 'emerald', lang: 'ES',
-                        isAgentic: true
-                    },
-                    {
-                        user: 'Sophie Martin',
-                        text: "Parfait, c'est exactement ce dont j'avais besoin ! Peux-tu me résumer les changements structurants sur l'API de traduction depuis le sprint 11 ? Je veux aussi comprendre pourquoi le endpoint /detect-language retourne un score de confiance maintenant alors qu'avant il renvoyait juste un code langue. C'est un breaking change ?",
-                        time: '08:05', avatar: 'SM', color: 'orange', lang: 'FR'
-                    }
-                ],
-
-                // ─── d3 : échange Kevin ───────────────────────────────────────────────
-                d3: [
-                    {
-                        user: 'Kevin Lee',
-                        text: "Hey Sophie, j'ai enfin isolé la cause du bug sur les z-index de la modale de profil. C'était un conflit de stacking context avec le header en position fixed et l'élément parent qui avait un transform CSS non intentionnel. Le correctif est sur la branche bugfix/profile-modal, peux-tu valider en recette avant que je fasse la PR ?",
-                        time: 'Hier', avatar: 'KL', color: 'zinc', lang: 'KR',
-                        reactions: [{ e: '🐛', c: 1 }]
-                    }
-                ]
-            },
-
-            participants: [
-                { name: 'Sophie Martin', initials: 'SM', color: 'orange',  status: 'online',   role: 'Designer UI/UX' },
-                { name: 'John Carter',   initials: 'JC', color: 'blue',    status: 'online',   role: 'Product Manager' },
-                { name: 'María García',  initials: 'MG', color: 'emerald', status: 'agentic',  role: 'Lead Developer' },
-                { name: 'Kevin Lee',     initials: 'KL', color: 'zinc',    status: 'offline',  role: 'Fullstack Dev' },
-                { name: 'Sarah Wilson',  initials: 'SW', color: 'purple',  status: 'online',   role: 'Marketing Lead' }
-            ]
-        };
-
-        // ─── Refs ──────────────────────────────────────────────────────────────────
-        const themeBtn     = document.getElementById('theme-toggle');
-        const html         = document.documentElement;
-        const teamNav      = document.getElementById('nav-teams');
-        const dmNav        = document.getElementById('nav-dms');
-        const chatMessages = document.getElementById('chat-messages');
-        const chatInput    = document.getElementById('chat-input');
-        const sidebarRight = document.getElementById('sidebar-right');
-        const headerIcon   = document.getElementById('header-icon');
-
-        // ─── Thème : icône soleil toujours visible, bascule dark/light ────────────
-        themeBtn.addEventListener('click', () => html.classList.toggle('dark'));
-
-        // ─── Rendu de la navigation ────────────────────────────────────────────────
-        function renderNav() {
-            // Équipes — prefixe # et numéro d'ordre
-            teamNav.innerHTML = state.teams.map((t, i) => {
-                const isActive = state.activeChatId === t.id;
-                // Badge doit correspondre au nombre de messages dans le flux
-                const msgCount = (state.messages[t.id] || []).length;
-                return `
-                <li>
-                    <button onclick="setActiveChat('${t.id}')" class="w-full flex items-center justify-between px-4 py-2 text-xs font-medium transition-ui group ${isActive ? 'nav-item-active' : 'text-zinc-500 hover:bg-zinc-200 dark:hover:bg-zinc-800 hover:text-zinc-900 dark:hover:text-zinc-200'}">
-                        <div class="flex items-center gap-3 truncate">
-                            <span class="opacity-40 font-bold text-[10px] w-4 text-right flex-shrink-0">#${i + 1}</span>
-                            <span class="truncate">${t.name}</span>
-                        </div>
-                        ${msgCount > 0 ? `<span class="bg-brand-orange text-white text-[9px] px-1.5 py-0.5 rounded-full font-bold shadow-sm min-w-[18px] text-center flex-shrink-0">${msgCount}</span>` : ''}
-                    </button>
-                </li>`;
-            }).join('');
-
-            // Binômes — avatar coloré + indicateur de statut + rôle sous le nom
-            dmNav.innerHTML = state.dms.map(d => {
-                const isActive = state.activeChatId === d.id;
-                const isAgentic = d.status === 'Agentic';
-                const dotColor  = d.status === 'En ligne' ? 'bg-green-500'
-                                : isAgentic              ? 'bg-brand-orange'
-                                :                          'bg-zinc-400';
-                const statusLabel = isAgentic
-                    ? `<span class="text-[8px] px-1 py-0.5 bg-brand-orange/20 text-brand-orange rounded font-bold uppercase tracking-tight">${d.status}</span>`
-                    : `<span class="text-[9px] opacity-60 font-medium">${d.role}</span>`;
-                return `
-                <li>
-                    <button onclick="setActiveChat('${d.id}')" class="w-full flex items-center gap-3 px-4 py-2.5 text-xs font-medium transition-ui group ${isActive ? 'nav-item-active' : 'text-zinc-500 hover:bg-zinc-200 dark:hover:bg-zinc-800 hover:text-zinc-900 dark:hover:text-zinc-200'}">
-                        <div class="relative flex-shrink-0">
-                            <div class="w-8 h-8 rounded-lg bg-${d.color}-500/10 flex items-center justify-center text-[10px] font-bold text-${d.color}-500 border border-${d.color}-500/30">${d.initials}</div>
-                            <div class="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 dark:border-brand-darkSidebar border-white ${dotColor}"></div>
-                        </div>
-                        <div class="flex flex-col items-start min-w-0 flex-1">
-                            <span class="${isActive ? 'text-brand-orange' : 'dark:text-zinc-200 text-zinc-800'} font-bold text-[11px] truncate w-full text-left">${d.name}</span>
-                            ${statusLabel}
-                        </div>
-                    </button>
-                </li>`;
-            }).join('');
-        }
-
-        // ─── Rendu des messages ────────────────────────────────────────────────────
-        // Ordre strict des métadonnées : Nom · Horodatage · Badge langue · Label traduction
-        function renderMessages() {
-            const msgs = state.messages[state.activeChatId] || [];
-            chatMessages.innerHTML = msgs.map(m => {
-                const needsTranslation = m.lang && m.lang !== 'FR';
-                return `
-                <div class="flex gap-4 group">
-                    <div class="w-9 h-9 rounded-xl bg-${m.color || 'orange'}-500/10 flex items-center justify-center text-xs font-bold text-${m.color || 'orange'}-500 flex-shrink-0 shadow-sm border border-${m.color || 'orange'}-500/10">
-                        ${m.avatar}
-                    </div>
-                    <div class="flex-1 min-w-0">
-                        <!-- Métadonnées : ordre strict nom → horodatage → langue → traduction -->
-                        <div class="flex items-center gap-2 mb-1.5 flex-wrap">
-                            <span class="text-xs font-bold dark:text-zinc-100 text-zinc-900">${m.user}</span>
-                            <span class="text-[10px] text-zinc-400 font-medium">${m.time}</span>
-                            <span class="text-[9px] px-1.5 py-0.5 bg-zinc-100 dark:bg-white/10 rounded font-bold text-zinc-500 dark:text-zinc-400 border dark:border-white/5 border-zinc-200">${m.lang || 'FR'}</span>
-                            ${needsTranslation ? `<span class="translate-label text-[9px] flex items-center text-brand-orange font-bold px-1.5 py-0.5 rounded-full bg-brand-orange/10">traduit</span>` : ''}
-                            ${m.isAgentic ? `<span class="text-[8px] px-1.5 py-0.5 bg-brand-orange/20 text-brand-orange rounded-full font-bold uppercase tracking-tighter">Agentic</span>` : ''}
-                        </div>
-                        <div class="${m.isAgentic ? 'bg-brand-orange text-white shadow-lg shadow-orange-500/20' : 'dark:bg-brand-darkPanel bg-white border dark:border-brand-darkBorder border-zinc-200'} p-3.5 rounded-2xl rounded-tl-sm text-sm inline-block shadow-sm leading-relaxed max-w-2xl">
-                            ${m.text}
-                        </div>
-                        ${m.reactions ? `
-                            <div class="flex gap-1.5 mt-2 flex-wrap">
-                                ${m.reactions.map(r => `<div class="reaction-pill"><span>${r.e}</span><span>${r.c}</span></div>`).join('')}
-                            </div>
-                        ` : ''}
-                    </div>
-                </div>`;
-            }).join('');
-            chatMessages.scrollTop = chatMessages.scrollHeight;
-        }
-
-        // ─── Changement de canal ───────────────────────────────────────────────────
-        function setActiveChat(id) {
-            state.activeChatId = id;
-
-            let info  = state.teams.find(t => t.id === id);
-            let isDM  = false;
-            if (!info) {
-                info  = state.dms.find(d => d.id === id);
-                isDM  = true;
-            }
-
-            document.getElementById('chat-title').innerText    = info.name;
-            document.getElementById('chat-subtitle').innerText = isDM ? info.role : info.subtitle;
-
-            headerIcon.innerHTML = isDM
-                ? `<div class="w-5 h-5 flex items-center justify-center font-bold text-[10px] text-brand-orange">${info.initials}</div>`
-                : `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>`;
-
-            renderNav();
-            renderMessages();
-        }
-
-        // ─── Envoi d'un message ────────────────────────────────────────────────────
-        function handleSend() {
-            const text = chatInput.value.trim();
-            if (!text) return;
-            const now     = new Date();
-            const timeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
-
-            if (!state.messages[state.activeChatId]) state.messages[state.activeChatId] = [];
-
-            state.messages[state.activeChatId].push({
-                user:   'Sophie Martin',
-                text,
-                time:   timeStr,
-                avatar: 'SM',
-                color:  'orange',
-                lang:   'FR'
-            });
-
-            chatInput.value = '';
-            renderNav();
-            renderMessages();
-        }
-
-        // ─── Sidebar droite ────────────────────────────────────────────────────────
-        function toggleSidebarRight() {
-            sidebarRight.classList.toggle('sidebar-right-hidden');
-            sidebarRight.classList.toggle('sidebar-right-visible');
-        }
-
-        document.getElementById('toggle-sidebar-right').addEventListener('click', toggleSidebarRight);
-        chatInput.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } });
-
-        // ─── Participants ──────────────────────────────────────────────────────────
-        document.getElementById('participant-count').innerText = `(${state.participants.length})`;
-        document.getElementById('participants-list').innerHTML = state.participants.map(p => {
-            const dotColor = p.status === 'online'   ? 'bg-green-500'
-                           : p.status === 'agentic'  ? 'bg-brand-orange'
-                           :                            'bg-zinc-400';
-            return `
-            <div class="flex items-center gap-3 p-2.5 rounded-xl hover:bg-zinc-50 dark:hover:bg-white/5 cursor-pointer transition-ui group">
-                <div class="relative">
-                    <div class="w-9 h-9 rounded-full bg-${p.color}-500/10 flex items-center justify-center text-xs font-bold text-${p.color}-500 border border-${p.color}-500/20">${p.initials}</div>
-                    <div class="absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 dark:border-brand-darkSidebar border-white ${dotColor}"></div>
-                </div>
-                <div class="flex-1 min-w-0">
-                    <p class="text-xs font-bold truncate dark:text-zinc-100">${p.name}</p>
-                    <p class="text-[10px] text-zinc-500 font-medium">${p.role}</p>
-                </div>
-                ${p.status === 'agentic' ? '<span class="text-[8px] px-1.5 py-0.5 bg-brand-orange/20 text-brand-orange rounded font-bold uppercase tracking-tight">Agentic</span>' : ''}
-            </div>`;
-        }).join('');
-
-        // ─── Initialisation ────────────────────────────────────────────────────────
-        setActiveChat('t1');
-    </script>
+// Init
+setActiveChat('t1');
+</script>
 </body>
 </html>
