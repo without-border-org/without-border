@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="fr" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WithoutBorder | Workspace</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: {
+                        brand: {
+                            orange: '#F97316',
+                            orangeHover: '#EA580C',
+                            darkBg: '#0E0E11',
+                            darkSidebar: '#18181B',
+                            darkPanel: '#27272A',
+                            darkBorder: 'rgba(255, 255, 255, 0.06)',
+                            lightBg: '#FFFFFF',
+                            lightSidebar: '#F4F4F5',
+                            lightPanel: '#E4E4E7',
+                            lightBorder: 'rgba(0, 0, 0, 0.08)'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { -webkit-font-smoothing: antialiased; }
+        .custom-scrollbar::-webkit-scrollbar { width: 5px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #3F3F46; border-radius: 10px; }
+
+        .transition-ui { transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); }
+
+        .sidebar-right-hidden { transform: translateX(100%); width: 0; opacity: 0; pointer-events: none; }
+        .sidebar-right-visible { transform: translateX(0); width: 340px; opacity: 1; }
+
+        .nav-item-active { background: rgba(249, 115, 22, 0.1) !important; color: #F97316 !important; border-left: 3px solid #F97316; border-radius: 0 8px 8px 0; }
+
+        .dark .glass-header { background: rgba(14, 14, 17, 0.8); backdrop-filter: blur(12px); border-bottom: 1px solid rgba(255, 255, 255, 0.06); }
+        .light .glass-header { background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(12px); border-bottom: 1px solid rgba(0, 0, 0, 0.06); }
+
+        .reaction-pill {
+            display: flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 99px; font-size: 10px; font-weight: 700;
+            border: 1px solid rgba(255, 255, 255, 0.1); background: rgba(255, 255, 255, 0.05); cursor: pointer; transition: all 0.2s;
+        }
+        .light .reaction-pill { border: 1px solid rgba(0, 0, 0, 0.05); background: rgba(0, 0, 0, 0.02); }
+        .reaction-pill:hover { transform: scale(1.05); background: rgba(249, 115, 22, 0.1); border-color: rgba(249, 115, 22, 0.3); }
+
+        /* Icone de traduction spécifique */
+        .translate-icon::before {
+            content: "文";
+            font-size: 10px;
+            margin-right: 2px;
+        }
+    </style>
+</head>
+<body class="h-screen flex overflow-hidden transition-colors duration-300 dark:bg-brand-darkBg bg-brand-lightBg dark:text-zinc-200 text-zinc-800">
+
+    <!-- ==================== BARRE LATÉRALE GAUCHE ==================== -->
+    <aside class="w-64 flex flex-col flex-shrink-0 dark:bg-brand-darkSidebar bg-brand-lightSidebar border-r dark:border-brand-darkBorder border-brand-lightBorder z-30">
+        <div class="h-16 flex items-center px-5 border-b dark:border-brand-darkBorder border-brand-lightBorder gap-2">
+            <span class="font-bold text-sm tracking-wide dark:text-white text-zinc-900 uppercase">WithoutBorder</span>
+            <button id="theme-toggle" class="p-1.5 rounded-lg hover:bg-brand-orange/10 text-brand-orange transition-ui ml-auto">
+                <svg id="theme-icon-sun" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m12.728 0l-.707-.707M6.343 6.343l-.707-.707M12 5a7 7 0 100 14 7 7 0 000-14z"></path>
+                </svg>
+            </button>
+        </div>
+
+        <div class="px-4 py-4">
+            <div class="relative group">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-zinc-500">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                </div>
+                <input type="text" id="team-search" placeholder="Rechercher..." class="w-full dark:bg-brand-darkPanel bg-white border dark:border-brand-darkBorder border-zinc-300 rounded-lg py-2 pl-9 pr-3 text-xs focus:outline-none focus:border-brand-orange/50 transition-ui">
+            </div>
+        </div>
+
+        <nav class="flex-1 overflow-y-auto custom-scrollbar pr-2 space-y-6">
+            <div>
+                <div class="px-5 flex items-center justify-between mb-2">
+                    <span class="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Équipes</span>
+                </div>
+                <ul class="space-y-0.5" id="nav-teams"></ul>
+            </div>
+
+            <div>
+                <div class="px-5 flex items-center justify-between mb-2">
+                    <span class="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Binômes</span>
+                </div>
+                <ul class="space-y-0.5" id="nav-dms"></ul>
+            </div>
+        </nav>
+
+        <div class="p-4 border-t dark:border-brand-darkBorder border-brand-lightBorder">
+            <div class="flex items-center gap-3 p-2 rounded-xl dark:bg-brand-darkPanel bg-white border dark:border-brand-darkBorder border-zinc-200 cursor-pointer hover:opacity-80 transition-ui">
+                <img src="https://ui-avatars.com/api/?name=Sophie+Martin&background=f97316&color=fff" class="w-8 h-8 rounded-lg shadow-sm" alt="Avatar">
+                <div class="flex-1 min-w-0">
+                    <p class="text-xs font-bold truncate">Sophie Martin</p>
+                    <p class="text-[9px] text-zinc-500 font-medium">FR Français</p>
+                </div>
+                <div class="w-2 h-2 rounded-full bg-green-500"></div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- ==================== ZONE DE CHAT PRINCIPALE ==================== -->
+    <main class="flex-1 flex flex-col relative min-w-0">
+        <header class="h-16 glass-header absolute top-0 left-0 right-0 z-20 flex items-center justify-between px-6">
+            <div class="flex items-center gap-3">
+                <div id="header-icon" class="p-2 bg-orange-500/10 rounded-lg text-brand-orange transition-ui">
+                    <!-- Icone injectée par JS -->
+                </div>
+                <div>
+                    <h2 id="chat-title" class="text-sm font-bold truncate">...</h2>
+                    <p id="chat-subtitle" class="text-[10px] text-zinc-500 font-medium tracking-wide">Chargement...</p>
+                </div>
+            </div>
+
+            <button id="toggle-sidebar-right" class="flex -space-x-2.5 hover:opacity-80 transition-ui p-1.5 rounded-xl hover:bg-zinc-100 dark:hover:bg-white/5">
+                <div class="w-8 h-8 rounded-full bg-orange-500 border-2 dark:border-brand-darkBg border-white flex items-center justify-center text-[10px] text-white font-bold z-30 shadow-sm">SM</div>
+                <div class="w-8 h-8 rounded-full bg-blue-500 border-2 dark:border-brand-darkBg border-white flex items-center justify-center text-[10px] text-white font-bold z-20 shadow-sm">JC</div>
+                <div class="w-8 h-8 rounded-full bg-emerald-500 border-2 dark:border-brand-darkBg border-white flex items-center justify-center text-[10px] text-white font-bold z-10 shadow-sm">MG</div>
+                <div class="w-8 h-8 rounded-full bg-zinc-400 border-2 dark:border-brand-darkBg border-white flex items-center justify-center text-[10px] text-white font-bold z-0 shadow-sm">+2</div>
+            </button>
+        </header>
+
+        <div id="chat-messages" class="flex-1 overflow-y-auto custom-scrollbar px-6 pt-24 pb-6 space-y-6"></div>
+
+        <div class="p-4 border-t dark:border-brand-darkBorder border-brand-lightBorder dark:bg-brand-darkBg bg-brand-lightBg">
+            <div class="max-w-4xl mx-auto flex gap-3 items-end">
+                <div class="flex-1 dark:bg-brand-darkPanel bg-zinc-100 border dark:border-brand-darkBorder border-zinc-200 rounded-xl p-3 transition-ui focus-within:border-brand-orange/40">
+                    <textarea id="chat-input" rows="1" class="w-full bg-transparent text-sm focus:outline-none resize-none" placeholder="Écrire un message..."></textarea>
+                </div>
+                <button onclick="handleSend()" class="w-10 h-10 bg-brand-orange text-white rounded-xl flex items-center justify-center shadow-lg shadow-orange-500/20 hover:bg-brand-orangeHover transition-ui active:scale-95">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <!-- ==================== BARRE LATÉRALE DROITE (PARTICIPANTS) ==================== -->
+    <aside id="sidebar-right" class="sidebar-right-hidden flex flex-col flex-shrink-0 dark:bg-brand-darkSidebar bg-white border-l dark:border-brand-darkBorder border-zinc-200 transition-ui z-40">
+        <div class="h-16 flex items-center justify-between px-6 border-b dark:border-brand-darkBorder border-zinc-100">
+            <h3 class="text-sm font-bold tracking-tight">Participants <span id="participant-count" class="ml-1 text-zinc-400 font-normal"></span></h3>
+            <button onclick="toggleSidebarRight()" class="p-1 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg text-zinc-500">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+        </div>
+        <div class="flex-1 overflow-y-auto custom-scrollbar p-4 space-y-1" id="participants-list"></div>
+    </aside>
+
+    <script>
+        const state = {
+            activeChatId: 't1',
+            teams: [
+                { id: 't1', name: 'Annonces Générales', subtitle: 'TechCorp Workspace', badge: 3 },
+                { id: 't2', name: 'Équipe Développement Front', subtitle: 'Projet Apollo', badge: 12 },
+                { id: 't3', name: 'Design System', subtitle: 'Charte graphique', badge: 1 },
+                { id: 't4', name: 'Marketing & Com', subtitle: 'Campagnes 2024', badge: 5 }
+            ],
+            dms: [
+                { id: 'd1', name: 'John Carter', status: 'En ligne', color: 'blue', initials: 'JC', role: 'Product Manager' },
+                { id: 'd2', name: 'María García', status: 'Agentic IA', color: 'emerald', initials: 'MG', role: 'Lead Developer' },
+                { id: 'd3', name: 'Kevin Lee', status: 'Hors ligne', color: 'zinc', initials: 'KL', role: 'Fullstack Dev' }
+            ],
+            messages: {
+                t1: [
+                    { user: 'John Carter', text: "Bonjour à toute l'équipe ! Je tenais à vous souhaiter la bienvenue sur notre nouvel espace WithoutBorder. Nous avons mis en place cet outil pour fluidifier nos échanges internationaux. N'oubliez pas de renseigner votre langue native dans les paramètres de votre profil utilisateur.", time: '09:12', avatar: 'JC', color: 'blue', lang: 'GB', reactions: [{e: '🔥', c: 2}] },
+                    { user: 'Sarah Wilson', text: "C'est une excellente nouvelle John ! Pour le lancement de la version Beta prévu lundi prochain, est-ce que nous avons déjà finalisé le listing des testeurs externes ou faut-il que je m'en occupe d'ici la fin de journée ?", time: '10:45', avatar: 'SW', color: 'purple', lang: 'US' },
+                    { user: 'Sophie Martin', text: "De mon côté, je suis en pleine phase de polissage des interfaces de paiement. Je devrais pouvoir soumettre ma Pull Request d'ici ce soir. Tout sera prêt pour la revue de code de demain matin, ne vous inquiétez pas !", time: '11:12', avatar: 'SM', color: 'orange', lang: 'FR', reactions: [{e: '❤️', c: 5}] }
+                ],
+                t2: [
+                    { user: 'María García', text: "Le composant de navigation que j'ai partagé hier sur le repo de staging est désormais totalement réactif. J'aimerais que vous testiez la fluidité des animations, notamment sur les navigateurs mobiles d'anciennes générations.", time: '14:20', avatar: 'MG', color: 'emerald', lang: 'ES', reactions: [{e: '🚀', c: 1}] },
+                    { user: 'John Carter', text: "Beau boulot María. Je vais libérer un créneau dans mon agenda cet après-midi pour tester ça en profondeur. Si tout est correct, on pourra l'intégrer au master dès demain matin.", time: '14:25', avatar: 'JC', color: 'blue', lang: 'GB' }
+                ],
+                d1: [
+                    { user: 'John Carter', text: "Salut Sophie, est-ce que tu as une minute pour discuter des derniers ajustements du design ? J'ai quelques retours client sur la taille des boutons de validation sur mobile.", time: '14:10', avatar: 'JC', color: 'blue', lang: 'GB' },
+                    { user: 'Sophie Martin', text: "Salut John ! Oui bien sûr. Je suis d'accord, ils sont peut-être un peu petits pour les écrans de 5 pouces. Je vais augmenter le padding et la taille de la police pour améliorer l'accessibilité.", time: '14:15', avatar: 'SM', color: 'orange', lang: 'FR' }
+                ],
+                d2: [
+                    { user: 'María García', text: "System: Agentic mode activated. Hello Sophie, how can I assist you with the front-end documentation today? I have analyzed your last commits and I can help with the README.", time: '08:00', avatar: 'MG', color: 'emerald', lang: 'ES', isAgentic: true },
+                    { user: 'Sophie Martin', text: "Peux-tu me résumer les derniers changements sur l'API de traduction ? J'ai vu qu'il y avait eu une mise à jour majeure sur le endpoint de détection de langue.", time: '08:05', avatar: 'SM', color: 'orange', lang: 'FR' }
+                ],
+                d3: [
+                    { user: 'Kevin Lee', text: "Hey Sophie, j'ai enfin trouvé la cause du bug sur les z-index de la modale de profil. C'était un conflit avec le header fixe. Tu peux tester sur la branche bugfix/profile-modal ?", time: 'Hier', avatar: 'KL', color: 'zinc', lang: 'KR' }
+                ]
+            },
+            participants: [
+                { name: 'Sophie Martin', initials: 'SM', color: 'orange', status: 'online', role: 'Designer' },
+                { name: 'John Carter', initials: 'JC', color: 'blue', status: 'online', role: 'PM' },
+                { name: 'María García', initials: 'MG', color: 'emerald', status: 'agentic', role: 'Dev' },
+                { name: 'Kevin Lee', initials: 'KL', color: 'zinc', status: 'offline', role: 'Dev' },
+                { name: 'Sarah Wilson', initials: 'SW', color: 'purple', status: 'online', role: 'Marketing' }
+            ]
+        };
+
+        const themeBtn = document.getElementById('theme-toggle');
+        const html = document.documentElement;
+        const teamNav = document.getElementById('nav-teams');
+        const dmNav = document.getElementById('nav-dms');
+        const chatMessages = document.getElementById('chat-messages');
+        const chatInput = document.getElementById('chat-input');
+        const sidebarRight = document.getElementById('sidebar-right');
+        const headerIcon = document.getElementById('header-icon');
+
+        themeBtn.addEventListener('click', () => html.classList.toggle('dark'));
+
+        function renderNav() {
+            // Render Teams
+            teamNav.innerHTML = state.teams.map(t => {
+                const isActive = state.activeChatId === t.id;
+                return `
+                <li>
+                    <button onclick="setActiveChat('${t.id}')" class="w-full flex items-center justify-between px-4 py-2 text-xs font-medium transition-ui group ${isActive ? 'nav-item-active' : 'text-zinc-500 hover:bg-zinc-200 dark:hover:bg-zinc-800 hover:text-zinc-900 dark:hover:text-zinc-200'}">
+                        <div class="flex items-center gap-3 truncate">
+                            <span class="opacity-40 font-bold">#</span>
+                            <span class="truncate">${t.name}</span>
+                        </div>
+                        ${t.badge ? `<span class="bg-brand-orange text-white text-[9px] px-1.5 py-0.5 rounded-full font-bold shadow-sm min-w-[18px] text-center">${t.badge}</span>` : ''}
+                    </button>
+                </li>`;
+            }).join('');
+
+            // Render DMs
+            dmNav.innerHTML = state.dms.map(d => {
+                const isActive = state.activeChatId === d.id;
+                return `
+                <li>
+                    <button onclick="setActiveChat('${d.id}')" class="w-full flex items-center gap-3 px-4 py-2.5 text-xs font-medium transition-ui group ${isActive ? 'nav-item-active' : 'text-zinc-500 hover:bg-zinc-200 dark:hover:bg-zinc-800 hover:text-zinc-900 dark:hover:text-zinc-200'}">
+                        <div class="relative flex-shrink-0">
+                            <div class="w-8 h-8 rounded-lg bg-${d.color}-500/10 flex items-center justify-center text-[10px] font-bold text-${d.color}-500 border border-${d.color}-500/20">${d.initials}</div>
+                            <div class="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 dark:border-brand-darkSidebar border-white ${d.status === 'En ligne' ? 'bg-green-500' : (d.status === 'Agentic IA' ? 'bg-brand-orange' : 'bg-zinc-400')}"></div>
+                        </div>
+                        <div class="flex flex-col items-start min-w-0 flex-1">
+                            <span class="${isActive ? 'text-brand-orange' : 'text-zinc-800 dark:text-zinc-200'} font-bold text-[11px] truncate w-full text-left">${d.name}</span>
+                            <span class="text-[9px] opacity-60 font-medium">${d.status}</span>
+                        </div>
+                    </button>
+                </li>`;
+            }).join('');
+        }
+
+        function renderMessages() {
+            const msgs = state.messages[state.activeChatId] || [];
+            chatMessages.innerHTML = msgs.map(m => {
+                const needsTranslation = m.lang && m.lang !== 'FR';
+                return `
+                <div class="flex gap-4 group animate-in fade-in slide-in-from-bottom-2 duration-300">
+                    <div class="w-9 h-9 rounded-xl bg-${m.color || 'orange'}-500/10 flex items-center justify-center text-xs font-bold text-${m.color || 'orange'}-500 flex-shrink-0 shadow-sm border border-${m.color || 'orange'}-500/10">
+                        ${m.avatar}
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center gap-2 mb-1.5 flex-wrap">
+                            <span class="text-xs font-bold dark:text-zinc-100">${m.user}</span>
+
+                            <!-- Langue à droite du nom -->
+                            <div class="flex items-center gap-1.5">
+                                <span class="text-[9px] px-1 bg-zinc-100 dark:bg-white/10 rounded font-bold text-zinc-500 dark:text-zinc-400 border dark:border-white/5">${m.lang || 'FR'}</span>
+                                ${needsTranslation ? `
+                                    <span class="translate-icon text-[9px] flex items-center gap-0.5 text-brand-orange font-bold px-1.5 py-0.5 rounded-full bg-brand-orange/10">
+                                        traduit
+                                    </span>
+                                ` : ''}
+                            </div>
+
+                            <span class="text-[10px] text-zinc-500 font-medium ml-1 opacity-60">${m.time}</span>
+                            ${m.isAgentic ? '<span class="text-[8px] px-1.5 py-0.5 bg-brand-orange/20 text-brand-orange rounded-full font-bold uppercase tracking-tighter ml-1">Agentic</span>' : ''}
+                        </div>
+                        <div class="${m.isAgentic ? 'bg-brand-orange text-white shadow-lg shadow-orange-500/10' : 'dark:bg-brand-darkPanel bg-white border dark:border-brand-darkBorder border-zinc-200'} p-3.5 rounded-2xl rounded-tl-sm text-sm inline-block shadow-sm leading-relaxed max-w-2xl">
+                            ${m.text}
+                        </div>
+                        ${m.reactions ? `
+                            <div class="flex gap-1 mt-2">
+                                ${m.reactions.map(r => `<div class="reaction-pill"><span>${r.e}</span><span>${r.c}</span></div>`).join('')}
+                            </div>
+                        ` : ''}
+                    </div>
+                </div>`;
+            }).join('');
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function setActiveChat(id) {
+            state.activeChatId = id;
+
+            let info = state.teams.find(t => t.id === id);
+            let isDM = false;
+            if (!info) {
+                info = state.dms.find(d => d.id === id);
+                isDM = true;
+            }
+
+            document.getElementById('chat-title').innerText = info.name;
+            document.getElementById('chat-subtitle').innerText = isDM ? info.role : info.subtitle;
+
+            headerIcon.innerHTML = isDM
+                ? `<div class="w-5 h-5 flex items-center justify-center font-bold text-[10px] text-brand-orange">${info.initials}</div>`
+                : `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>`;
+
+            renderNav();
+            renderMessages();
+        }
+
+        function handleSend() {
+            const text = chatInput.value.trim();
+            if (!text) return;
+            const now = new Date();
+            const timeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+
+            if (!state.messages[state.activeChatId]) state.messages[state.activeChatId] = [];
+
+            state.messages[state.activeChatId].push({
+                user: 'Sophie Martin',
+                text,
+                time: timeStr,
+                avatar: 'SM',
+                color: 'orange',
+                lang: 'FR'
+            });
+
+            chatInput.value = '';
+            renderMessages();
+        }
+
+        function toggleSidebarRight() {
+            sidebarRight.classList.toggle('sidebar-right-hidden');
+            sidebarRight.classList.toggle('sidebar-right-visible');
+        }
+
+        document.getElementById('toggle-sidebar-right').addEventListener('click', toggleSidebarRight);
+        chatInput.addEventListener('keydown', (e) => (e.key === 'Enter' && !e.shiftKey) && (e.preventDefault(), handleSend()));
+
+        // Initialisation de l'interface
+        setActiveChat('t1');
+
+        document.getElementById('participant-count').innerText = `(${state.participants.length})`;
+        document.getElementById('participants-list').innerHTML = state.participants.map(p => `
+            <div class="flex items-center gap-3 p-2.5 rounded-xl hover:bg-zinc-50 dark:hover:bg-white/5 cursor-pointer transition-ui group">
+                <div class="relative">
+                    <div class="w-9 h-9 rounded-full bg-${p.color}-500/10 flex items-center justify-center text-xs font-bold text-${p.color}-500 border border-${p.color}-500/20">${p.initials}</div>
+                    <div class="absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 dark:border-brand-darkSidebar border-white ${p.status === 'online' ? 'bg-green-500' : (p.status === 'agentic' ? 'bg-brand-orange' : 'bg-zinc-400')}"></div>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <span class="text-xs font-bold truncate dark:text-zinc-100">${p.name}</span>
+                    <p class="text-[10px] text-zinc-500 font-medium">${p.role}</p>
+                </div>
+            </div>`).join('');
+    </script>
+</body>
+</html>
