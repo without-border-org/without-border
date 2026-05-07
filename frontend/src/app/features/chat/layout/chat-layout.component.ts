@@ -1,256 +1,334 @@
-import { Component, inject, signal, computed, OnInit } from '@angular/core';
+import {
+  Component, inject, signal, computed, OnInit, PLATFORM_ID,
+} from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterLink, RouterOutlet, Router, ActivatedRoute } from '@angular/router';
+import { RouterLink, RouterOutlet, Router } from '@angular/router';
 import { ChannelService } from '../../../core/services/channel.service';
 import { UserService } from '../../../core/services/user.service';
 import { AuthService } from '../../../core/services/auth.service';
-import { AiService } from '../../../core/services/ai.service';
-import { Channel, LANGUAGE_MAP } from '../../../core/models';
-import { CreateChannelModalComponent } from '../components/create-channel-modal.component';
-import { NotificationsPanelComponent } from '../components/notifications-panel.component';
+import { Channel, ChannelMember, LANGUAGE_MAP, getUserColor, getInitials } from '../../../core/models';
 
 @Component({
   selector: 'wb-chat-layout',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, RouterOutlet, CreateChannelModalComponent, NotificationsPanelComponent],
+  imports: [CommonModule, FormsModule, RouterLink, RouterOutlet],
   template: `
-    <div class="flex h-screen bg-surface-900 overflow-hidden">
+    <!-- Root: dark/light toggle applied on <html>, body inherits -->
+    <div class="h-screen flex overflow-hidden transition-colors duration-300
+                dark:bg-brand-darkBg bg-brand-lightBg
+                dark:text-zinc-200 text-zinc-800">
 
-      <!-- Mobile overlay -->
-      <div *ngIf="sidebarOpen() && isMobile()"
-           class="fixed inset-0 bg-black/60 z-20 lg:hidden"
-           (click)="sidebarOpen.set(false)"></div>
+      <!-- ═══════════════ SIDEBAR GAUCHE ═══════════════ -->
+      <aside class="w-64 flex flex-col flex-shrink-0
+                    dark:bg-brand-darkSidebar bg-brand-lightSidebar
+                    border-r dark:border-brand-darkBorder border-brand-lightBorder z-30">
 
-      <!-- ─── SIDEBAR ─────────────────────────────────────── -->
-      <aside class="flex-shrink-0 w-72 h-full flex flex-col
-                    bg-surface-850/95 backdrop-blur-xl border-r border-white/5
-                    fixed lg:relative z-30 transition-transform duration-300
-                    {{ sidebarOpen() || !isMobile() ? 'translate-x-0' : '-translate-x-full' }}">
-
-        <!-- Brand -->
-        <div class="flex items-center gap-3 px-5 py-5 border-b border-white/5">
-          <div class="w-9 h-9 bg-gradient-to-br from-primary-500 to-accent-pink rounded-xl flex items-center justify-center shadow-glow-primary flex-shrink-0">
-            <span class="text-lg">🌍</span>
-          </div>
-          <div class="flex-1 min-w-0">
-            <h1 class="text-base font-bold text-white leading-none">WithoutBorder</h1>
-            <p class="text-xs text-gray-500 mt-0.5 truncate">
-              {{ langInfo()?.flag }} {{ langInfo()?.name }}
-            </p>
-          </div>
-          <!-- AI Status dot -->
-          <div class="w-2 h-2 rounded-full flex-shrink-0" [class]="aiAvailable() ? 'bg-accent-green animate-pulse' : 'bg-gray-600'"
-               [title]="aiAvailable() ? 'Gemma 4 ready' : 'AI unavailable'"></div>
+        <!-- Header: Logo + thème -->
+        <div class="h-16 flex items-center px-5 gap-2
+                    border-b dark:border-brand-darkBorder border-brand-lightBorder">
+          <span class="font-bold text-sm tracking-wide dark:text-white text-zinc-900 uppercase">
+            WithoutBorder
+          </span>
+          <button (click)="toggleTheme()"
+                  class="p-1.5 rounded-lg hover:bg-brand-orange/10 text-brand-orange transition-ui ml-auto"
+                  title="Basculer le thème">
+            <!-- Lune / Soleil -->
+            <svg *ngIf="isDark()" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707
+                   m12.728 0l-.707-.707M6.343 6.343l-.707-.707M12 5a7 7 0 100 14 7 7 0 000-14z"/>
+            </svg>
+            <svg *ngIf="!isDark()" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
+            </svg>
+          </button>
         </div>
 
-        <!-- Search -->
-        <div class="px-4 py-3">
+        <!-- Recherche -->
+        <div class="px-4 py-4">
           <div class="relative">
-            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm">🔍</span>
-            <input [(ngModel)]="searchQuery" (ngModelChange)="onSearch($event)"
-              placeholder="Search channels..."
-              class="w-full bg-surface-800 border border-white/5 rounded-xl py-2 pl-9 pr-4
-                     text-sm text-white placeholder-gray-500 focus:outline-none
-                     focus:border-primary-500/50 transition-colors" />
+            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-zinc-500">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+              </svg>
+            </div>
+            <input [(ngModel)]="searchQuery"
+              type="text" placeholder="Rechercher..."
+              class="w-full dark:bg-brand-darkPanel bg-white border dark:border-brand-darkBorder
+                     border-zinc-300 rounded-lg py-2 pl-9 pr-3 text-xs
+                     focus:outline-none focus:border-brand-orange/50 transition-ui
+                     dark:text-zinc-200 text-zinc-800 dark:placeholder-zinc-600 placeholder-zinc-400"/>
           </div>
         </div>
 
-        <!-- Nav content -->
-        <nav class="flex-1 overflow-y-auto px-3 pb-3 space-y-1 scrollbar-thin">
+        <!-- Navigation -->
+        <nav class="flex-1 overflow-y-auto custom-scrollbar pr-2 space-y-6">
 
-          <!-- Teams section -->
-          <div class="mb-1">
-            <div class="flex items-center justify-between px-2 py-2">
-              <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Teams</span>
-              <button (click)="showCreateModal.set(true)"
-                class="w-5 h-5 rounded-md bg-white/5 hover:bg-primary-500/20 text-gray-400
-                       hover:text-primary-400 flex items-center justify-center transition-all text-sm"
-                title="New team">+</button>
+          <!-- ── Équipes ── -->
+          <div>
+            <div class="px-5 mb-2">
+              <span class="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Équipes</span>
             </div>
-            <a *ngFor="let ch of teamChannels()" [routerLink]="['/chat', ch.id]"
-               (click)="sidebarOpen.set(false)"
-               class="flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer transition-all duration-150 group"
-               [class]="activeChannelId() === ch.id
-                 ? 'bg-primary-500/15 text-white'
-                 : 'text-gray-400 hover:bg-white/5 hover:text-white'">
-              <div class="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 text-sm font-bold"
-                   [class]="activeChannelId() === ch.id ? 'bg-primary-500/30 text-primary-300' : 'bg-white/5 text-gray-500 group-hover:bg-white/10'">
-                {{ ch.name[0].toUpperCase() }}
-              </div>
-              <div class="flex-1 min-w-0">
-                <p class="text-sm font-medium truncate leading-none">{{ ch.name }}</p>
-                <p class="text-xs text-gray-500 mt-0.5">{{ ch.memberCount }} members</p>
-              </div>
-              <span *ngIf="ch.unreadCount" class="text-xs bg-accent-pink text-white font-bold px-1.5 py-0.5 rounded-full flex-shrink-0">
-                {{ ch.unreadCount }}
-              </span>
-            </a>
-            <p *ngIf="teamChannels().length === 0" class="text-xs text-gray-600 px-3 py-2 italic">
-              No teams yet — create one above
-            </p>
+            <ul class="space-y-0.5">
+              <li *ngFor="let ch of teamChannels(); let i = index">
+                <button (click)="navigate(ch.id)"
+                  class="w-full flex items-center justify-between px-4 py-2 text-xs font-medium transition-ui"
+                  [class]="activeChannelId() === ch.id
+                    ? 'nav-item-active'
+                    : 'text-zinc-500 hover:bg-zinc-200 dark:hover:bg-zinc-800 hover:text-zinc-900 dark:hover:text-zinc-200'">
+                  <div class="flex items-center gap-3 truncate">
+                    <span class="opacity-40 font-bold text-[10px] w-4 text-right flex-shrink-0">
+                      #{{ i + 1 }}
+                    </span>
+                    <span class="truncate">{{ ch.name }}</span>
+                  </div>
+                  <span *ngIf="ch.unreadCount"
+                    class="bg-brand-orange text-white text-[9px] px-1.5 py-0.5 rounded-full
+                           font-bold shadow-sm min-w-[18px] text-center flex-shrink-0">
+                    {{ ch.unreadCount }}
+                  </span>
+                </button>
+              </li>
+              <li *ngIf="teamChannels().length === 0"
+                  class="px-5 py-2 text-[10px] text-zinc-500 italic">
+                Aucune équipe
+              </li>
+            </ul>
           </div>
 
-          <!-- Direct Messages section -->
+          <!-- ── Binômes (DMs) ── -->
           <div>
-            <div class="flex items-center justify-between px-2 py-2">
-              <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Direct Messages</span>
-              <button (click)="showCreateDM.set(true)"
-                class="w-5 h-5 rounded-md bg-white/5 hover:bg-primary-500/20 text-gray-400 hover:text-primary-400 flex items-center justify-center transition-all text-sm"
-                title="New DM">+</button>
+            <div class="px-5 mb-2">
+              <span class="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Binômes</span>
             </div>
-            <a *ngFor="let ch of pairChannels()" [routerLink]="['/chat', ch.id]"
-               (click)="sidebarOpen.set(false)"
-               class="flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer transition-all duration-150 group"
-               [class]="activeChannelId() === ch.id
-                 ? 'bg-primary-500/15 text-white'
-                 : 'text-gray-400 hover:bg-white/5 hover:text-white'">
-              <div class="w-8 h-8 rounded-full bg-gradient-to-br from-primary-600/40 to-accent-pink/30 flex items-center justify-center flex-shrink-0 text-sm">
-                {{ ch.name[0].toUpperCase() }}
-              </div>
-              <span class="flex-1 text-sm font-medium truncate">{{ ch.name }}</span>
-              <span *ngIf="ch.unreadCount" class="text-xs bg-accent-pink text-white font-bold px-1.5 py-0.5 rounded-full">
-                {{ ch.unreadCount }}
-              </span>
-            </a>
+            <ul class="space-y-0.5">
+              <li *ngFor="let ch of pairChannels()">
+                <button (click)="navigate(ch.id)"
+                  class="w-full flex items-center gap-3 px-4 py-2.5 text-xs font-medium transition-ui"
+                  [class]="activeChannelId() === ch.id
+                    ? 'nav-item-active'
+                    : 'text-zinc-500 hover:bg-zinc-200 dark:hover:bg-zinc-800 hover:text-zinc-900 dark:hover:text-zinc-200'">
+
+                  <!-- Avatar + status dot -->
+                  <div class="relative flex-shrink-0">
+                    <div class="w-8 h-8 rounded-lg flex items-center justify-center text-[10px] font-bold"
+                         [ngClass]="dmAvatarClass(ch.id)">
+                      {{ getInitials(ch.name) }}
+                    </div>
+                    <div class="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2
+                                dark:border-brand-darkSidebar border-white"
+                         [ngClass]="dmStatusDot(ch.id)"></div>
+                  </div>
+
+                  <!-- Name + role / Agentic badge -->
+                  <div class="flex flex-col items-start min-w-0 flex-1">
+                    <span class="font-bold text-[11px] truncate w-full text-left"
+                          [class]="activeChannelId() === ch.id ? 'text-brand-orange' : 'dark:text-zinc-200 text-zinc-800'">
+                      {{ ch.name }}
+                    </span>
+                    <ng-container *ngIf="dmPartnerStatus(ch.id) === 'agentic'; else dmRole">
+                      <span class="text-[8px] px-1 py-0.5 bg-brand-orange/20 text-brand-orange
+                                   rounded font-bold uppercase tracking-tight">Agentic</span>
+                    </ng-container>
+                    <ng-template #dmRole>
+                      <span class="text-[9px] opacity-60 font-medium">{{ dmPartnerRole(ch.id) }}</span>
+                    </ng-template>
+                  </div>
+                </button>
+              </li>
+              <li *ngIf="pairChannels().length === 0"
+                  class="px-5 py-2 text-[10px] text-zinc-500 italic">
+                Aucun binôme
+              </li>
+            </ul>
           </div>
         </nav>
 
-        <!-- User footer -->
-        <div class="border-t border-white/5 p-3">
-          <div class="flex items-center gap-3 px-2 py-2 rounded-xl hover:bg-white/5 cursor-pointer transition-all group"
-               [routerLink]="['/profile']" (click)="sidebarOpen.set(false)">
-            <!-- Avatar -->
-            <div class="relative flex-shrink-0">
-              <div class="w-9 h-9 rounded-full overflow-hidden bg-gradient-to-br from-primary-500 to-accent-pink flex items-center justify-center">
-                <img *ngIf="user()?.avatarUrl" [src]="user()?.avatarUrl" class="w-full h-full object-cover" />
-                <span *ngIf="!user()?.avatarUrl" class="text-sm font-bold text-white">
-                  {{ user()?.username?.[0]?.toUpperCase() }}
-                </span>
-              </div>
-              <!-- Status dot -->
-              <div class="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-surface-850"
-                   [class]="statusColor()"></div>
-            </div>
-            <!-- Info -->
+        <!-- User profile card -->
+        <div class="p-4 border-t dark:border-brand-darkBorder border-brand-lightBorder">
+          <div [routerLink]="['/profile']"
+               class="flex items-center gap-3 p-2 rounded-xl cursor-pointer hover:opacity-80 transition-ui
+                      dark:bg-brand-darkPanel bg-white border dark:border-brand-darkBorder border-zinc-200">
+            <img [src]="userAvatarUrl()"
+                 class="w-8 h-8 rounded-lg shadow-sm" alt="Avatar">
             <div class="flex-1 min-w-0">
-              <p class="text-sm font-semibold text-white truncate leading-none">{{ user()?.username }}</p>
-              <p class="text-xs mt-0.5" [class]="statusTextColor()">{{ statusLabel() }}</p>
+              <p class="text-xs font-bold truncate dark:text-white text-zinc-900">{{ user()?.username }}</p>
+              <p class="text-[9px] text-zinc-500 font-medium">{{ langBadge() }} · {{ userRoleLabel() }}</p>
             </div>
-            <!-- Notifications bell -->
-            <button (click)="$event.stopPropagation(); showNotifs.update(v => !v)"
-              class="relative p-1.5 rounded-lg hover:bg-white/10 text-gray-400 hover:text-white transition-all">
-              🔔
-              <span *ngIf="unreadCount() > 0"
-                class="absolute -top-1 -right-1 w-4 h-4 bg-accent-pink text-white text-xs rounded-full flex items-center justify-center font-bold">
-                {{ unreadCount() > 9 ? '9+' : unreadCount() }}
-              </span>
-            </button>
-            <!-- Logout -->
-            <button (click)="$event.stopPropagation(); logout()"
-              class="p-1.5 rounded-lg hover:bg-red-500/20 text-gray-500 hover:text-red-400 transition-all"
-              title="Sign out">⏏</button>
+            <div class="w-2 h-2 rounded-full" [ngClass]="currentUserDot()"></div>
           </div>
         </div>
       </aside>
 
-      <!-- ─── MAIN CONTENT ────────────────────────────────── -->
-      <main class="flex-1 flex flex-col min-w-0 overflow-hidden">
-
-        <!-- Mobile header -->
-        <div class="flex items-center gap-3 px-4 py-3 border-b border-white/5 bg-surface-850/50 lg:hidden">
-          <button (click)="sidebarOpen.update(v => !v)"
-            class="p-2 rounded-xl hover:bg-white/10 text-gray-400 hover:text-white transition-all">
-            ☰
-          </button>
-          <div class="w-7 h-7 bg-gradient-to-br from-primary-500 to-accent-pink rounded-lg flex items-center justify-center">
-            <span class="text-sm">🌍</span>
-          </div>
-          <span class="font-semibold text-white text-sm">WithoutBorder</span>
-        </div>
-
+      <!-- ═══════════════ ZONE PRINCIPALE ═══════════════ -->
+      <main class="flex-1 flex flex-col relative min-w-0">
         <router-outlet />
       </main>
 
-      <!-- Notifications panel -->
-      <wb-notifications-panel *ngIf="showNotifs()" (close)="showNotifs.set(false)" />
-
-      <!-- Create channel modal -->
-      <wb-create-channel-modal *ngIf="showCreateModal()"
-        [type]="'team'"
-        (close)="showCreateModal.set(false)"
-        (created)="onChannelCreated($event)" />
-
-      <wb-create-channel-modal *ngIf="showCreateDM()"
-        [type]="'pair'"
-        (close)="showCreateDM.set(false)"
-        (created)="onChannelCreated($event)" />
     </div>
   `,
 })
 export class ChatLayoutComponent implements OnInit {
   private channelSvc = inject(ChannelService);
-  private userSvc = inject(UserService);
-  private authSvc = inject(AuthService);
-  private aiSvc = inject(AiService);
-  private router = inject(Router);
+  private userSvc    = inject(UserService);
+  private authSvc    = inject(AuthService);
+  private router     = inject(Router);
+  private platformId = inject(PLATFORM_ID);
 
-  sidebarOpen = signal(false);
-  showCreateModal = signal(false);
-  showCreateDM = signal(false);
-  showNotifs = signal(false);
+  // Expose helpers to template
+  getInitials = getInitials;
+
+  isDark    = signal(true);
   searchQuery = '';
-  aiAvailable = signal(false);
+  user      = this.authSvc.user;
+  channels  = this.channelSvc.channels;
 
-  user = this.authSvc.user;
-  unreadCount = this.userSvc.unreadCount;
-  channels = this.channelSvc.channels;
+  /** Map of channel ID → partner ChannelMember info (populated after loading channels). */
+  dmPartnersMap = signal<Map<string, ChannelMember>>(new Map());
 
   activeChannelId = computed(() => {
-    const url = this.router.url;
-    const match = url.match(/\/chat\/([^/]+)/);
+    const match = this.router.url.match(/\/chat\/([^/?]+)/);
     return match ? match[1] : null;
   });
 
   teamChannels = computed(() =>
-    this.channels().filter(c => c.type === 'team' && c.name.toLowerCase().includes(this.searchQuery.toLowerCase()))
+    this.channels().filter(c =>
+      c.type === 'team' &&
+      !c.isArchived &&
+      c.name.toLowerCase().includes(this.searchQuery.toLowerCase())
+    )
   );
+
   pairChannels = computed(() =>
-    this.channels().filter(c => c.type === 'pair' && c.name.toLowerCase().includes(this.searchQuery.toLowerCase()))
+    this.channels().filter(c =>
+      c.type === 'pair' &&
+      !c.isArchived &&
+      c.name.toLowerCase().includes(this.searchQuery.toLowerCase())
+    )
   );
-  isMobile = signal(window.innerWidth < 1024);
 
-  langInfo = computed(() => {
+  langBadge = computed(() => {
     const lang = this.user()?.preferredLanguage;
-    return lang ? LANGUAGE_MAP[lang] : null;
+    return lang ? (LANGUAGE_MAP[lang]?.badge ?? lang.toUpperCase()) : '??';
   });
 
-  statusColor = computed(() => {
+  userRoleLabel = computed(() => {
     const s = this.user()?.status;
-    return s === 'active' ? 'bg-accent-green' : s === 'agentic' ? 'bg-accent-violet animate-pulse' : 'bg-gray-500';
+    if (s === 'agentic') return 'Agentic';
+    return 'Membre';
   });
-  statusTextColor = computed(() => {
+
+  currentUserDot = computed(() => {
     const s = this.user()?.status;
-    return s === 'active' ? 'text-accent-green' : s === 'agentic' ? 'text-accent-violet' : 'text-gray-500';
+    return s === 'agentic' ? 'bg-brand-orange' : s === 'inactive' ? 'bg-zinc-400' : 'bg-green-500';
   });
-  statusLabel = computed(() => {
-    const s = this.user()?.status;
-    return s === 'active' ? '● Active' : s === 'agentic' ? '◆ Agentic (AI)' : '○ Inactive';
+
+  userAvatarUrl = computed(() => {
+    const u = this.user();
+    if (u?.avatarUrl) return u.avatarUrl;
+    const name = encodeURIComponent(u?.username ?? 'U');
+    return `https://ui-avatars.com/api/?name=${name}&background=f97316&color=fff`;
   });
 
   ngOnInit() {
-    this.channelSvc.loadChannels().subscribe();
+    this.initTheme();
+    this.channelSvc.loadChannels().subscribe(() => this.loadDmPartners());
     this.userSvc.loadNotifications().subscribe();
-    this.aiSvc.checkHealth().subscribe({ next: r => this.aiAvailable.set(r.available), error: () => {} });
-    window.addEventListener('resize', () => this.isMobile.set(window.innerWidth < 1024));
   }
 
-  onSearch(q: string) { this.searchQuery = q; }
+  /** Restore theme from localStorage and apply to <html>. */
+  private initTheme() {
+    if (!isPlatformBrowser(this.platformId)) return;
+    const stored = localStorage.getItem('wb-theme');
+    const dark = stored !== 'light';
+    this.isDark.set(dark);
+    this.applyTheme(dark);
+  }
 
-  onChannelCreated(ch: Channel) {
-    this.showCreateModal.set(false);
-    this.showCreateDM.set(false);
-    this.router.navigate(['/chat', ch.id]);
+  toggleTheme() {
+    const next = !this.isDark();
+    this.isDark.set(next);
+    this.applyTheme(next);
+    if (isPlatformBrowser(this.platformId)) {
+      localStorage.setItem('wb-theme', next ? 'dark' : 'light');
+    }
+  }
+
+  private applyTheme(dark: boolean) {
+    const html = document.documentElement;
+    if (dark) {
+      html.classList.add('dark');
+      html.classList.remove('light');
+    } else {
+      html.classList.remove('dark');
+      html.classList.add('light');
+    }
+  }
+
+  navigate(channelId: string) {
+    this.router.navigate(['/chat', channelId]);
+  }
+
+  /** Fetch members for every pair channel to get partner info (name, status, role). */
+  private loadDmPartners() {
+    const pairs = this.channels().filter(c => c.type === 'pair');
+    const currentUserId = this.user()?.id;
+    pairs.forEach(ch => {
+      this.channelSvc.getMembers(ch.id).subscribe({
+        next: (rawMembers: unknown[]) => {
+          const partner = rawMembers
+            .map(r => this.mapMember(r as Record<string, unknown>))
+            .find(m => m.userId !== currentUserId);
+          if (partner) {
+            this.dmPartnersMap.update(map => {
+              const next = new Map(map);
+              next.set(ch.id, partner);
+              return next;
+            });
+          }
+        },
+        error: () => {},
+      });
+    });
+  }
+
+  private mapMember(raw: Record<string, unknown>): ChannelMember {
+    return {
+      userId:            raw['user_id']            as string,
+      username:          raw['username']            as string,
+      status:            (raw['status'] as string ?? 'active') as ChannelMember['status'],
+      role:              raw['role']               as string,
+      preferredLanguage: raw['preferred_language'] as string | undefined,
+    };
+  }
+
+  dmPartner(channelId: string): ChannelMember | undefined {
+    return this.dmPartnersMap().get(channelId);
+  }
+
+  dmPartnerStatus(channelId: string): string {
+    return this.dmPartner(channelId)?.status ?? 'active';
+  }
+
+  dmPartnerRole(channelId: string): string {
+    const lang = this.dmPartner(channelId)?.preferredLanguage;
+    const badge = lang ? (LANGUAGE_MAP[lang]?.badge ?? lang.toUpperCase()) : '??';
+    return badge;
+  }
+
+  dmStatusDot(channelId: string): string {
+    const s = this.dmPartnerStatus(channelId);
+    return s === 'agentic' ? 'bg-brand-orange' : s === 'inactive' ? 'bg-zinc-400' : 'bg-green-500';
+  }
+
+  dmAvatarClass(channelId: string): string {
+    const partner = this.dmPartner(channelId);
+    const color = partner ? getUserColor(partner.userId) : 'orange';
+    return `bg-${color}-500/10 text-${color}-500 border border-${color}-500/30`;
   }
 
   logout() { this.authSvc.logout(); }

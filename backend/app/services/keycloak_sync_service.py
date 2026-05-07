@@ -52,7 +52,7 @@ class KeycloakUserSyncService:
         email = claims.get("email", "")
         username = claims.get("preferred_username", email)
         locale = claims.get("locale", "fr")
-        is_enabled = claims.get("enabled", True)
+        is_enabled = bool(claims.get("enabled", True))
 
         # Check if user exists
         existing = await self.repo.get_by_id(user_id)

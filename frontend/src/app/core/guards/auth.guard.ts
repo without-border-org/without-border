@@ -15,6 +15,6 @@ export const authGuard: CanActivateFn = () => {
     return true;
   }
   const keycloak = inject(Keycloak);
-  return keycloak.authenticated ?? false;
+  return !!keycloak.authenticated;
 };
 

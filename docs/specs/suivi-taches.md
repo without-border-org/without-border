@@ -36,12 +36,12 @@ Intégrer la maquette fonctionnelle HTML (`docs/specs/maquette-fonctionnelle.htm
 
 | # | User Story | Statut | Notes |
 |---|-----------|--------|-------|
-| US-01 | [Layout principal 3 colonnes](user-stories/US-01_layout-principal-3-colonnes.md) | ⬜ | Nouveau composant shell `ChatLayoutComponent` |
-| US-02 | [Dark/Light mode](user-stories/US-02_dark-light-mode.md) | ⬜ | Classe `dark` sur `<html>`, persistée en localStorage |
-| US-03 | [Liste canaux d'équipe](user-stories/US-03_liste-canaux-equipe.md) | ⬜ | Filtre `type = 'team'` sur `GET /channels` |
-| US-04 | [Liste conversations directes](user-stories/US-04_liste-conversations-directes.md) | ⬜ | Filtre `type = 'pair'` sur `GET /channels` |
-| US-05 | [Recherche dans la sidebar](user-stories/US-05_recherche-sidebar.md) | ⬜ | Filtrage local, pas d'appel API supplémentaire |
-| US-06 | [Carte profil utilisateur](user-stories/US-06_carte-profil-utilisateur.md) | ⬜ | Données via `GET /users/me` |
+| US-01 | [Layout principal 3 colonnes](user-stories/US-01_layout-principal-3-colonnes.md) | ✅ | `chat-layout.component.ts` réécrit |
+| US-02 | [Dark/Light mode](user-stories/US-02_dark-light-mode.md) | ✅ | `toggleTheme()` + localStorage + classe `dark` sur `<html>` |
+| US-03 | [Liste canaux d'équipe](user-stories/US-03_liste-canaux-equipe.md) | ✅ | Section "Équipes" avec `#N` + badge count |
+| US-04 | [Liste conversations directes](user-stories/US-04_liste-conversations-directes.md) | ✅ | Section "Binômes" — membres fetchés pour statut partenaire |
+| US-05 | [Recherche dans la sidebar](user-stories/US-05_recherche-sidebar.md) | ✅ | `searchQuery` filtre local sur les deux sections |
+| US-06 | [Carte profil utilisateur](user-stories/US-06_carte-profil-utilisateur.md) | ✅ | Bas de sidebar : avatar + nom + langue + statut dot |
 
 ---
 
@@ -49,11 +49,11 @@ Intégrer la maquette fonctionnelle HTML (`docs/specs/maquette-fonctionnelle.htm
 
 | # | User Story | Statut | Notes |
 |---|-----------|--------|-------|
-| US-07 | [Header de canal](user-stories/US-07_header-canal.md) | ⬜ | Glassmorphism, avatars empilés, toggle sidebar droite |
-| US-08 | [Affichage liste de messages](user-stories/US-08_affichage-liste-messages.md) | ⬜ | Auto-scroll bas, zone scrollable custom |
-| US-09 | [Bulle de message + métadonnées](user-stories/US-09_bulle-message-metadonnees.md) | ⬜ | Avatar, nom, heure, badge langue, label "traduit" |
-| US-10 | [Réactions aux messages](user-stories/US-10_reactions-messages.md) | ⬜ | Pills emoji, toggle via `POST /messages/{id}/reactions` |
-| US-11 | [Messages Agentic](user-stories/US-11_messages-agentic.md) | ⬜ | Style orange, badge AGENTIC |
+| US-07 | [Header de canal](user-stories/US-07_header-canal.md) | ✅ | Glass header + icône + titre + sous-titre + avatars empilés |
+| US-08 | [Affichage liste de messages](user-stories/US-08_affichage-liste-messages.md) | ✅ | Zone scrollable custom, auto-scroll bas, skeleton loading |
+| US-09 | [Bulle de message + métadonnées](user-stories/US-09_bulle-message-metadonnees.md) | ✅ | `message-bubble.component.ts` : avatar coloré, badge langue, label "文 traduit" |
+| US-10 | [Réactions aux messages](user-stories/US-10_reactions-messages.md) | ✅ | Pills avec hover scale, toggle via `onReact()` |
+| US-11 | [Messages Agentic](user-stories/US-11_messages-agentic.md) | ✅ | Fond orange plein + badge AGENTIC sur bulle et sidebar |
 
 ---
 
@@ -61,8 +61,8 @@ Intégrer la maquette fonctionnelle HTML (`docs/specs/maquette-fonctionnelle.htm
 
 | # | User Story | Statut | Notes |
 |---|-----------|--------|-------|
-| US-12 | [Compositeur de messages](user-stories/US-12_compositeur-messages.md) | ⬜ | Textarea, Enter envoie, bouton orange si contenu |
-| US-13 | [Toolbar de formatage riche](user-stories/US-13_toolbar-formatage-riche.md) | ⬜ | Toolbars haut et bas, B/I/U/S fonctionnels |
+| US-12 | [Compositeur de messages](user-stories/US-12_compositeur-messages.md) | ✅ | Textarea + Enter envoie + bouton orange actif |
+| US-13 | [Toolbar de formatage riche](user-stories/US-13_toolbar-formatage-riche.md) | ✅ | Toolbar haut (B/I/U/S + outils) + toolbar bas (attach/emoji/@/video/vocal/slash) |
 
 ---
 
@@ -70,8 +70,8 @@ Intégrer la maquette fonctionnelle HTML (`docs/specs/maquette-fonctionnelle.htm
 
 | # | User Story | Statut | Notes |
 |---|-----------|--------|-------|
-| US-14 | [Panel participants (sidebar droite)](user-stories/US-14_panel-participants.md) | ⬜ | Toggle, animation slide, 340px |
-| US-15 | [Indicateurs de statut](user-stories/US-15_indicateurs-statut-utilisateur.md) | ⬜ | online/agentic/offline, points colorés |
+| US-14 | [Panel participants (sidebar droite)](user-stories/US-14_panel-participants.md) | ✅ | Sidebar 340px dans `conversation.component.ts`, toggle via header |
+| US-15 | [Indicateurs de statut](user-stories/US-15_indicateurs-statut-utilisateur.md) | ✅ | Points vert/orange/gris dans sidebar gauche, droite et carte profil |
 
 ---
 
@@ -79,10 +79,10 @@ Intégrer la maquette fonctionnelle HTML (`docs/specs/maquette-fonctionnelle.htm
 
 | # | User Story | Statut | Notes |
 |---|-----------|--------|-------|
-| US-16 | [Chargement canaux API](user-stories/US-16_chargement-canaux-api.md) | ⬜ | Lazy load membres au clic canal |
-| US-17 | [Pagination des messages](user-stories/US-17_chargement-pagination-messages.md) | ⬜ | page_size=50, "Charger plus" ou scroll infini |
-| US-18 | [WebSocket temps réel](user-stories/US-18_envoi-messages-websocket.md) | ⬜ | Reconnexion auto, fallback REST |
-| US-19 | [Traductions automatiques](user-stories/US-19_traduction-automatique-messages.md) | ⬜ | `translated_content` backend, badge `文 traduit` |
+| US-16 | [Chargement canaux API](user-stories/US-16_chargement-canaux-api.md) | ✅ | `loadChannels()` + `getMembers()` pour chaque DM au démarrage |
+| US-17 | [Pagination des messages](user-stories/US-17_chargement-pagination-messages.md) | ✅ | Bouton "Charger les messages précédents" si `hasMore` |
+| US-18 | [WebSocket temps réel](user-stories/US-18_envoi-messages-websocket.md) | ✅ | `wsSvc.connect/disconnect/sendMessage` — reconnexion gérée par le service existant |
+| US-19 | [Traductions automatiques](user-stories/US-19_traduction-automatique-messages.md) | ✅ | `isTranslated()` + badge `文 traduit` si `originalLanguage !== currentUserLang` |
 
 ---
 
@@ -90,7 +90,7 @@ Intégrer la maquette fonctionnelle HTML (`docs/specs/maquette-fonctionnelle.htm
 
 | # | User Story | Statut | Notes |
 |---|-----------|--------|-------|
-| US-20 | [Seed données de test](user-stories/US-20_seed-donnees-test.md) | ⬜ | 5 users, 4 canaux équipe, 3 DMs, messages + réactions + traductions seedés |
+| US-20 | [Seed données de test](user-stories/US-20_seed-donnees-test.md) | ✅ | 5 users, 4 canaux équipe, 3 DMs, 17 messages + réactions seedés ; realm Keycloak mis à jour |
 
 ---
 
