@@ -88,3 +88,13 @@
   .bg-white\/3 { background-color: rgba(255,255,255,0.03); }
   .hover\:bg-white\/3:hover { background-color: rgba(255,255,255,0.03); }
 }
+
+/* Router-outlet children must stretch to fill main flex column */
+wb-conversation,
+wb-welcome {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}

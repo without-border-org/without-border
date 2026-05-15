@@ -1,10 +1,11 @@
 import {
-  Component, inject, signal, computed, OnInit, PLATFORM_ID,
+  Component, inject, signal, computed, OnInit, OnDestroy, PLATFORM_ID,
 } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterLink, RouterOutlet, Router } from '@angular/router';
+import { RouterLink, RouterOutlet, Router, NavigationEnd } from '@angular/router';
+import { filter, Subscription } from 'rxjs';
 import { ChannelService } from '../../../core/services/channel.service';
 import { UserService } from '../../../core/services/user.service';
 import { AuthService } from '../../../core/services/auth.service';
@@ -56,7 +57,7 @@ import { Channel, ChannelMember, LANGUAGE_MAP, getUserColor, getInitials } from 
                   d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
               </svg>
             </div>
-            <input [(ngModel)]="searchQuery"
+            <input [ngModel]="searchQuery()" (ngModelChange)="searchQuery.set($event)"
               type="text" placeholder="Rechercher..."
               class="w-full dark:bg-brand-darkPanel bg-white border dark:border-brand-darkBorder
                      border-zinc-300 rounded-lg py-2 pl-9 pr-3 text-xs
@@ -117,7 +118,7 @@ import { Channel, ChannelMember, LANGUAGE_MAP, getUserColor, getInitials } from 
                   <div class="relative flex-shrink-0">
                     <div class="w-8 h-8 rounded-lg flex items-center justify-center text-[10px] font-bold"
                          [ngClass]="dmAvatarClass(ch.id)">
-                      {{ getInitials(ch.name) }}
+                      {{ getInitials(dmDisplayName(ch.id)) }}
                     </div>
                     <div class="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2
                                 dark:border-brand-darkSidebar border-white"
@@ -128,7 +129,7 @@ import { Channel, ChannelMember, LANGUAGE_MAP, getUserColor, getInitials } from 
                   <div class="flex flex-col items-start min-w-0 flex-1">
                     <span class="font-bold text-[11px] truncate w-full text-left"
                           [class]="activeChannelId() === ch.id ? 'text-brand-orange' : 'dark:text-zinc-200 text-zinc-800'">
-                      {{ ch.name }}
+                      {{ dmDisplayName(ch.id) }}
                     </span>
                     <ng-container *ngIf="dmPartnerStatus(ch.id) === 'agentic'; else dmRole">
                       <span class="text-[8px] px-1 py-0.5 bg-brand-orange/20 text-brand-orange
@@ -172,34 +173,33 @@ import { Channel, ChannelMember, LANGUAGE_MAP, getUserColor, getInitials } from 
     </div>
   `,
 })
-export class ChatLayoutComponent implements OnInit {
+export class ChatLayoutComponent implements OnInit, OnDestroy {
   private channelSvc = inject(ChannelService);
   private userSvc    = inject(UserService);
   private authSvc    = inject(AuthService);
   private router     = inject(Router);
   private platformId = inject(PLATFORM_ID);
+  private routerSub!: Subscription;
 
   // Expose helpers to template
   getInitials = getInitials;
 
-  isDark    = signal(true);
-  searchQuery = '';
-  user      = this.authSvc.user;
-  channels  = this.channelSvc.channels;
+  isDark      = signal(true);
+  searchQuery = signal('');
+  user        = this.authSvc.user;
+  channels    = this.channelSvc.channels;
 
   /** Map of channel ID → partner ChannelMember info (populated after loading channels). */
   dmPartnersMap = signal<Map<string, ChannelMember>>(new Map());
 
-  activeChannelId = computed(() => {
-    const match = this.router.url.match(/\/chat\/([^/?]+)/);
-    return match ? match[1] : null;
-  });
+  /** Reactive active channel ID — updated on every NavigationEnd event. */
+  activeChannelId = signal<string | null>(null);
 
   teamChannels = computed(() =>
     this.channels().filter(c =>
       c.type === 'team' &&
       !c.isArchived &&
-      c.name.toLowerCase().includes(this.searchQuery.toLowerCase())
+      c.name.toLowerCase().includes(this.searchQuery().toLowerCase())
     )
   );
 
@@ -207,7 +207,7 @@ export class ChatLayoutComponent implements OnInit {
     this.channels().filter(c =>
       c.type === 'pair' &&
       !c.isArchived &&
-      c.name.toLowerCase().includes(this.searchQuery.toLowerCase())
+      c.name.toLowerCase().includes(this.searchQuery().toLowerCase())
     )
   );
 
@@ -236,8 +236,31 @@ export class ChatLayoutComponent implements OnInit {
 
   ngOnInit() {
     this.initTheme();
-    this.channelSvc.loadChannels().subscribe(() => this.loadDmPartners());
+    this.syncActiveChannelFromUrl();
+    this.routerSub = this.router.events
+      .pipe(filter(e => e instanceof NavigationEnd))
+      .subscribe(() => this.syncActiveChannelFromUrl());
+    this.channelSvc.loadChannels().subscribe(() => {
+      this.loadDmPartners();
+      this.autoNavigateToFirstChannel();
+    });
     this.userSvc.loadNotifications().subscribe();
+  }
+
+  ngOnDestroy() {
+    this.routerSub?.unsubscribe();
+  }
+
+  private syncActiveChannelFromUrl() {
+    const match = this.router.url.match(/\/chat\/([^/?]+)/);
+    this.activeChannelId.set(match ? match[1] : null);
+  }
+
+  private autoNavigateToFirstChannel() {
+    if (!this.activeChannelId()) {
+      const first = this.teamChannels()[0];
+      if (first) this.router.navigate(['/chat', first.id], { replaceUrl: true });
+    }
   }
 
   /** Restore theme from localStorage and apply to <html>. */
@@ -298,16 +321,20 @@ export class ChatLayoutComponent implements OnInit {
 
   private mapMember(raw: Record<string, unknown>): ChannelMember {
     return {
-      userId:            raw['user_id']            as string,
-      username:          raw['username']            as string,
+      userId:            (raw['id'] ?? raw['user_id']) as string,
+      username:          raw['username']             as string,
       status:            (raw['status'] as string ?? 'active') as ChannelMember['status'],
-      role:              raw['role']               as string,
-      preferredLanguage: raw['preferred_language'] as string | undefined,
+      role:              (raw['role'] as string)     ?? 'member',
+      preferredLanguage: raw['preferred_language']   as string | undefined,
     };
   }
 
   dmPartner(channelId: string): ChannelMember | undefined {
     return this.dmPartnersMap().get(channelId);
+  }
+
+  dmDisplayName(channelId: string): string {
+    return this.dmPartner(channelId)?.username ?? '...';
   }
 
   dmPartnerStatus(channelId: string): string {

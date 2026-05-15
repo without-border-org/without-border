@@ -16,7 +16,7 @@ import { MessageBubbleComponent } from '../components/message-bubble.component';
   standalone: true,
   imports: [CommonModule, FormsModule, MessageBubbleComponent],
   template: `
-    <div class="flex h-full overflow-hidden relative">
+    <div class="flex flex-1 min-h-0 overflow-hidden relative">
 
       <!-- ═══════════════ ZONE CHAT ═══════════════ -->
       <div class="flex-1 flex flex-col min-w-0 overflow-hidden">
@@ -357,7 +357,7 @@ export class ConversationComponent implements OnInit, OnDestroy, AfterViewChecke
     this.msgSvc.getMessages(this.channelId, this.currentPage()).subscribe({
       next: data => {
         this.messages.set(data.items.slice().reverse());
-        this.hasMore.set(data.hasMore);
+        this.hasMore.set(data.has_more ?? data.hasMore ?? false);
         this.loading.set(false);
         this.shouldScroll = true;
       },
@@ -369,7 +369,7 @@ export class ConversationComponent implements OnInit, OnDestroy, AfterViewChecke
     const next = this.currentPage() + 1;
     this.msgSvc.getMessages(this.channelId, next).subscribe(data => {
       this.messages.update(list => [...data.items, ...list]);
-      this.hasMore.set(data.hasMore);
+      this.hasMore.set(data.has_more ?? data.hasMore ?? false);
       this.currentPage.set(next);
     });
   }
@@ -385,11 +385,11 @@ export class ConversationComponent implements OnInit, OnDestroy, AfterViewChecke
 
   private mapMember(raw: Record<string, unknown>): ChannelMember {
     return {
-      userId:            raw['user_id']            as string,
-      username:          raw['username']            as string,
+      userId:            (raw['id'] ?? raw['user_id']) as string,
+      username:          raw['username']             as string,
       status:            (raw['status'] as string ?? 'active') as ChannelMember['status'],
-      role:              raw['role']               as string,
-      preferredLanguage: raw['preferred_language'] as string | undefined,
+      role:              (raw['role'] as string)     ?? 'member',
+      preferredLanguage: raw['preferred_language']   as string | undefined,
     };
   }
 

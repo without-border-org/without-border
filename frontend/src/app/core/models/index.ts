@@ -82,8 +82,11 @@ export interface PaginatedMessages {
   items: Message[];
   total: number;
   page: number;
-  pageSize: number;
-  hasMore: boolean;
+  page_size: number;
+  has_more: boolean;
+  // aliases used by the component layer
+  pageSize?: number;
+  hasMore?: boolean;
 }
 
 export interface WsEvent {

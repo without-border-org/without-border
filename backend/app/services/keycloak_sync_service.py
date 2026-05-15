@@ -50,29 +50,35 @@ class KeycloakUserSyncService:
             raise ValueError(f"Invalid UUID in 'sub' claim: {sub}")
 
         email = claims.get("email", "")
-        username = claims.get("preferred_username", email)
+        # Use full name from token if available, fall back to preferred_username
+        full_name = claims.get("name") or ""
+        if full_name:
+            given = claims.get("given_name", "")
+            family = claims.get("family_name", "")
+            username = f"{given} {family}".strip() if (given or family) else full_name
+        else:
+            username = claims.get("preferred_username", email)
         locale = claims.get("locale", "fr")
         is_enabled = bool(claims.get("enabled", True))
 
         # Check if user exists
         existing = await self.repo.get_by_id(user_id)
         if existing:
-            # Soft update: only sync changed fields
+            # Soft update: only sync email and active status.
+            # Username is preserved from the seed / user profile — Keycloak preferred_username
+            # is a login handle and should not overwrite the display name.
             changed = False
             if existing.email != email:
                 existing.email = email
                 changed = True
-            if existing.username != username:
-                existing.username = username
-                changed = True
             if existing.is_active != is_enabled:
                 existing.is_active = is_enabled
                 changed = True
-            
+
             if changed:
                 await self.db.commit()
                 await self.db.refresh(existing)
-            
+
             return UserRead.model_validate(existing)
 
         # Create new user

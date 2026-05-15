@@ -13,7 +13,7 @@ function mapChannel(raw: Record<string, unknown>): Channel {
     createdBy: raw['created_by'] as string,
     isArchived: raw['is_archived'] as boolean,
     memberCount: raw['member_count'] as number ?? 0,
-    unreadCount: 0,
+    unreadCount: (raw['unread_count'] as number) ?? 0,
     createdAt: raw['created_at'] as string,
   };
 }

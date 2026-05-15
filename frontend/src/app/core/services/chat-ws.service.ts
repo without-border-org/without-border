@@ -26,7 +26,7 @@ export class ChatWebSocketService {
     this.currentChannelId = channelId;
     const token = this.auth.getAccessToken();
     const wsBase = environment.apiUrl.replace(/^https/, 'wss').replace(/^http/, 'ws');
-    this.ws = new WebSocket(`${wsBase}/ws/channels/${channelId}?token=${token}`);
+    this.ws = new WebSocket(`${wsBase}/api/v1/ws/channels/${channelId}?token=${token}`);
 
     this.ws.onopen = () => console.log('[WS] Connected to', channelId);
     this.ws.onmessage = ({ data }) => {

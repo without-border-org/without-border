@@ -19,9 +19,11 @@ async def list_channels(
     channels = await repo.get_user_channels(current_user.id)
     result = []
     for ch in channels:
-        count = await repo.get_member_count(ch.id)
+        member_count = await repo.get_member_count(ch.id)
+        msg_count = await repo.get_message_count(ch.id)
         r = ChannelRead.model_validate(ch)
-        r.member_count = count
+        r.member_count = member_count
+        r.unread_count = msg_count
         result.append(r)
     return result
 
