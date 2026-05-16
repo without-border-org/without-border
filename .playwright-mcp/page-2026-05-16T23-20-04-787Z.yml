@@ -1,0 +1,22 @@
+- generic [ref=e2]:
+  - generic [ref=e4]: WithoutBorder
+  - generic [ref=e5]:
+    - banner [ref=e6]:
+      - heading "Sign in to your account" [level=1] [ref=e7]
+    - generic [ref=e12]:
+      - generic [ref=e13]:
+        - generic [ref=e14]: Username or email
+        - textbox "Username or email" [active] [ref=e15]
+      - generic [ref=e16]:
+        - generic [ref=e17]: Password
+        - generic [ref=e18]:
+          - textbox "Password" [ref=e19]
+          - button "Show password" [ref=e20] [cursor=pointer]:
+            - generic [ref=e21]: 
+      - generic [ref=e22]:
+        - generic [ref=e25] [cursor=pointer]:
+          - checkbox "Remember me" [ref=e26]
+          - text: Remember me
+        - link "Forgot Password?" [ref=e29] [cursor=pointer]:
+          - /url: /realms/without-border/login-actions/reset-credentials?client_id=without-border-frontend&tab_id=xgg-OGK1nSw&client_data=eyJydSI6Imh0dHA6Ly9sb2NhbGhvc3Q6NDIwMC8iLCJydCI6ImNvZGUiLCJybSI6ImZyYWdtZW50Iiwic3QiOiI1MmFlMTRiMi04MDBjLTQ4NmItYTI2OC00MDY1MTkxYTUyNWYifQ
+      - button "Sign In" [ref=e31] [cursor=pointer]

@@ -125,16 +125,18 @@ export const LANGUAGE_MAP: Record<string, { name: string; flag: string; badge: s
  */
 export function getUserColor(userId: string): string {
   const COLORS = ['violet', 'orange', 'blue', 'emerald', 'zinc', 'purple', 'pink', 'teal'];
-  const lastByte = parseInt(userId.replace(/-/g, '').slice(-2), 16) || 0;
+  const lastByte = parseInt(userId?.replace(/-/g, '').slice(-2), 16) || 0;
   return COLORS[lastByte % COLORS.length];
 }
 
 /** Returns 2-letter initials from a full name (e.g. "Sophie Martin" → "SM"). */
-export function getInitials(name: string): string {
-  return name
-    .split(' ')
-    .map(w => w[0] ?? '')
+export function getInitials(name: string | null | undefined): string {
+  if (!name || typeof name !== 'string') return '?';
+  const parts = name.trim().split(' ').filter(p => p.length > 0);
+  if (parts.length === 0) return '?';
+  return parts
+    .slice(0, 2)
+    .map(w => w[0])
     .join('')
-    .toUpperCase()
-    .slice(0, 2);
+    .toUpperCase() || '?';
 }

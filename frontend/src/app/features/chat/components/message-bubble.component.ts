@@ -85,7 +85,7 @@ import { Message, LANGUAGE_MAP, getUserColor, getInitials } from '../../../core/
         </div>
 
         <!-- Réactions -->
-        <div *ngIf="message.reactions.length" class="flex gap-1.5 mt-2 flex-wrap">
+        <div *ngIf="message.reactions && message.reactions.length" class="flex gap-1.5 mt-2 flex-wrap">
           <button *ngFor="let r of message.reactions"
                   (click)="react.emit(r.emoji)"
                   class="reaction-pill"
@@ -126,11 +126,13 @@ export class MessageBubbleComponent {
 
   langBadge(): string {
     const lang = this.message.originalLanguage;
+    if (!lang) return '??';
     return LANGUAGE_MAP[lang]?.badge ?? lang.toUpperCase();
   }
 
   isTranslated(): boolean {
-    return this.message.originalLanguage !== this.currentUserLang;
+    const originalLang = this.message.originalLanguage;
+    return !!originalLang && originalLang !== this.currentUserLang;
   }
 
   displayContent(): string {
