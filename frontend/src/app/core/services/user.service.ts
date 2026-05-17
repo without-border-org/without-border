@@ -1,8 +1,8 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { tap } from 'rxjs';
+import { Observable, tap } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { User, Notification } from '../models';
+import { User, UserStatus, Notification } from '../models';
 import { AuthService } from './auth.service';
 
 @Injectable({ providedIn: 'root' })
@@ -34,7 +34,7 @@ export class UserService {
     );
   }
 
-  updateStatus(status: 'active' | 'agentic' | 'inactive') {
+  updateStatus(status: UserStatus): Observable<unknown> {
     return this.http.put<Record<string, unknown>>(`${this.base}/me/status`, { status }).pipe(
       tap(user => this.auth.setUser(this._mapUser(user)))
     );

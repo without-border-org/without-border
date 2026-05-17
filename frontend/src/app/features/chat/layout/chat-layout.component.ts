@@ -9,7 +9,8 @@ import { filter, Subscription } from 'rxjs';
 import { ChannelService } from '../../../core/services/channel.service';
 import { UserService } from '../../../core/services/user.service';
 import { AuthService } from '../../../core/services/auth.service';
-import { Channel, ChannelMember, LANGUAGE_MAP, getUserColor, getInitials } from '../../../core/models';
+import { AgentService } from '../../../core/services/agent.service';
+import { Channel, ChannelMember, UserStatus, LANGUAGE_MAP, getUserColor, getInitials } from '../../../core/models';
 
 @Component({
   selector: 'wb-chat-layout',
@@ -33,17 +34,23 @@ import { Channel, ChannelMember, LANGUAGE_MAP, getUserColor, getInitials } from 
             WithoutBorder
           </span>
           <button (click)="toggleTheme()"
-                  class="p-1.5 rounded-lg hover:bg-brand-orange/10 text-brand-orange transition-ui ml-auto"
+                  class="p-1.5 rounded-lg dark:hover:bg-brand-orange/10 hover:bg-teal-400/16 dark:text-brand-orange text-teal-400 transition-ui ml-auto"
                   title="Basculer le thème">
-            <!-- Lune / Soleil -->
-            <svg *ngIf="isDark()" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707
-                   m12.728 0l-.707-.707M6.343 6.343l-.707-.707M12 5a7 7 0 100 14 7 7 0 000-14z"/>
+            <!-- Soleil — affiché en mode dark pour passer en light -->
+            <svg *ngIf="isDark()" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="5"/>
+              <line x1="12" y1="1" x2="12" y2="3"/>
+              <line x1="12" y1="21" x2="12" y2="23"/>
+              <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+              <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+              <line x1="1" y1="12" x2="3" y2="12"/>
+              <line x1="21" y1="12" x2="23" y2="12"/>
+              <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+              <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
             </svg>
-            <svg *ngIf="!isDark()" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
+            <!-- Lune — affiché en mode light pour passer en dark -->
+            <svg *ngIf="!isDark()" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
             </svg>
           </button>
         </div>
@@ -147,20 +154,127 @@ import { Channel, ChannelMember, LANGUAGE_MAP, getUserColor, getInitials } from 
               </li>
             </ul>
           </div>
+
+          <!-- ── Agents IA ── -->
+          <div>
+            <div class="px-5 mb-2 flex items-center justify-between">
+              <span class="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Agents IA</span>
+            </div>
+            <ul class="space-y-0.5">
+              <li *ngFor="let agent of agents()">
+                <button (click)="navigate('agent-' + agent.id)"
+                  class="w-full flex items-center gap-3 px-4 py-2.5 text-xs font-medium transition-ui"
+                  [class]="activeChannelId() === 'agent-' + agent.id
+                    ? 'nav-item-active'
+                    : 'text-zinc-500 hover:bg-zinc-200 dark:hover:bg-zinc-800 hover:text-zinc-900 dark:hover:text-zinc-200'">
+                  <!-- Avatar agent avec dot statut -->
+                  <div class="relative flex-shrink-0">
+                    <div class="agent-avatar w-8 h-8 rounded-lg flex items-center justify-center text-[10px] font-bold border
+                                dark:bg-blue-500/10 dark:text-blue-400 dark:border-blue-500/30
+                                bg-teal-500/10 text-teal-600 border-teal-500/30">
+                      {{ getInitials(agent.name) }}
+                    </div>
+                    <div class="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2
+                                dark:border-brand-darkSidebar border-white"
+                         [class]="agent.isActive ? 'bg-green-500' : 'bg-amber-400'"></div>
+                  </div>
+                  <!-- Nom + badge IA -->
+                  <div class="flex flex-col items-start min-w-0 flex-1">
+                    <div class="flex items-center gap-1.5 w-full">
+                      <span class="font-bold text-[11px] truncate text-left
+                                   dark:text-zinc-200 text-zinc-800">{{ agent.name }}</span>
+                      <span class="text-[8px] px-1 py-0.5 rounded font-bold uppercase tracking-tight
+                                   dark:bg-blue-500/18 dark:text-blue-400
+                                   bg-teal-500/15 text-teal-600">IA</span>
+                    </div>
+                    <span class="text-[9px] opacity-60 font-medium truncate w-full text-left">{{ agent.description }}</span>
+                  </div>
+                </button>
+              </li>
+              <li *ngIf="agents().length === 0"
+                  class="px-5 py-2 text-[10px] text-zinc-500 italic">
+                Aucun agent
+              </li>
+            </ul>
+          </div>
+
         </nav>
 
-        <!-- User profile card -->
-        <div class="p-4 border-t dark:border-brand-darkBorder border-brand-lightBorder">
-          <div [routerLink]="['/profile']"
-               class="flex items-center gap-3 p-2 rounded-xl cursor-pointer hover:opacity-80 transition-ui
+        <!-- User profile card with status menu -->
+        <div class="p-4 border-t dark:border-brand-darkBorder border-brand-lightBorder relative" id="user-card-wrap">
+
+          <!-- Status dropdown -->
+          <div *ngIf="statusMenuOpen()"
+               class="absolute bottom-full left-4 right-4 mb-2 rounded-[14px] border z-50
+                      dark:bg-[#1C1C20] dark:border-white/9 bg-white border-slate-200
+                      shadow-[0_12px_40px_rgba(0,0,0,0.22)]
+                      animate-[statusFadeUp_0.15s_ease-out]">
+            <div class="px-3.5 py-2.5 text-[9.5px] font-bold uppercase tracking-[.09em]
+                        dark:text-zinc-500 text-slate-400
+                        border-b dark:border-white/7 border-slate-100">Mon statut</div>
+            <div class="p-1.5 space-y-0.5">
+              <button (click)="setStatus('active')"
+                class="status-opt w-full flex items-center gap-2.5 px-3 py-2 rounded-[9px] text-[12.5px] font-medium
+                       dark:text-zinc-300 text-slate-700 dark:hover:bg-white/6 hover:bg-slate-50 transition-all">
+                <div class="w-2.5 h-2.5 rounded-full flex-shrink-0 bg-green-500"></div>
+                <span>Actif</span>
+                <svg *ngIf="user()?.status === 'active'" class="ml-auto w-3 h-3 text-green-500" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+              </button>
+              <button (click)="setStatus('absent')"
+                class="w-full flex items-center gap-2.5 px-3 py-2 rounded-[9px] text-[12.5px] font-medium
+                       dark:text-zinc-300 text-slate-700 dark:hover:bg-white/6 hover:bg-slate-50 transition-all">
+                <div class="w-2.5 h-2.5 rounded-full flex-shrink-0 bg-amber-400"></div>
+                <span>Absent</span>
+                <svg *ngIf="user()?.status === 'absent'" class="ml-auto w-3 h-3 text-amber-400" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+              </button>
+              <button (click)="setStatus('communication')"
+                class="w-full flex items-center gap-2.5 px-3 py-2 rounded-[9px] text-[12.5px] font-medium
+                       dark:text-zinc-300 text-slate-700 dark:hover:bg-white/6 hover:bg-slate-50 transition-all">
+                <div class="w-2.5 h-2.5 rounded-full flex-shrink-0 bg-blue-500"></div>
+                <span>En communication</span>
+                <svg *ngIf="user()?.status === 'communication'" class="ml-auto w-3 h-3 text-blue-500" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+              </button>
+              <button (click)="setStatus('agentic')"
+                class="w-full flex items-center gap-2.5 px-3 py-2 rounded-[9px] text-[12.5px] font-medium
+                       dark:text-zinc-300 text-slate-700 dark:hover:bg-white/6 hover:bg-slate-50 transition-all">
+                <div class="w-2.5 h-2.5 rounded-full flex-shrink-0 bg-brand-orange dot-agentic"></div>
+                <div class="flex flex-col items-start flex-1">
+                  <span>Mode Agent</span>
+                  <span class="text-[9px] opacity-60">Déléguer à un agent IA</span>
+                </div>
+                <svg *ngIf="user()?.status === 'agentic'" class="w-3 h-3 text-brand-orange" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+              </button>
+            </div>
+          </div>
+
+          <!-- Clickable user card -->
+          <div (click)="toggleStatusMenu($event)"
+               class="flex items-center gap-3 p-2 rounded-xl cursor-pointer hover:opacity-80 transition-ui select-none
                       dark:bg-brand-darkPanel bg-white border dark:border-brand-darkBorder border-zinc-200">
-            <img [src]="userAvatarUrl()"
-                 class="w-8 h-8 rounded-lg shadow-sm" alt="Avatar">
+            <!-- Avatar with agentic ring -->
+            <div class="relative flex-shrink-0">
+              <img [src]="userAvatarUrl()"
+                   class="w-8 h-8 rounded-lg shadow-sm transition-all"
+                   [class]="user()?.status === 'agentic' ? 'avatar-agentic' : ''"
+                   alt="Avatar">
+              <!-- Bot badge — visible in agentic mode only -->
+              <div *ngIf="user()?.status === 'agentic'"
+                   class="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-brand-orange
+                          border-2 dark:border-brand-darkSidebar border-white
+                          flex items-center justify-center">
+                <svg viewBox="0 0 20 20" fill="white" style="width:8px;height:8px">
+                  <path d="M10 2a1.5 1.5 0 011.5 1.5c0 .45-.2.86-.5 1.14V6h1A5 5 0 0117 11h.5a.5.5 0 010 1H17v.5A4 4 0 0113 16.5v.5a.5.5 0 01-1 0v-.5H8v.5a.5.5 0 01-1 0v-.5A4 4 0 013 12.5V12h-.5a.5.5 0 010-1H3A5 5 0 018 6h1V4.64c-.3-.28-.5-.69-.5-1.14A1.5 1.5 0 0110 2zM7.5 10a1.5 1.5 0 100 3 1.5 1.5 0 000-3zm5 0a1.5 1.5 0 100 3 1.5 1.5 0 000-3z"/>
+                </svg>
+              </div>
+            </div>
             <div class="flex-1 min-w-0">
               <p class="text-xs font-bold truncate dark:text-white text-zinc-900">{{ user()?.username }}</p>
-              <p class="text-[9px] text-zinc-500 font-medium">{{ langBadge() }} · {{ userRoleLabel() }}</p>
+              <p class="text-[9px] text-zinc-500 font-medium">{{ userStatusLabel() }}</p>
             </div>
-            <div class="w-2 h-2 rounded-full" [ngClass]="currentUserDot()"></div>
+            <!-- Status dot -->
+            <div class="w-2 h-2 rounded-full flex-shrink-0"
+                 [class]="currentUserDot()"
+                 [class.dot-agentic]="user()?.status === 'agentic'"></div>
           </div>
         </div>
       </aside>
@@ -177,9 +291,13 @@ export class ChatLayoutComponent implements OnInit, OnDestroy {
   private channelSvc = inject(ChannelService);
   private userSvc    = inject(UserService);
   private authSvc    = inject(AuthService);
+  private agentSvc   = inject(AgentService);
   private router     = inject(Router);
   private platformId = inject(PLATFORM_ID);
   private routerSub!: Subscription;
+
+  // Click-outside handler reference for proper cleanup
+  private clickOutsideHandler = () => this.statusMenuOpen.set(false);
 
   // Expose helpers to template
   getInitials = getInitials;
@@ -188,6 +306,10 @@ export class ChatLayoutComponent implements OnInit, OnDestroy {
   searchQuery = signal('');
   user        = this.authSvc.user;
   channels    = this.channelSvc.channels;
+  agents      = this.agentSvc.agents;
+
+  /** Status menu open/closed state */
+  statusMenuOpen = signal(false);
 
   /** Map of channel ID → partner ChannelMember info (populated after loading channels). */
   dmPartnersMap = signal<Map<string, ChannelMember>>(new Map());
@@ -222,9 +344,21 @@ export class ChatLayoutComponent implements OnInit, OnDestroy {
     return 'Membre';
   });
 
+  userStatusLabel = computed(() => {
+    const s = this.user()?.status;
+    if (s === 'agentic') return 'Mode Agent';
+    if (s === 'absent') return 'Absent';
+    if (s === 'communication') return 'En communication';
+    return `${this.langBadge()} · Membre`;
+  });
+
   currentUserDot = computed(() => {
     const s = this.user()?.status;
-    return s === 'agentic' ? 'bg-brand-orange' : s === 'inactive' ? 'bg-zinc-400' : 'bg-green-500';
+    if (s === 'agentic') return 'bg-brand-orange';
+    if (s === 'absent') return 'bg-amber-400';
+    if (s === 'communication') return 'bg-blue-500';
+    if (s === 'inactive') return 'bg-zinc-400';
+    return 'bg-green-500';
   });
 
   userAvatarUrl = computed(() => {
@@ -244,11 +378,24 @@ export class ChatLayoutComponent implements OnInit, OnDestroy {
       this.loadDmPartners();
       this.autoNavigateToFirstChannel();
     });
+    this.agentSvc.loadAgents().subscribe();
     this.userSvc.loadNotifications().subscribe();
+    document.addEventListener('click', this.clickOutsideHandler);
   }
 
   ngOnDestroy() {
     this.routerSub?.unsubscribe();
+    document.removeEventListener('click', this.clickOutsideHandler);
+  }
+
+  toggleStatusMenu(event: Event) {
+    event.stopPropagation();
+    this.statusMenuOpen.update(v => !v);
+  }
+
+  setStatus(status: UserStatus) {
+    this.userSvc.updateStatus(status).subscribe();
+    this.statusMenuOpen.set(false);
   }
 
   private syncActiveChannelFromUrl() {
