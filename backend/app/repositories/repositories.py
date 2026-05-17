@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 from app.models.models import (
     User, Channel, ChannelMember, Message,
-    MessageTranslation, MessageReaction, Notification
+    MessageTranslation, MessageReaction, Notification, Agent
 )
 
 
@@ -266,3 +266,12 @@ class NotificationRepository:
         await self.db.execute(
             update(Notification).where(Notification.user_id == user_id).values(is_read=True)
         )
+
+
+class AgentRepository:
+    def __init__(self, db: AsyncSession):
+        self.db = db
+
+    async def list_all(self) -> list[Agent]:
+        result = await self.db.execute(select(Agent).where(Agent.is_active == True))
+        return list(result.scalars().all())

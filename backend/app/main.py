@@ -10,6 +10,7 @@ from app.api.v1.endpoints.channels_router import router as channels_router
 from app.api.v1.endpoints.messages_router import router as messages_router
 from app.api.v1.endpoints.ai_router import router as ai_router
 from app.api.v1.endpoints.files_router import router as files_router
+from app.api.v1.endpoints.agents_router import router as agents_router
 from app.core.config.settings import settings
 from app.core.database import create_tables
 
@@ -50,6 +51,7 @@ def create_app() -> FastAPI:
     app.include_router(messages_router, prefix=prefix)
     app.include_router(ai_router, prefix=prefix)
     app.include_router(files_router, prefix=prefix)
+    app.include_router(agents_router, prefix=prefix)
 
     os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
     app.mount("/uploads", StaticFiles(directory=settings.UPLOAD_DIR), name="uploads")

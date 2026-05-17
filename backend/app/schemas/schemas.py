@@ -78,6 +78,14 @@ class UserUpdateRequest(BaseModel):
 class UserStatusUpdate(BaseModel):
     status: str
 
+    @field_validator("status")
+    @classmethod
+    def status_valid(cls, v: str) -> str:
+        allowed = {"active", "agentic", "inactive", "absent", "communication"}
+        if v not in allowed:
+            raise ValueError(f"status must be one of {sorted(allowed)}")
+        return v
+
 
 # ─── Channel ─────────────────────────────────────────────────────────────────
 
@@ -198,3 +206,15 @@ class AIHealthResponse(BaseModel):
     model: str
     available: bool
     message: str
+
+
+# --- Agent ---
+
+class AgentRead(BaseModel):
+    id: uuid.UUID
+    name: str
+    description: Optional[str]
+    agent_type: str
+    persona: Optional[str]
+    is_active: bool
+    model_config = {"from_attributes": True}

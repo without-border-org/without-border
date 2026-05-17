@@ -38,8 +38,6 @@ async def update_status(
     current_user: UserRead = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    if payload.status not in ("active", "agentic", "inactive"):
-        raise HTTPException(400, "Invalid status")
     repo = UserRepository(db)
     user = await repo.update(current_user.id, status=payload.status)
     return UserRead.model_validate(user)

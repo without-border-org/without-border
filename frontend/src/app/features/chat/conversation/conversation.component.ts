@@ -10,6 +10,7 @@ import { ChatWebSocketService } from '../../../core/services/chat-ws.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { Message, Channel, ChannelMember, LANGUAGE_MAP, getUserColor, getInitials } from '../../../core/models';
 import { MessageBubbleComponent } from '../components/message-bubble.component';
+import { AgentService } from '../../../core/services/agent.service';
 
 @Component({
   selector: 'wb-conversation',
@@ -53,6 +54,34 @@ import { MessageBubbleComponent } from '../components/message-bubble.component';
             </div>
           </div>
 
+          <!-- Tab bar agent : Conversation | Configuration -->
+          <div *ngIf="isAgentChannel()" class="flex items-center gap-1 p-1 rounded-[10px]
+                      dark:bg-white/4 bg-slate-100/80">
+            <button (click)="agentTab.set('chat')"
+              class="tab-btn px-3.5 py-1.5 rounded-[7px] text-[12px] font-semibold flex items-center gap-1.5 border-0 cursor-pointer transition-all"
+              [class]="agentTab() === 'chat'
+                ? 'bg-brand-orange text-white shadow-[0_1px_4px_rgba(249,115,22,0.3)]'
+                : 'dark:text-zinc-400 text-slate-500 bg-transparent hover:opacity-80'">
+              <!-- Feather message-circle icon, stroke 1.75 -->
+              <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+              </svg>
+              Conversation
+            </button>
+            <button (click)="agentTab.set('config')"
+              class="tab-btn px-3.5 py-1.5 rounded-[7px] text-[12px] font-semibold flex items-center gap-1.5 border-0 cursor-pointer transition-all"
+              [class]="agentTab() === 'config'
+                ? 'bg-brand-orange text-white shadow-[0_1px_4px_rgba(249,115,22,0.3)]'
+                : 'dark:text-zinc-400 text-slate-500 bg-transparent hover:opacity-80'">
+              <!-- Feather settings icon, stroke 1.75 -->
+              <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="3"/>
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+              </svg>
+              Configuration
+            </button>
+          </div>
+
           <!-- Groupe d'avatars participants → toggle sidebar droite -->
           <button (click)="toggleParticipants()"
                   class="flex -space-x-2.5 hover:opacity-80 transition-ui p-1.5 rounded-xl
@@ -73,161 +102,346 @@ import { MessageBubbleComponent } from '../components/message-bubble.component';
           </button>
         </header>
 
-        <!-- ── Messages ── -->
-        <div #messagesEl
-             class="flex-1 overflow-y-auto custom-scrollbar px-6 pt-24 pb-4 space-y-6"
-             (scroll)="onScroll($event)">
+        <!-- ── Messages (visible en mode chat uniquement) ── -->
+        <ng-container *ngIf="!isAgentChannel() || agentTab() === 'chat'">
+          <div #messagesEl
+               class="flex-1 overflow-y-auto custom-scrollbar px-6 pt-24 pb-4 space-y-6"
+               (scroll)="onScroll($event)">
 
-          <!-- Load more -->
-          <div *ngIf="hasMore()" class="text-center py-2">
-            <button (click)="loadMore()"
-              class="text-xs text-brand-orange hover:text-brand-orangeHover
-                     bg-brand-orange/10 hover:bg-brand-orange/20 px-4 py-2 rounded-full transition-ui">
-              Charger les messages précédents
-            </button>
+            <!-- Load more -->
+            <div *ngIf="hasMore()" class="text-center py-2">
+              <button (click)="loadMore()"
+                class="text-xs text-brand-orange hover:text-brand-orangeHover
+                       bg-brand-orange/10 hover:bg-brand-orange/20 px-4 py-2 rounded-full transition-ui">
+                Charger les messages précédents
+              </button>
+            </div>
+
+            <!-- Skeleton loading -->
+            <div *ngIf="loading()">
+              <div *ngFor="let i of [1,2,3,4]" class="flex gap-4 animate-pulse">
+                <div class="w-9 h-9 rounded-xl dark:bg-zinc-800 bg-zinc-200 flex-shrink-0"></div>
+                <div class="flex-1">
+                  <div class="h-3 w-24 dark:bg-zinc-800 bg-zinc-200 rounded mb-2"></div>
+                  <div class="h-12 dark:bg-zinc-800 bg-zinc-200 rounded-2xl w-3/4"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Empty state -->
+            <div *ngIf="!loading() && messages().length === 0"
+                 class="flex flex-col items-center justify-center h-full text-center py-20">
+              <div class="text-5xl mb-4">💬</div>
+              <h3 class="text-base font-semibold dark:text-white text-zinc-900 mb-2">
+                Démarrez la conversation
+              </h3>
+              <p class="text-zinc-500 text-sm max-w-xs">
+                Les messages seront automatiquement traduits pour chaque membre dans sa langue.
+              </p>
+            </div>
+
+            <!-- Messages list -->
+            <wb-message-bubble
+              *ngFor="let msg of messages(); trackBy: trackById"
+              [message]="msg"
+              [currentUserLang]="currentUserLang()"
+              [id]="'msg-' + msg.id"
+              (react)="onReact(msg.id, $event)" />
           </div>
 
-          <!-- Skeleton loading -->
-          <div *ngIf="loading()">
-            <div *ngFor="let i of [1,2,3,4]" class="flex gap-4 animate-pulse">
-              <div class="w-9 h-9 rounded-xl dark:bg-zinc-800 bg-zinc-200 flex-shrink-0"></div>
-              <div class="flex-1">
-                <div class="h-3 w-24 dark:bg-zinc-800 bg-zinc-200 rounded mb-2"></div>
-                <div class="h-12 dark:bg-zinc-800 bg-zinc-200 rounded-2xl w-3/4"></div>
+          <!-- ── Compositeur (Rich Text) ── -->
+          <div class="px-4 pb-4 pt-2 border-t dark:border-brand-darkBorder border-brand-lightBorder
+                      dark:bg-brand-darkBg bg-brand-lightBg">
+            <div class="dark:bg-brand-darkPanel bg-zinc-100 border dark:border-brand-darkBorder
+                        border-zinc-200 rounded-2xl transition-ui focus-within:border-brand-orange/30 overflow-hidden">
+
+              <!-- Toolbar formatage (haut) -->
+              <div class="flex items-center gap-0.5 px-3 pt-2.5 pb-2
+                          border-b dark:border-white/[0.05] border-zinc-200/80">
+                <button class="editor-tool font-bold text-xs dark:text-zinc-300 text-zinc-700"
+                        (click)="applyFormat('bold')" title="Gras">B</button>
+                <button class="editor-tool text-xs dark:text-zinc-300 text-zinc-700 italic"
+                        (click)="applyFormat('italic')" title="Italique">I</button>
+                <button class="editor-tool text-xs dark:text-zinc-300 text-zinc-700 underline"
+                        (click)="applyFormat('underline')" title="Souligné">U</button>
+                <button class="editor-tool text-xs dark:text-zinc-300 text-zinc-700 line-through"
+                        (click)="applyFormat('strikethrough')" title="Barré">S</button>
+                <div class="w-px h-3.5 dark:bg-white/10 bg-zinc-300 mx-1.5 flex-shrink-0"></div>
+                <button class="editor-tool dark:text-zinc-300 text-zinc-700" title="Lien">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101
+                         m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/>
+                  </svg>
+                </button>
+                <div class="w-px h-3.5 dark:bg-white/10 bg-zinc-300 mx-1.5 flex-shrink-0"></div>
+                <button class="editor-tool dark:text-zinc-300 text-zinc-700" title="Liste ordonnée">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M4 6h16M4 10h16M4 14h16M4 18h16"/>
+                  </svg>
+                </button>
+                <button class="editor-tool dark:text-zinc-300 text-zinc-700" title="Liste à puces">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/>
+                  </svg>
+                </button>
+                <div class="w-px h-3.5 dark:bg-white/10 bg-zinc-300 mx-1.5 flex-shrink-0"></div>
+                <button class="editor-tool dark:text-zinc-300 text-zinc-700" title="Code">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/>
+                  </svg>
+                </button>
+                <button class="editor-tool dark:text-zinc-300 text-zinc-700" title="Citation">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/>
+                  </svg>
+                </button>
+              </div>
+
+              <!-- Zone de saisie -->
+              <textarea #textareaEl [(ngModel)]="messageText"
+                (input)="onInput()"
+                (keydown)="onKeydown($event)"
+                rows="3"
+                class="w-full bg-transparent text-sm focus:outline-none resize-none px-4 py-3
+                       dark:placeholder-zinc-600 placeholder-zinc-400 dark:text-zinc-200 text-zinc-800"
+                placeholder="Envoyer un message..."></textarea>
+
+              <!-- Toolbar actions (bas) -->
+              <div class="flex items-center gap-0.5 px-3 pb-2.5 pt-1">
+                <button class="editor-tool dark:text-zinc-400 text-zinc-500" title="Joindre un fichier">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                  </svg>
+                </button>
+                <button class="editor-tool text-[10px] font-semibold dark:text-zinc-400 text-zinc-500"
+                        title="Format">Aa</button>
+                <button class="editor-tool dark:text-zinc-400 text-zinc-500" title="Emoji">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                  </svg>
+                </button>
+                <button class="editor-tool text-[11px] font-bold dark:text-zinc-400 text-zinc-500"
+                        title="Mentionner">@</button>
+                <div class="w-px h-3.5 dark:bg-white/10 bg-zinc-300 mx-1.5 flex-shrink-0"></div>
+                <button class="editor-tool dark:text-zinc-400 text-zinc-500" title="Clip vidéo">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M15 10l4.553-2.069A1 1 0 0121 8.82v6.36a1 1 0 01-1.447.894L15 14
+                         M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                  </svg>
+                </button>
+                <button class="editor-tool dark:text-zinc-400 text-zinc-500" title="Message vocal">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/>
+                  </svg>
+                </button>
+                <button class="editor-tool text-[11px] font-bold dark:text-zinc-400 text-zinc-500"
+                        title="Commandes">/</button>
+                <div class="flex-1"></div>
+                <!-- Bouton envoi -->
+                <button (click)="sendMessage()"
+                        class="editor-tool rounded-lg"
+                        [class]="messageText.trim() ? 'send-btn-active' : 'send-btn-inactive'"
+                        title="Envoyer (Entrée)">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
+                      d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
+                  </svg>
+                </button>
               </div>
             </div>
           </div>
+        </ng-container>
 
-          <!-- Empty state -->
-          <div *ngIf="!loading() && messages().length === 0"
-               class="flex flex-col items-center justify-center h-full text-center py-20">
-            <div class="text-5xl mb-4">💬</div>
-            <h3 class="text-base font-semibold dark:text-white text-zinc-900 mb-2">
-              Démarrez la conversation
-            </h3>
-            <p class="text-zinc-500 text-sm max-w-xs">
-              Les messages seront automatiquement traduits pour chaque membre dans sa langue.
-            </p>
-          </div>
+        <!-- ── Vue configuration agent ── -->
+        <div *ngIf="isAgentChannel() && agentTab() === 'config'"
+             class="flex-1 overflow-y-auto custom-scrollbar pt-20 px-5 pb-5">
+          <div class="grid gap-4" style="grid-template-columns:340px 1fr; max-width:1060px; margin:0 auto">
 
-          <!-- Messages list -->
-          <wb-message-bubble
-            *ngFor="let msg of messages(); trackBy: trackById"
-            [message]="msg"
-            [currentUserLang]="currentUserLang()"
-            [id]="'msg-' + msg.id"
-            (react)="onReact(msg.id, $event)" />
-        </div>
+            <!-- ═══ Colonne gauche ═══ -->
+            <div class="flex flex-col gap-4">
 
-        <!-- ── Compositeur (Rich Text) ── -->
-        <div class="px-4 pb-4 pt-2 border-t dark:border-brand-darkBorder border-brand-lightBorder
-                    dark:bg-brand-darkBg bg-brand-lightBg">
-          <div class="dark:bg-brand-darkPanel bg-zinc-100 border dark:border-brand-darkBorder
-                      border-zinc-200 rounded-2xl transition-ui focus-within:border-brand-orange/30 overflow-hidden">
+              <!-- Agent Setup -->
+              <div class="dark:bg-brand-darkPanel bg-white rounded-[14px] border dark:border-brand-darkBorder border-zinc-200 overflow-hidden shadow-sm">
+                <div class="px-[18px] py-[14px] border-b dark:border-brand-darkBorder border-zinc-200 flex items-center gap-2.5">
+                  <div class="w-[30px] h-[30px] rounded-[7px] bg-brand-orange/10 text-brand-orange flex items-center justify-center flex-shrink-0">
+                    <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+                  </div>
+                  <div>
+                    <div class="text-[13px] font-semibold dark:text-zinc-100 text-zinc-900 tracking-tight">Agent Setup</div>
+                    <div class="text-[11px] dark:text-zinc-500 text-zinc-400 mt-px">Identity &amp; model configuration</div>
+                  </div>
+                </div>
+                <div class="p-[18px]">
+                  <!-- Status row -->
+                  <div class="flex items-center gap-2.5 px-[13px] py-2.5 rounded-[9px] dark:bg-zinc-900 bg-zinc-50 border dark:border-brand-darkBorder border-zinc-200 mb-[14px]">
+                    <div class="w-[30px] h-[30px] rounded-[7px] bg-brand-orange/10 text-brand-orange flex items-center justify-center flex-shrink-0">
+                      <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+                    </div>
+                    <div class="flex-1">
+                      <div class="text-[12.5px] font-semibold dark:text-zinc-200 text-zinc-700">Agent Status</div>
+                      <div class="text-[11px] dark:text-zinc-500 text-zinc-400 mt-px">
+                        {{ currentAgent()?.isActive ? 'Active — responding to messages' : 'Inactive' }}
+                      </div>
+                    </div>
+                    <div class="flex items-center gap-1.5">
+                      <div class="w-2 h-2 rounded-full" [class]="currentAgent()?.isActive ? 'bg-green-500' : 'bg-zinc-400'"></div>
+                      <span class="text-[11px] font-medium" [class]="currentAgent()?.isActive ? 'text-green-500' : 'dark:text-zinc-400 text-zinc-500'">
+                        {{ currentAgent()?.isActive ? 'Active' : 'Off' }}
+                      </span>
+                    </div>
+                  </div>
+                  <!-- Fields -->
+                  <div class="mb-[14px]">
+                    <label class="block text-[10.5px] font-semibold uppercase tracking-wider dark:text-zinc-500 text-zinc-400 mb-[5px]">Agent Name</label>
+                    <div class="w-full px-[11px] py-[9px] dark:bg-zinc-950 bg-zinc-50 border dark:border-white/10 border-zinc-300 rounded-lg dark:text-zinc-200 text-zinc-800 text-[13.5px]">
+                      {{ currentAgent()?.name ?? '—' }}
+                    </div>
+                  </div>
+                  <div class="mb-[14px]">
+                    <label class="block text-[10.5px] font-semibold uppercase tracking-wider dark:text-zinc-500 text-zinc-400 mb-[5px]">Type</label>
+                    <div class="w-full px-[11px] py-[9px] dark:bg-zinc-950 bg-zinc-50 border dark:border-white/10 border-zinc-300 rounded-lg dark:text-zinc-200 text-zinc-800 text-[13.5px] capitalize">
+                      {{ currentAgent()?.agentType?.replace('_', ' ') ?? '—' }}
+                    </div>
+                  </div>
+                  <div>
+                    <label class="block text-[10.5px] font-semibold uppercase tracking-wider dark:text-zinc-500 text-zinc-400 mb-[5px]">AI Model</label>
+                    <div class="w-full px-[11px] py-[9px] dark:bg-zinc-950 bg-zinc-50 border dark:border-white/10 border-zinc-300 rounded-lg dark:text-zinc-200 text-zinc-800 text-[13.5px]">
+                      Gemma 4 · 27B — High Accuracy
+                    </div>
+                  </div>
+                  <div class="mt-3 flex gap-1.5 items-start p-[8px_11px] rounded-lg dark:bg-zinc-900 bg-zinc-50 border dark:border-brand-darkBorder border-zinc-200">
+                    <svg class="w-3.5 h-3.5 text-brand-orange flex-shrink-0 mt-px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                    <span class="text-[12px] dark:text-zinc-400 text-zinc-500">Using <strong class="dark:text-zinc-200 text-zinc-700">Gemma 4 · 27B</strong> in multilingual mode. Auto-translates across 50+ languages.</span>
+                  </div>
+                </div>
+              </div>
 
-            <!-- Toolbar formatage (haut) -->
-            <div class="flex items-center gap-0.5 px-3 pt-2.5 pb-2
-                        border-b dark:border-white/[0.05] border-zinc-200/80">
-              <button class="editor-tool font-bold text-xs dark:text-zinc-300 text-zinc-700"
-                      (click)="applyFormat('bold')" title="Gras">B</button>
-              <button class="editor-tool text-xs dark:text-zinc-300 text-zinc-700 italic"
-                      (click)="applyFormat('italic')" title="Italique">I</button>
-              <button class="editor-tool text-xs dark:text-zinc-300 text-zinc-700 underline"
-                      (click)="applyFormat('underline')" title="Souligné">U</button>
-              <button class="editor-tool text-xs dark:text-zinc-300 text-zinc-700 line-through"
-                      (click)="applyFormat('strikethrough')" title="Barré">S</button>
-              <div class="w-px h-3.5 dark:bg-white/10 bg-zinc-300 mx-1.5 flex-shrink-0"></div>
-              <button class="editor-tool dark:text-zinc-300 text-zinc-700" title="Lien">
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101
-                       m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/>
-                </svg>
-              </button>
-              <div class="w-px h-3.5 dark:bg-white/10 bg-zinc-300 mx-1.5 flex-shrink-0"></div>
-              <button class="editor-tool dark:text-zinc-300 text-zinc-700" title="Liste ordonnée">
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M4 6h16M4 10h16M4 14h16M4 18h16"/>
-                </svg>
-              </button>
-              <button class="editor-tool dark:text-zinc-300 text-zinc-700" title="Liste à puces">
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/>
-                </svg>
-              </button>
-              <div class="w-px h-3.5 dark:bg-white/10 bg-zinc-300 mx-1.5 flex-shrink-0"></div>
-              <button class="editor-tool dark:text-zinc-300 text-zinc-700" title="Code">
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/>
-                </svg>
-              </button>
-              <button class="editor-tool dark:text-zinc-300 text-zinc-700" title="Citation">
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/>
-                </svg>
-              </button>
+              <!-- Context Documents -->
+              <div class="dark:bg-brand-darkPanel bg-white rounded-[14px] border dark:border-brand-darkBorder border-zinc-200 overflow-hidden shadow-sm">
+                <div class="px-[18px] py-[14px] border-b dark:border-brand-darkBorder border-zinc-200 flex items-center gap-2.5">
+                  <div class="w-[30px] h-[30px] rounded-[7px] bg-brand-orange/10 text-brand-orange flex items-center justify-center flex-shrink-0">
+                    <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+                  </div>
+                  <div class="flex-1">
+                    <div class="text-[13px] font-semibold dark:text-zinc-100 text-zinc-900 tracking-tight">Context Documents</div>
+                    <div class="text-[11px] dark:text-zinc-500 text-zinc-400 mt-px">Agent knowledge base</div>
+                  </div>
+                  <span class="text-[11px] dark:text-zinc-400 text-zinc-500 dark:bg-zinc-800 bg-zinc-100 border dark:border-brand-darkBorder border-zinc-200 px-2 py-0.5 rounded-full">0 files</span>
+                </div>
+                <div class="p-[18px]">
+                  <button class="flex items-center gap-1.5 w-full px-[13px] py-[9px] rounded-lg border-[1.5px] border-dashed dark:border-white/10 border-zinc-300 dark:text-zinc-400 text-zinc-500 text-[12.5px] hover:border-brand-orange hover:text-brand-orange transition-colors cursor-pointer bg-transparent">
+                    <svg class="w-3.5 h-3.5 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                    + Add context documents
+                  </button>
+                  <div class="mt-3 px-[10px] py-[8px] rounded-lg dark:bg-zinc-900 bg-zinc-50 border dark:border-brand-darkBorder border-zinc-200 border-l-[3px] border-l-brand-orange">
+                    <div class="text-[10px] font-bold uppercase tracking-[0.07em] text-brand-orange mb-1.5">Last AI Response</div>
+                    <div class="text-[12px] dark:text-zinc-300 text-zinc-600 leading-[1.65]">
+                      {{ currentAgent()?.name === 'ProjectBot'
+                        ? 'Bonjour @Sophie — le jalon Q4 est prévu le 15 nov. Je peux organiser une réunion de synchronisation cette semaine si vous le souhaitez.'
+                        : 'Mode veille. Activation automatique dès qu\'un message nécessite une traduction.' }}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
             </div>
 
-            <!-- Zone de saisie -->
-            <textarea #textareaEl [(ngModel)]="messageText"
-              (input)="onInput()"
-              (keydown)="onKeydown($event)"
-              rows="3"
-              class="w-full bg-transparent text-sm focus:outline-none resize-none px-4 py-3
-                     dark:placeholder-zinc-600 placeholder-zinc-400 dark:text-zinc-200 text-zinc-800"
-              placeholder="Envoyer un message..."></textarea>
+            <!-- ═══ Colonne droite ═══ -->
+            <div class="dark:bg-brand-darkPanel bg-white rounded-[14px] border dark:border-brand-darkBorder border-zinc-200 overflow-hidden shadow-sm flex flex-col">
+              <div class="px-[18px] py-[14px] border-b dark:border-brand-darkBorder border-zinc-200 flex items-center gap-2.5 flex-shrink-0">
+                <div class="w-[30px] h-[30px] rounded-[7px] bg-brand-orange/10 text-brand-orange flex items-center justify-center flex-shrink-0">
+                  <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                </div>
+                <div class="flex-1">
+                  <div class="text-[13px] font-semibold dark:text-zinc-100 text-zinc-900 tracking-tight">Behaviour Configuration</div>
+                  <div class="text-[11px] dark:text-zinc-500 text-zinc-400 mt-px">Tone, response settings &amp; system prompt</div>
+                </div>
+              </div>
 
-            <!-- Toolbar actions (bas) -->
-            <div class="flex items-center gap-0.5 px-3 pb-2.5 pt-1">
-              <button class="editor-tool dark:text-zinc-400 text-zinc-500" title="Joindre un fichier">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-                </svg>
-              </button>
-              <button class="editor-tool text-[10px] font-semibold dark:text-zinc-400 text-zinc-500"
-                      title="Format">Aa</button>
-              <button class="editor-tool dark:text-zinc-400 text-zinc-500" title="Emoji">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                </svg>
-              </button>
-              <button class="editor-tool text-[11px] font-bold dark:text-zinc-400 text-zinc-500"
-                      title="Mentionner">@</button>
-              <div class="w-px h-3.5 dark:bg-white/10 bg-zinc-300 mx-1.5 flex-shrink-0"></div>
-              <button class="editor-tool dark:text-zinc-400 text-zinc-500" title="Clip vidéo">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M15 10l4.553-2.069A1 1 0 0121 8.82v6.36a1 1 0 01-1.447.894L15 14
-                       M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
-                </svg>
-              </button>
-              <button class="editor-tool dark:text-zinc-400 text-zinc-500" title="Message vocal">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/>
-                </svg>
-              </button>
-              <button class="editor-tool text-[11px] font-bold dark:text-zinc-400 text-zinc-500"
-                      title="Commandes">/</button>
-              <div class="flex-1"></div>
-              <!-- Bouton envoi -->
-              <button (click)="sendMessage()"
-                      class="editor-tool rounded-lg"
-                      [class]="messageText.trim() ? 'send-btn-active' : 'send-btn-inactive'"
-                      title="Envoyer (Entrée)">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
-                    d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
-                </svg>
-              </button>
+              <div class="flex-1 overflow-y-auto custom-scrollbar p-[18px]">
+
+                <!-- Tone -->
+                <div class="flex items-center gap-2 my-4">
+                  <div class="flex-1 h-px dark:bg-brand-darkBorder bg-zinc-200"></div>
+                  <span class="text-[10px] font-bold uppercase tracking-[0.08em] dark:text-zinc-500 text-zinc-400">Tone</span>
+                  <div class="flex-1 h-px dark:bg-brand-darkBorder bg-zinc-200"></div>
+                </div>
+                <div class="grid grid-cols-2 gap-2 mb-[14px]">
+                  <div *ngFor="let t of ['Professional','Friendly','Formal','Casual']; let i = index"
+                       class="flex items-center gap-1.5 px-[11px] py-[8px] rounded-lg border text-[13px] font-medium cursor-pointer transition-colors"
+                       [class]="i === 0
+                         ? 'border-brand-orange bg-brand-orange/10 dark:text-zinc-100 text-zinc-900'
+                         : 'dark:border-white/10 border-zinc-200 dark:bg-zinc-900 bg-zinc-50 dark:text-zinc-400 text-zinc-500'">
+                    <div class="w-[13px] h-[13px] rounded-full border-[1.5px] flex items-center justify-center flex-shrink-0"
+                         [class]="i === 0 ? 'border-brand-orange' : 'dark:border-zinc-500 border-zinc-400'">
+                      <div *ngIf="i === 0" class="w-[5px] h-[5px] rounded-full bg-brand-orange"></div>
+                    </div>
+                    {{ t }}
+                  </div>
+                </div>
+
+                <!-- Response Settings -->
+                <div class="flex items-center gap-2 my-4">
+                  <div class="flex-1 h-px dark:bg-brand-darkBorder bg-zinc-200"></div>
+                  <span class="text-[10px] font-bold uppercase tracking-[0.08em] dark:text-zinc-500 text-zinc-400">Response Settings</span>
+                  <div class="flex-1 h-px dark:bg-brand-darkBorder bg-zinc-200"></div>
+                </div>
+                <div class="mb-[14px]">
+                  <div class="flex items-center justify-between py-2.5 border-b dark:border-brand-darkBorder border-zinc-100">
+                    <div>
+                      <div class="text-[13px] font-medium dark:text-zinc-200 text-zinc-700">Auto-respond to @mentions</div>
+                      <div class="text-[11px] dark:text-zinc-500 text-zinc-400 mt-0.5">Agent replies when tagged in any conversation</div>
+                    </div>
+                    <div class="relative w-[36px] h-[20px] flex-shrink-0">
+                      <div class="absolute inset-0 rounded-full bg-brand-orange"></div>
+                      <div class="absolute top-[3px] left-[19px] w-[13px] h-[13px] rounded-full bg-white shadow"></div>
+                    </div>
+                  </div>
+                  <div class="flex items-center justify-between py-2.5">
+                    <div>
+                      <div class="text-[13px] font-medium dark:text-zinc-200 text-zinc-700">Auto-respond to direct messages</div>
+                      <div class="text-[11px] dark:text-zinc-500 text-zinc-400 mt-0.5">Handles DMs automatically without supervision</div>
+                    </div>
+                    <div class="relative w-[36px] h-[20px] flex-shrink-0">
+                      <div class="absolute inset-0 rounded-full dark:bg-zinc-700 bg-zinc-300"></div>
+                      <div class="absolute top-[3px] left-[3px] w-[13px] h-[13px] rounded-full dark:bg-zinc-400 bg-zinc-500 shadow"></div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- System Prompt -->
+                <div class="flex items-center gap-2 my-4">
+                  <div class="flex-1 h-px dark:bg-brand-darkBorder bg-zinc-200"></div>
+                  <span class="text-[10px] font-bold uppercase tracking-[0.08em] dark:text-zinc-500 text-zinc-400">System Prompt</span>
+                  <div class="flex-1 h-px dark:bg-brand-darkBorder bg-zinc-200"></div>
+                </div>
+                <div>
+                  <div class="flex justify-between items-center mb-1.5">
+                    <label class="text-[10.5px] font-semibold uppercase tracking-wider dark:text-zinc-500 text-zinc-400">Instructions</label>
+                    <span class="text-[11px] dark:text-zinc-500 text-zinc-400">
+                      <span class="font-semibold text-brand-orange">{{ (currentAgent()?.persona ?? '').length }}</span> / 500
+                    </span>
+                  </div>
+                  <div class="w-full px-[11px] py-[9px] dark:bg-zinc-950 bg-zinc-50 border dark:border-white/10 border-zinc-300 rounded-lg dark:text-zinc-300 text-zinc-600 text-[13px] leading-[1.65] min-h-[120px] whitespace-pre-wrap">
+                    {{ currentAgent()?.persona ?? '—' }}
+                  </div>
+                  <div class="text-[11px] dark:text-zinc-500 text-zinc-400 text-right mt-1">Max 500 characters · Included in every AI response</div>
+                </div>
+
+              </div>
             </div>
+
           </div>
         </div>
+
       </div>
 
       <!-- ═══════════════ SIDEBAR DROITE (PARTICIPANTS) ═══════════════ -->
@@ -270,11 +484,21 @@ import { MessageBubbleComponent } from '../components/message-bubble.component';
               <p class="text-xs font-bold truncate dark:text-zinc-100 text-zinc-900">{{ m.username }}</p>
               <p class="text-[10px] text-zinc-500 font-medium">{{ memberRoleLabel(m) }}</p>
             </div>
-            <!-- Agentic badge -->
+            <!-- Status badges -->
             <span *ngIf="m.status === 'agentic'"
                   class="text-[8px] px-1.5 py-0.5 bg-brand-orange/20 text-brand-orange
-                         rounded font-bold uppercase tracking-tight flex-shrink-0">
+                         rounded font-bold uppercase tracking-tight flex-shrink-0 dot-agentic">
               Agentic
+            </span>
+            <span *ngIf="m.status === 'absent'"
+                  class="text-[8px] px-1.5 py-0.5 bg-amber-400/20 text-amber-500
+                         rounded font-bold uppercase tracking-tight flex-shrink-0">
+              Absent
+            </span>
+            <span *ngIf="m.status === 'communication'"
+                  class="text-[8px] px-1.5 py-0.5 bg-blue-500/20 text-blue-500
+                         rounded font-bold uppercase tracking-tight flex-shrink-0">
+              En com.
             </span>
           </div>
         </div>
@@ -291,6 +515,7 @@ export class ConversationComponent implements OnInit, OnChanges, OnDestroy, Afte
   private msgSvc     = inject(MessageService);
   private wsSvc      = inject(ChatWebSocketService);
   private authSvc    = inject(AuthService);
+  private agentSvc   = inject(AgentService);
 
   // Expose helpers to template
   getInitials = getInitials;
@@ -302,6 +527,7 @@ export class ConversationComponent implements OnInit, OnChanges, OnDestroy, Afte
   hasMore        = signal(false);
   currentPage    = signal(1);
   showParticipants = signal(false);
+  agentTab       = signal<'chat' | 'config'>('chat');
   messageText    = '';
   typingText     = signal('');
 
@@ -310,6 +536,17 @@ export class ConversationComponent implements OnInit, OnChanges, OnDestroy, Afte
 
   participantsPreview = computed(() => this.members().slice(0, 3));
   participantsOverflow = computed(() => Math.max(0, this.members().length - 3));
+
+  isAgentChannel = computed(() => {
+    const ch = this.channel();
+    return ch?.type === 'pair' && (ch.name === 'ProjectBot' || ch.name === 'TransBot');
+  });
+
+  currentAgent = computed(() => {
+    const ch = this.channel();
+    if (!ch) return null;
+    return this.agentSvc.agents().find(a => a.name === ch.name) ?? null;
+  });
 
   private subs: Subscription[] = [];
   private shouldScroll = true;
@@ -511,7 +748,14 @@ export class ConversationComponent implements OnInit, OnChanges, OnDestroy, Afte
   }
 
   memberStatusDot(status: string): string {
-    return status === 'agentic' ? 'bg-brand-orange' : status === 'inactive' ? 'bg-zinc-400' : 'bg-green-500';
+    switch (status) {
+      case 'active':        return 'bg-green-500';
+      case 'absent':        return 'bg-amber-400';
+      case 'communication': return 'bg-blue-500';
+      case 'agentic':       return 'bg-brand-orange dot-agentic';
+      case 'inactive':      return 'bg-zinc-400';
+      default:              return 'bg-zinc-400';
+    }
   }
 
   memberRoleLabel(m: ChannelMember): string {
