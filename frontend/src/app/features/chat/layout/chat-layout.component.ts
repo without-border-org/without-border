@@ -87,7 +87,7 @@ import { Agent, Channel, ChannelMember, UserStatus, LANGUAGE_MAP, getUserColor, 
                   class="w-full flex items-center justify-between px-4 py-2 text-xs font-medium transition-ui"
                   [class]="activeChannelId() === ch.id
                     ? 'nav-item-active'
-                    : 'text-zinc-500 hover:bg-zinc-200 dark:hover:bg-zinc-800 hover:text-zinc-900 dark:hover:text-zinc-200'">
+                    : 'text-zinc-400 hover:bg-white/10 hover:text-white'">
                   <div class="flex items-center gap-3 truncate">
                     <span class="opacity-40 font-bold text-[10px] w-4 text-right flex-shrink-0">
                       #{{ i + 1 }}
@@ -119,7 +119,7 @@ import { Agent, Channel, ChannelMember, UserStatus, LANGUAGE_MAP, getUserColor, 
                   class="w-full flex items-center gap-3 px-4 py-2.5 text-xs font-medium transition-ui"
                   [class]="activeChannelId() === ch.id
                     ? 'nav-item-active'
-                    : 'text-zinc-500 hover:bg-zinc-200 dark:hover:bg-zinc-800 hover:text-zinc-900 dark:hover:text-zinc-200'">
+                    : 'text-zinc-400 hover:bg-white/10 hover:text-white'">
 
                   <!-- Avatar + status dot -->
                   <div class="relative flex-shrink-0">
@@ -166,7 +166,7 @@ import { Agent, Channel, ChannelMember, UserStatus, LANGUAGE_MAP, getUserColor, 
                   class="w-full flex items-center gap-3 px-4 py-2.5 text-xs font-medium transition-ui"
                   [class]="activeChannelId() === agentChannelMap().get(agent.id)
                     ? 'nav-item-active'
-                    : 'text-zinc-500 hover:bg-zinc-200 dark:hover:bg-zinc-800 hover:text-zinc-900 dark:hover:text-zinc-200'">
+                    : 'text-zinc-400 hover:bg-white/10 hover:text-white'">
                   <!-- Avatar agent avec dot statut -->
                   <div class="relative flex-shrink-0">
                     <div class="agent-avatar w-8 h-8 rounded-lg flex items-center justify-center text-[10px] font-bold border
@@ -205,6 +205,7 @@ import { Agent, Channel, ChannelMember, UserStatus, LANGUAGE_MAP, getUserColor, 
 
           <!-- Status dropdown -->
           <div *ngIf="statusMenuOpen() && !agentPickerOpen()"
+               (click)="$event.stopPropagation()"
                class="absolute bottom-full left-4 right-4 mb-2 rounded-[14px] border z-50
                       dark:bg-[#1C1C20] dark:border-white/9 bg-white border-slate-200
                       shadow-[0_12px_40px_rgba(0,0,0,0.22)]
