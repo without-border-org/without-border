@@ -810,6 +810,115 @@
     .reveal { opacity: 1; transform: none; }
     .fade-up { opacity: 1; transform: none; animation: none; }
   }
+
+  /* ===== Section alternance ===== */
+  .section-alt { background: var(--bg-2); }
+
+  /* ===== Open Source strip ===== */
+  .oss-strip {
+    background: var(--bg-2);
+    border-top: 1px solid var(--hairline);
+    border-bottom: 1px solid var(--hairline);
+    padding: 18px 0;
+  }
+  .oss-strip .wrap {
+    display: flex; align-items: center; gap: 28px; flex-wrap: wrap;
+  }
+  .oss-item {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 14px; color: var(--fg-2); font-weight: 500;
+    white-space: nowrap;
+  }
+  .oss-item svg { width: 15px; height: 15px; flex-shrink: 0; color: var(--accent); }
+  .oss-gh {
+    margin-left: auto;
+    display: inline-flex; align-items: center; gap: 8px;
+    font-family: var(--mono); font-size: 12px;
+    letter-spacing: 0.03em; color: var(--fg-2);
+    border: 1px solid var(--hairline-2); border-radius: 999px;
+    padding: 7px 16px;
+    transition: color .15s, border-color .15s, background .15s;
+  }
+  .oss-gh:hover { color: var(--fg); border-color: var(--accent); background: color-mix(in oklab,var(--accent) 6%,transparent); }
+  .oss-gh svg { width: 13px; height: 13px; }
+  @media (max-width: 640px) { .oss-strip .wrap { gap: 16px; } .oss-gh { margin-left: 0; } }
+
+  /* ===== Why Gemma — compare ===== */
+  .why-compare {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 24px;
+  }
+  @media (max-width: 720px) { .why-compare { grid-template-columns: 1fr; } }
+  .why-col {
+    padding: 32px 28px;
+    border-radius: var(--r-lg);
+    border: 1px solid var(--hairline);
+    background: var(--surface);
+    box-shadow: var(--shadow-1);
+  }
+  .why-col-good {
+    background: linear-gradient(170deg, color-mix(in oklab,var(--accent) 9%,transparent), var(--surface) 60%);
+    border-color: color-mix(in oklab,var(--accent) 22%,var(--hairline));
+  }
+  .why-col-head {
+    display: flex; align-items: center; gap: 10px; margin-bottom: 22px;
+  }
+  .why-col-head h3 { font-size: 18px; margin: 0; }
+  .why-mark {
+    width: 22px; height: 22px; border-radius: 50%;
+    display: grid; place-items: center;
+    font-size: 12px; font-weight: 700; flex-shrink: 0;
+  }
+  .why-mark.bad  { background: rgba(239,68,68,.15); color:#EF4444; }
+  .why-mark.good { background: color-mix(in oklab,var(--accent) 18%,transparent); color:var(--accent); }
+  .why-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 13px; }
+  .why-list li {
+    display: flex; align-items: flex-start; gap: 10px;
+    font-size: 15px; color: var(--fg-2); line-height: 1.5;
+  }
+  .why-list li .dot-i {
+    width: 18px; height: 18px; border-radius: 50%; flex-shrink: 0;
+    display: grid; place-items: center; font-size: 10px; font-weight: 700;
+    margin-top: 2px;
+  }
+  .why-list li.bad  .dot-i { background: rgba(239,68,68,.12); color:#EF4444; border:1.5px solid rgba(239,68,68,.35); }
+  .why-list li.good .dot-i { background:color-mix(in oklab,var(--accent) 12%,transparent); color:var(--accent); border:1.5px solid color-mix(in oklab,var(--accent) 35%,transparent); }
+
+  /* ===== Why Gemma — 3 cards ===== */
+  .why-gemma-grid {
+    display: grid; grid-template-columns: repeat(3,1fr); gap: 20px;
+  }
+  @media (max-width: 900px) { .why-gemma-grid { grid-template-columns: 1fr; } }
+  .why-gemma-card {
+    padding: 28px 24px;
+    background: var(--surface);
+    border: 1px solid var(--hairline);
+    border-radius: var(--r-lg);
+    box-shadow: var(--shadow-1);
+  }
+  .why-gemma-card .wgc-icn {
+    width: 44px; height: 44px; border-radius: 12px;
+    display: grid; place-items: center; margin-bottom: 18px;
+  }
+  .why-gemma-card .wgc-icn svg { width: 22px; height: 22px; }
+  .why-gemma-card h3 { font-size: 18px; margin-bottom: 12px; }
+  .why-gemma-card p { font-size: 15px; line-height: 1.6; color: var(--fg-2); }
+
+  /* ===== Contact ===== */
+  .contact-inner { max-width: 680px; margin: 0 auto; text-align: center; }
+  .contact-links {
+    margin-top: 38px;
+    display: flex; gap: 14px; flex-wrap: wrap; justify-content: center;
+  }
+  .contact-email-link {
+    display: inline-flex; align-items: center; gap: 10px;
+    padding: 14px 24px;
+    background: var(--surface); border: 1px solid var(--hairline-2);
+    border-radius: 999px; font-size: 15px; font-weight: 500; color: var(--fg);
+    box-shadow: var(--shadow-1);
+    transition: border-color .2s, transform .15s, box-shadow .2s;
+  }
+  .contact-email-link:hover { border-color: var(--accent); transform: translateY(-2px); box-shadow: var(--shadow-2); }
+  .contact-email-link svg { width: 18px; height: 18px; color: var(--accent); flex-shrink: 0; }
 </style>
 </head>
 <body>
@@ -835,15 +944,16 @@
     <nav class="nav-links" aria-label="Main">
       <a href="#features">Features</a>
       <a href="#how">How it works</a>
+      <a href="#why">Why Gemma</a>
       <a href="#sovereignty">Sovereignty</a>
-      <a href="#agents">Agents</a>
+      <a href="#contact">Contact</a>
     </nav>
     <div class="nav-actions">
       <button class="theme-toggle" id="themeToggle" aria-label="Toggle color theme" title="Toggle theme">
         <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8 8 0 1 1 9.5 4 6.5 6.5 0 0 0 20 14.5z"/></svg>
         <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
       </button>
-      <a class="btn btn-primary btn-sm" href="/app/">Try it now</a>
+      <a class="btn btn-primary btn-sm" href="https://github.com/without-border-org/without-border" target="_blank" rel="noopener">★ Open Source</a>
     </div>
   </div>
 </header>
@@ -863,12 +973,12 @@
         Built for teams that can't outsource their context.
       </p>
       <div class="hero-cta fade-up d4">
-        <a href="/app/" class="btn btn-primary">Get started for free →</a>
-        <a href="#how" class="btn btn-ghost">How it works</a>
+        <a href="https://github.com/without-border-org/without-border" class="btn btn-primary" target="_blank" rel="noopener">Deploy for free →</a>
+        <a href="https://github.com/without-border-org/without-border" class="btn btn-ghost" target="_blank" rel="noopener">★ View on GitHub</a>
       </div>
       <div class="hero-meta fade-up d4">
         <span class="pulse" aria-hidden="true"></span>
-        <span>LIVE · 6 LANGUAGES · 0 BYTES TO THE CLOUD</span>
+        <span>FREE · MIT LICENSED · 6 LANGUAGES · 0 BYTES TO THE CLOUD</span>
       </div>
     </div>
 
@@ -976,8 +1086,34 @@
   </div>
 </section>
 
+<!-- ===== OPEN SOURCE STRIP ===== -->
+<div class="oss-strip" role="complementary" aria-label="Open source highlights">
+  <div class="wrap">
+    <div class="oss-item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+      Free &amp; Open Source
+    </div>
+    <div class="oss-item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      No subscription · MIT Licensed
+    </div>
+    <div class="oss-item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
+      Self-host in minutes
+    </div>
+    <div class="oss-item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      0 bytes to the cloud
+    </div>
+    <a class="oss-gh" href="https://github.com/without-border-org/without-border" target="_blank" rel="noopener" aria-label="View WithoutBorder on GitHub">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></svg>
+      View on GitHub →
+    </a>
+  </div>
+</div>
+
 <!-- ===== PROBLEM ===== -->
-<section class="section" id="problem">
+<section class="section section-alt" id="problem">
   <div class="wrap">
     <div class="section-head reveal">
       <span class="eyebrow">The status quo</span>
@@ -1114,7 +1250,7 @@
 </section>
 
 <!-- ===== HOW IT WORKS ===== -->
-<section class="section" id="how">
+<section class="section section-alt" id="how">
   <div class="wrap">
     <div class="section-head reveal">
       <span class="eyebrow">How it works</span>
@@ -1136,11 +1272,77 @@
            The 文 badge keeps the provenance honest. One click toggles between
            the original and the translation.</p>
       </div>
-      <div class="step reveal" id="agents">
+      <div class="step reveal">
         <h3>Let AI back you up.</h3>
         <p>Flip on Mode Agent when you leave. Gemma 4 maintains the conversation
            in your absence, with a purple AGENTIC badge on every message so
            collaborators always know what's you and what's the model.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== WHY GEMMA 4 ===== -->
+<section class="section" id="why">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <span class="eyebrow">Why WithoutBorder · Why Gemma 4</span>
+      <h2>The right solution,<br/>powered by the right model.</h2>
+      <p>The Language Tax costs billions in lost productivity and excluded talent every year. Gemma 4 is the first open model family capable of eliminating it — at the edge, on-premise, for free.</p>
+    </div>
+
+    <!-- Comparison -->
+    <div class="why-compare reveal">
+      <div class="why-col why-col-bad">
+        <div class="why-col-head">
+          <span class="why-mark bad">✕</span>
+          <h3>Existing tools</h3>
+        </div>
+        <ul class="why-list">
+          <li class="bad"><span class="dot-i">✕</span>Translation means copy-pasting to a separate service</li>
+          <li class="bad"><span class="dot-i">✕</span>AI features send your data to external clouds</li>
+          <li class="bad"><span class="dot-i">✕</span>Prompt engineering excludes non-technical contributors</li>
+          <li class="bad"><span class="dot-i">✕</span>AI authorship is invisible — erodes trust</li>
+          <li class="bad"><span class="dot-i">✕</span>High-reasoning AI requires cloud compute budgets</li>
+        </ul>
+      </div>
+      <div class="why-col why-col-good">
+        <div class="why-col-head">
+          <span class="why-mark good">✓</span>
+          <h3>WithoutBorder</h3>
+        </div>
+        <ul class="why-list">
+          <li class="good"><span class="dot-i">✓</span>Zero-latency translation built into every message</li>
+          <li class="good"><span class="dot-i">✓</span>Gemma 4 runs on your hardware — 0 bytes to the cloud</li>
+          <li class="good"><span class="dot-i">✓</span>Delegate to AI through natural language — no prompts needed</li>
+          <li class="good"><span class="dot-i">✓</span>Purple AGENTIC badge on every AI message — always transparent</li>
+          <li class="good"><span class="dot-i">✓</span>Edge E2B/E4B + local 26B/31B — MIT licensed, free forever</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Why Gemma 4 specifically -->
+    <div class="why-gemma-grid" style="margin-top:52px">
+      <div class="why-gemma-card reveal">
+        <div class="wgc-icn" style="background:color-mix(in oklab,var(--accent) 12%,transparent);border:1px solid color-mix(in oklab,var(--accent) 30%,transparent);color:var(--accent)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2V9M9 21H5a2 2 0 0 1-2-2V9m0 0h18"/></svg>
+        </div>
+        <h3>Native function calling</h3>
+        <p>Users delegate complex tasks ("summarize this sprint") through plain language. Gemma 4 identifies the intent, calls the synthesis tool, and returns structured output as a background task. No prompt vocabulary required.</p>
+      </div>
+      <div class="why-gemma-card reveal">
+        <div class="wgc-icn" style="background:color-mix(in oklab,var(--agent) 12%,transparent);border:1px solid color-mix(in oklab,var(--agent) 30%,transparent);color:var(--agent)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+        </div>
+        <h3>Edge + reasoning — one model family</h3>
+        <p>E2B/E4B via LiteRT delivers sub-100ms translation on consumer hardware. The 26B/31B weights handle complex agentic reasoning locally via Ollama. One model family, automatically routed by task complexity.</p>
+      </div>
+      <div class="why-gemma-card reveal">
+        <div class="wgc-icn" style="background:color-mix(in oklab,var(--teal) 12%,transparent);border:1px solid color-mix(in oklab,var(--teal) 30%,transparent);color:var(--teal)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        </div>
+        <h3>Open weights — auditable by compliance</h3>
+        <p>A hospital compliance officer can inspect the exact model weights running on their own rack. No opaque API contract, no external data dependency. Open weights are what make AI adoption viable in regulated sectors.</p>
       </div>
     </div>
   </div>
@@ -1242,16 +1444,37 @@
   </div>
 </section>
 
+<!-- ===== CONTACT ===== -->
+<section class="section section-alt" id="contact">
+  <div class="wrap">
+    <div class="contact-inner reveal">
+      <span class="eyebrow" style="justify-content:center">Get in touch</span>
+      <h2 style="margin-top:14px">Questions, ideas,<br/>or want to collaborate?</h2>
+      <p style="margin-top:18px;font-size:17px;color:var(--fg-2);max-width:52ch;margin-left:auto;margin-right:auto">
+        WithoutBorder is built in the open. Whether you want to contribute, test
+        the platform with your team, or talk about AI and linguistic equity — reach out anytime.
+      </p>
+      <div class="contact-links">
+        <a class="contact-email-link" href="mailto:dadi.service.ca@gmail.com">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 7 10 7 10-7"/></svg>
+          dadi.service.ca@gmail.com
+        </a>
+        <a class="btn btn-ghost" href="https://github.com/without-border-org/without-border" target="_blank" rel="noopener">★ Star on GitHub</a>
+      </div>
+    </div>
+  </div>
+</section>
+
 <!-- ===== FINAL CTA ===== -->
 <section class="final" id="cta">
   <div class="wrap">
     <div class="reveal">
-      <span class="eyebrow" style="justify-content:center;">Start now · No cloud signup</span>
+      <span class="eyebrow" style="justify-content:center;">MIT Licensed · Free forever · No cloud signup</span>
       <h2 style="margin-top:18px">Start collaborating<br/>without borders.</h2>
-      <p>Deploy in minutes. Own your AI. Speak your language.</p>
+      <p>Deploy in minutes. Own your AI. Speak your language. No subscription, no vendor lock-in.</p>
       <div class="cta-row">
-        <a class="btn btn-primary" href="/app/">Get started for free →</a>
-        <a class="btn btn-ghost" href="https://github.com/without-border-org/without-border#readme" target="_blank" rel="noopener">Read the docs</a>
+        <a class="btn btn-primary" href="https://github.com/without-border-org/without-border" target="_blank" rel="noopener">Deploy for free →</a>
+        <a class="btn btn-ghost" href="https://github.com/without-border-org/without-border#readme" target="_blank" rel="noopener">★ Read the docs</a>
       </div>
     </div>
   </div>
@@ -1283,7 +1506,7 @@
         <a href="https://github.com/without-border-org/without-border" target="_blank" rel="noopener">GitHub</a>
         <a href="https://github.com/without-border-org/without-border#readme" target="_blank" rel="noopener">Docs</a>
         <a href="https://www.kaggle.com/competitions" target="_blank" rel="noopener">Kaggle Challenge</a>
-        <a href="https://github.com/without-border-org/without-border/issues" target="_blank" rel="noopener">Contact</a>
+        <a href="mailto:dadi.service.ca@gmail.com">Contact</a>
       </div>
       <div>
         <h5>Powered by</h5>
