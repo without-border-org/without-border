@@ -13,10 +13,10 @@ module.exports = {
           darkSidebar:  '#18181B',
           darkPanel:    '#27272A',
           darkBorder:   'rgba(255,255,255,0.06)',
-          lightBg:      '#FFFFFF',
-          lightSidebar: '#F4F4F5',
-          lightPanel:   '#E4E4E7',
-          lightBorder:  'rgba(0,0,0,0.08)',
+          lightBg:      '#F3F3F6',
+          lightSidebar: '#1B1442',
+          lightPanel:   '#FFFFFF',
+          lightBorder:  'rgba(15,15,30,0.08)',
         },
         // Legacy palette — kept for existing components not yet migrated
         primary: {

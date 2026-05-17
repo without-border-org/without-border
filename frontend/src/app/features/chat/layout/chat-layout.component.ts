@@ -23,7 +23,7 @@ import { Agent, Channel, ChannelMember, UserStatus, LANGUAGE_MAP, getUserColor, 
                 dark:text-zinc-200 text-zinc-800">
 
       <!-- ═══════════════ SIDEBAR GAUCHE ═══════════════ -->
-      <aside class="w-64 flex flex-col flex-shrink-0
+      <aside class="sidebar-main w-64 flex flex-col flex-shrink-0
                     dark:bg-brand-darkSidebar bg-brand-lightSidebar
                     border-r dark:border-brand-darkBorder border-brand-lightBorder z-30">
 
