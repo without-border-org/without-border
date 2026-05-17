@@ -14,7 +14,7 @@ from alembic import op
 
 # revision identifiers, used by Alembic.
 revision = '003_extend_user_status'
-down_revision = '001_initial_schema'
+down_revision = '002_add_agents_table'
 branch_labels = None
 depends_on = None
 
