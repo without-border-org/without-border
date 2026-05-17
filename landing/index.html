@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WithoutBorder — Real-Time Multilingual Collaboration</title>
+  <meta name="description" content="WithoutBorder is a real-time multilingual collaboration platform powered by local AI. Communicate across languages instantly, without sending your data to the cloud." />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --brand:     #2563eb;
+      --brand-dk:  #1d4ed8;
+      --brand-lt:  #eff6ff;
+      --text:      #0f172a;
+      --muted:     #64748b;
+      --border:    #e2e8f0;
+      --white:     #ffffff;
+      --radius:    0.75rem;
+      --shadow:    0 4px 24px rgba(15,23,42,.08);
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      color: var(--text);
+      background: var(--white);
+      line-height: 1.6;
+    }
+
+    /* ── NAV ── */
+    nav {
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(255,255,255,.92);
+      backdrop-filter: blur(8px);
+      border-bottom: 1px solid var(--border);
+      padding: 0 1.5rem;
+      height: 60px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .nav-logo {
+      font-weight: 700; font-size: 1.15rem; color: var(--brand);
+      text-decoration: none; letter-spacing: -.3px;
+    }
+    .nav-cta {
+      background: var(--brand); color: var(--white);
+      padding: .45rem 1.1rem; border-radius: 0.5rem;
+      text-decoration: none; font-size: .9rem; font-weight: 600;
+      transition: background .15s;
+    }
+    .nav-cta:hover { background: var(--brand-dk); }
+
+    /* ── HERO ── */
+    .hero {
+      text-align: center;
+      padding: 6rem 1.5rem 5rem;
+      background: linear-gradient(160deg, var(--brand-lt) 0%, var(--white) 60%);
+    }
+    .hero-badge {
+      display: inline-block;
+      background: var(--brand-lt); color: var(--brand);
+      border: 1px solid #bfdbfe;
+      font-size: .78rem; font-weight: 600; letter-spacing: .05em;
+      text-transform: uppercase; padding: .3rem .85rem; border-radius: 99px;
+      margin-bottom: 1.5rem;
+    }
+    .hero h1 {
+      font-size: clamp(2rem, 5vw, 3.4rem);
+      font-weight: 800; line-height: 1.15; letter-spacing: -.03em;
+      max-width: 780px; margin: 0 auto .75rem;
+    }
+    .hero h1 span { color: var(--brand); }
+    .hero p {
+      font-size: clamp(1rem, 2vw, 1.2rem);
+      color: var(--muted); max-width: 560px; margin: 0 auto 2.5rem;
+    }
+    .cta-group { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+    .btn-primary {
+      background: var(--brand); color: var(--white);
+      padding: .8rem 2rem; border-radius: var(--radius);
+      text-decoration: none; font-size: 1rem; font-weight: 700;
+      transition: background .15s, transform .1s;
+      display: inline-flex; align-items: center; gap: .5rem;
+    }
+    .btn-primary:hover { background: var(--brand-dk); transform: translateY(-1px); }
+    .btn-secondary {
+      background: var(--white); color: var(--brand);
+      border: 2px solid var(--brand);
+      padding: .8rem 2rem; border-radius: var(--radius);
+      text-decoration: none; font-size: 1rem; font-weight: 700;
+      transition: background .15s;
+    }
+    .btn-secondary:hover { background: var(--brand-lt); }
+
+    /* ── SECTION WRAPPER ── */
+    section { padding: 4.5rem 1.5rem; }
+    .section-inner { max-width: 1100px; margin: 0 auto; }
+    .section-label {
+      font-size: .78rem; font-weight: 700; letter-spacing: .1em;
+      text-transform: uppercase; color: var(--brand);
+      margin-bottom: .5rem;
+    }
+    .section-title {
+      font-size: clamp(1.5rem, 3vw, 2.2rem);
+      font-weight: 800; letter-spacing: -.02em; margin-bottom: .6rem;
+    }
+    .section-sub {
+      color: var(--muted); font-size: 1.05rem; max-width: 540px;
+      margin-bottom: 3rem;
+    }
+
+    /* ── FEATURES GRID ── */
+    .features { background: var(--white); }
+    .feature-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 1.5rem;
+    }
+    .feature-card {
+      background: var(--white); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 1.75rem;
+      box-shadow: var(--shadow);
+      transition: transform .15s, box-shadow .15s;
+    }
+    .feature-card:hover { transform: translateY(-3px); box-shadow: 0 8px 32px rgba(15,23,42,.12); }
+    .feature-icon {
+      font-size: 1.8rem; margin-bottom: 1rem;
+      display: inline-block;
+    }
+    .feature-card h3 {
+      font-size: 1.05rem; font-weight: 700; margin-bottom: .45rem;
+    }
+    .feature-card p { color: var(--muted); font-size: .95rem; }
+
+    /* ── HOW IT WORKS ── */
+    .how { background: #f8fafc; }
+    .steps {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 2rem; counter-reset: steps;
+    }
+    .step { counter-increment: steps; }
+    .step-num {
+      width: 2.4rem; height: 2.4rem; border-radius: 50%;
+      background: var(--brand); color: var(--white);
+      font-weight: 800; font-size: 1rem;
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 1rem;
+    }
+    .step h3 { font-size: 1rem; font-weight: 700; margin-bottom: .35rem; }
+    .step p  { color: var(--muted); font-size: .92rem; }
+
+    /* ── CTA BANNER ── */
+    .cta-banner {
+      background: linear-gradient(135deg, var(--brand) 0%, #1e40af 100%);
+      color: var(--white); text-align: center;
+      padding: 5rem 1.5rem;
+    }
+    .cta-banner h2 {
+      font-size: clamp(1.6rem, 3vw, 2.4rem);
+      font-weight: 800; margin-bottom: .75rem; letter-spacing: -.02em;
+    }
+    .cta-banner p { font-size: 1.1rem; opacity: .85; margin-bottom: 2rem; }
+    .btn-white {
+      background: var(--white); color: var(--brand);
+      padding: .85rem 2.2rem; border-radius: var(--radius);
+      text-decoration: none; font-size: 1rem; font-weight: 700;
+      transition: opacity .15s, transform .1s;
+      display: inline-block;
+    }
+    .btn-white:hover { opacity: .92; transform: translateY(-1px); }
+
+    /* ── FOOTER ── */
+    footer {
+      background: var(--text); color: #94a3b8;
+      text-align: center; padding: 2rem 1.5rem;
+      font-size: .88rem;
+    }
+    footer a { color: #93c5fd; text-decoration: none; }
+    footer a:hover { text-decoration: underline; }
+
+    @media (max-width: 480px) {
+      .hero { padding: 4rem 1rem 3.5rem; }
+      .btn-primary, .btn-secondary { width: 100%; justify-content: center; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- NAV -->
+  <nav>
+    <a class="nav-logo" href="/">WithoutBorder</a>
+    <a class="nav-cta" href="/app">Open App</a>
+  </nav>
+
+  <!-- HERO -->
+  <section class="hero">
+    <span class="hero-badge">🌍 Powered by Local AI · No Cloud Required</span>
+    <h1>Collaborate Across Languages<br /><span>Without Borders</span></h1>
+    <p>Real-time multilingual messaging where every participant reads in their own language — powered by Gemma 4 running entirely on your infrastructure.</p>
+    <div class="cta-group">
+      <a class="btn-primary" href="/app">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        Open the App
+      </a>
+      <a class="btn-secondary" href="#features">See Features</a>
+    </div>
+  </section>
+
+  <!-- FEATURES -->
+  <section class="features" id="features">
+    <div class="section-inner">
+      <div class="section-label">Features</div>
+      <h2 class="section-title">Everything your multilingual team needs</h2>
+      <p class="section-sub">One platform — zero language barriers, zero data sent to the cloud.</p>
+
+      <div class="feature-grid">
+
+        <div class="feature-card">
+          <span class="feature-icon">🌐</span>
+          <h3>Real-Time Translation</h3>
+          <p>Messages are automatically translated for each recipient in their preferred language the moment they are sent — no delay, no copy-paste.</p>
+        </div>
+
+        <div class="feature-card">
+          <span class="feature-icon">🤖</span>
+          <h3>AI Backup Agent</h3>
+          <p>Activate Agentic mode and let the AI reply on your behalf while you're away, keeping conversations moving around the clock.</p>
+        </div>
+
+        <div class="feature-card">
+          <span class="feature-icon">📋</span>
+          <h3>Summaries &amp; Action Plans</h3>
+          <p>Generate meeting summaries, action plans, and formal reports directly from any conversation with a single click.</p>
+        </div>
+
+        <div class="feature-card">
+          <span class="feature-icon">📄</span>
+          <h3>File Translation</h3>
+          <p>Upload PDFs and text documents — WithoutBorder translates the full content and delivers a localized copy instantly.</p>
+        </div>
+
+        <div class="feature-card">
+          <span class="feature-icon">🔒</span>
+          <h3>Privacy by Design</h3>
+          <p>All AI processing runs on-premises via Gemma 4. Your conversations and documents never leave your infrastructure.</p>
+        </div>
+
+        <div class="feature-card">
+          <span class="feature-icon">⚡</span>
+          <h3>Rich Collaboration</h3>
+          <p>@mentions, emoji reactions, pinned messages, and full-text search across the entire message history — in every language.</p>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW IT WORKS -->
+  <section class="how" id="how">
+    <div class="section-inner">
+      <div class="section-label">How It Works</div>
+      <h2 class="section-title">Up and running in minutes</h2>
+      <p class="section-sub">No external API keys, no SaaS subscriptions. Just your team and your server.</p>
+
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <h3>Deploy</h3>
+          <p>Spin up the stack with Docker Compose on any Linux server. Gemma 4 loads locally.</p>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <h3>Invite</h3>
+          <p>Each team member sets their preferred language once during sign-up.</p>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <h3>Chat</h3>
+          <p>Write in your language. Everyone reads in theirs — automatically, in real time.</p>
+        </div>
+        <div class="step">
+          <div class="step-num">4</div>
+          <h3>Automate</h3>
+          <p>Enable the AI agent for async coverage and let it generate summaries on demand.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA BANNER -->
+  <section class="cta-banner">
+    <h2>Break the language barrier today</h2>
+    <p>Your team deserves to communicate freely — no matter what language they speak.</p>
+    <a class="btn-white" href="/app">Get Started — Open App</a>
+  </section>
+
+  <!-- FOOTER -->
+  <footer>
+    <p>&copy; 2025 WithoutBorder &mdash; <a href="/app">Open App</a></p>
+  </footer>
+
+</body>
+</html>
