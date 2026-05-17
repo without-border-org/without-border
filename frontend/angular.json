@@ -23,6 +23,10 @@
           },
           "configurations": {
             "production": {
+              "fileReplacements": [
+                { "replace": "src/environments/environment.ts", "with": "src/environments/environment.prod.ts" }
+              ],
+              "baseHref": "/app/",
               "budgets": [
                 { "type": "initial", "maximumWarning": "500kB", "maximumError": "1MB" },
                 { "type": "anyComponentStyle", "maximumWarning": "2kB", "maximumError": "4kB" }
