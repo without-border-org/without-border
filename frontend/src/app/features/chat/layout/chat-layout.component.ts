@@ -10,7 +10,7 @@ import { ChannelService } from '../../../core/services/channel.service';
 import { UserService } from '../../../core/services/user.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { AgentService } from '../../../core/services/agent.service';
-import { Channel, ChannelMember, UserStatus, LANGUAGE_MAP, getUserColor, getInitials } from '../../../core/models';
+import { Agent, Channel, ChannelMember, UserStatus, LANGUAGE_MAP, getUserColor, getInitials } from '../../../core/models';
 
 @Component({
   selector: 'wb-chat-layout',
@@ -162,9 +162,9 @@ import { Channel, ChannelMember, UserStatus, LANGUAGE_MAP, getUserColor, getInit
             </div>
             <ul class="space-y-0.5">
               <li *ngFor="let agent of agents()">
-                <button (click)="navigate('agent-' + agent.id)"
+                <button (click)="navigateToAgent(agent)"
                   class="w-full flex items-center gap-3 px-4 py-2.5 text-xs font-medium transition-ui"
-                  [class]="activeChannelId() === 'agent-' + agent.id
+                  [class]="activeChannelId() === agentChannelMap().get(agent.id)
                     ? 'nav-item-active'
                     : 'text-zinc-500 hover:bg-zinc-200 dark:hover:bg-zinc-800 hover:text-zinc-900 dark:hover:text-zinc-200'">
                   <!-- Avatar agent avec dot statut -->
@@ -329,9 +329,23 @@ export class ChatLayoutComponent implements OnInit, OnDestroy {
     this.channels().filter(c =>
       c.type === 'pair' &&
       !c.isArchived &&
-      c.name.toLowerCase().includes(this.searchQuery().toLowerCase())
+      c.description !== 'Agent IA' &&
+      c.name.toLowerCase().includes(this.searchQuery().toLowerCase()) &&
+      this.dmPartnersMap().has(c.id)
     )
   );
+
+  /** Maps agent.id → DM channel.id for the Agents IA section. */
+  agentChannelMap = computed(() => {
+    const map = new Map<string, string>();
+    this.channels()
+      .filter(c => c.type === 'pair' && c.description === 'Agent IA')
+      .forEach(c => {
+        const agent = this.agents().find(a => a.name === c.name);
+        if (agent) map.set(agent.id, c.id);
+      });
+    return map;
+  });
 
   langBadge = computed(() => {
     const lang = this.user()?.preferredLanguage;
@@ -441,6 +455,11 @@ export class ChatLayoutComponent implements OnInit, OnDestroy {
 
   navigate(channelId: string) {
     this.router.navigate(['/chat', channelId]);
+  }
+
+  navigateToAgent(agent: Agent) {
+    const channelId = this.agentChannelMap().get(agent.id);
+    if (channelId) this.navigate(channelId);
   }
 
   /** Fetch members for every pair channel to get partner info (name, status, role). */

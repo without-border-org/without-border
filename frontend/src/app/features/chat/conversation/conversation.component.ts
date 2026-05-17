@@ -145,6 +145,7 @@ import { AgentService } from '../../../core/services/agent.service';
               *ngFor="let msg of messages(); trackBy: trackById"
               [message]="msg"
               [currentUserLang]="currentUserLang()"
+              [isOwn]="msg.senderId === currentUserId()"
               [id]="'msg-' + msg.id"
               (react)="onReact(msg.id, $event)" />
           </div>

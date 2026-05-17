@@ -17,7 +17,7 @@ import { Message, LANGUAGE_MAP, getUserColor, getInitials } from '../../../core/
       </div>
 
       <!-- Contenu -->
-      <div class="flex-1 min-w-0">
+      <div class="max-w-[80%] min-w-0">
 
         <!-- Ligne métadonnées : nom · heure · langue · traduit · agentic -->
         <div class="flex items-center gap-2 mb-1.5 flex-wrap">
@@ -103,6 +103,7 @@ import { Message, LANGUAGE_MAP, getUserColor, getInitials } from '../../../core/
 export class MessageBubbleComponent {
   @Input() message!: Message;
   @Input() currentUserLang = 'fr';
+  @Input() isOwn = false;
   @Output() react = new EventEmitter<string>();
 
   hover       = signal(false);
@@ -121,7 +122,10 @@ export class MessageBubbleComponent {
     if (this.message.isAgentic) {
       return 'bg-brand-orange text-white shadow-lg shadow-orange-500/20';
     }
-    return 'dark:bg-brand-darkPanel bg-white border dark:border-brand-darkBorder border-zinc-200 dark:text-zinc-200 text-zinc-800';
+    if (this.isOwn) {
+      return 'dark:bg-brand-orange/10 bg-orange-50 border dark:border-brand-orange/20 border-orange-100 dark:text-zinc-200 text-zinc-800';
+    }
+    return 'dark:bg-white/5 bg-zinc-50 border dark:border-brand-darkBorder border-zinc-200 dark:text-zinc-200 text-zinc-800';
   }
 
   langBadge(): string {
