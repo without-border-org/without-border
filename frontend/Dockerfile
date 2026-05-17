@@ -22,7 +22,7 @@ RUN cd frontend && npx ng build --configuration production
 FROM nginx:alpine
 
 # Angular SPA
-COPY --from=builder /app/dist/withoutborder/browser /usr/share/nginx/html/app
+COPY --from=builder /app/frontend/dist/withoutborder/browser /usr/share/nginx/html/app
 
 # Landing page (static files served at /)
 COPY landing /usr/share/nginx/html/
