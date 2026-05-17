@@ -5,35 +5,96 @@
 
 @layer base {
   html { font-size: 16px; -webkit-text-size-adjust: 100%; }
-  body { @apply bg-surface-900 text-white font-sans antialiased; overflow: hidden; }
+  /* Body: dark bg by default — the root component div handles theme-aware bg */
+  body { @apply font-sans antialiased bg-brand-darkBg; overflow: hidden; }
   * { box-sizing: border-box; }
 }
 
 @layer components {
-  /* Reusable input style */
-  .wb-input {
-    @apply w-full bg-surface-800 border border-white/10 rounded-xl px-4 py-3
-           text-white placeholder-gray-500 text-sm
-           focus:outline-none focus:border-primary-500/60 focus:ring-1 focus:ring-primary-500/30
-           transition-all duration-200;
-  }
+  /* ── Scrollbar custom (5 px, style discret) ── */
+  .custom-scrollbar::-webkit-scrollbar { width: 5px; height: 5px; }
+  .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+  .custom-scrollbar::-webkit-scrollbar-thumb { background: #3F3F46; border-radius: 10px; }
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #52525B; }
 
-  /* Scrollbar */
+  /* ── Legacy scrollbar (kept for non-migrated components) ── */
   .scrollbar-thin {
     scrollbar-width: thin;
     scrollbar-color: rgba(255,255,255,0.1) transparent;
   }
   .scrollbar-thin::-webkit-scrollbar { width: 4px; height: 4px; }
   .scrollbar-thin::-webkit-scrollbar-track { background: transparent; }
-  .scrollbar-thin::-webkit-scrollbar-thumb {
-    @apply bg-white/10 rounded-full;
+  .scrollbar-thin::-webkit-scrollbar-thumb { @apply bg-white/10 rounded-full; }
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover { @apply bg-white/20; }
+
+  /* ── Transition standard ── */
+  .transition-ui { transition: all .25s cubic-bezier(.4,0,.2,1); }
+
+  /* ── Nav item actif (sidebar gauche) ── */
+  .nav-item-active {
+    background: rgba(249,115,22,.1) !important;
+    color: #F97316 !important;
+    border-left: 3px solid #F97316;
+    border-radius: 0 8px 8px 0;
   }
-  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
-    @apply bg-white/20;
+
+  /* ── Glass header ── */
+  .glass-header { backdrop-filter: blur(12px); }
+  .dark  .glass-header { background: rgba(14,14,17,.8);  border-bottom: 1px solid rgba(255,255,255,.06); }
+  .light .glass-header { background: rgba(255,255,255,.8); border-bottom: 1px solid rgba(0,0,0,.06); }
+
+  /* ── Reaction pills ── */
+  .reaction-pill {
+    display: flex; align-items: center; gap: 4px;
+    padding: 2px 8px; border-radius: 99px;
+    font-size: 10px; font-weight: 700;
+    border: 1px solid rgba(255,255,255,.1);
+    background: rgba(255,255,255,.05);
+    cursor: pointer; transition: all .2s;
+  }
+  .light .reaction-pill { border: 1px solid rgba(0,0,0,.05); background: rgba(0,0,0,.02); }
+  .reaction-pill:hover { transform: scale(1.05); background: rgba(249,115,22,.1); border-color: rgba(249,115,22,.3); }
+
+  /* ── Right sidebar animation ── */
+  .sidebar-right-hidden  { transform: translateX(100%); width: 0 !important; opacity: 0; pointer-events: none; }
+  .sidebar-right-visible { transform: translateX(0); width: 340px; opacity: 1; }
+
+  /* ── Editor tool buttons (composer) ── */
+  .editor-tool {
+    display: flex; align-items: center; justify-content: center;
+    width: 28px; height: 28px; border-radius: 6px;
+    opacity: .45; cursor: pointer; transition: opacity .15s, background .15s;
+    flex-shrink: 0;
+  }
+  .editor-tool:hover { opacity: 1; }
+  .dark  .editor-tool:hover { background: rgba(255,255,255,.07); }
+  .light .editor-tool:hover { background: rgba(0,0,0,.06); }
+
+  /* ── Send button state ── */
+  .send-btn-inactive { opacity: .22; cursor: not-allowed; color: inherit; }
+  .send-btn-active   { opacity: 1;   cursor: pointer; color: #F97316; }
+  .send-btn-active:hover { background: rgba(249,115,22,.12); }
+
+  /* ── Legacy input (kept for non-migrated components) ── */
+  .wb-input {
+    @apply w-full bg-surface-800 border border-white/10 rounded-xl px-4 py-3
+           text-white placeholder-gray-500 text-sm
+           focus:outline-none focus:border-primary-500/60 focus:ring-1 focus:ring-primary-500/30
+           transition-all duration-200;
   }
 }
 
 @layer utilities {
   .bg-white\/3 { background-color: rgba(255,255,255,0.03); }
   .hover\:bg-white\/3:hover { background-color: rgba(255,255,255,0.03); }
+}
+
+/* Router-outlet children must stretch to fill main flex column */
+wb-conversation,
+wb-welcome {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }

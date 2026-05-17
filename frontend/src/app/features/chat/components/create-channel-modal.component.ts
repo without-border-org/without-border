@@ -50,7 +50,7 @@ import { Channel } from '../../../core/models';
                 (click)="addMember(user)"
                 class="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-white/5 transition-all text-left">
                 <div class="w-7 h-7 rounded-full bg-gradient-to-br from-primary-600/40 to-accent-pink/30 flex items-center justify-center text-xs font-bold text-white flex-shrink-0">
-                  {{ user.username[0].toUpperCase() }}
+                  {{ (user.username && user.username.length > 0) ? user.username[0].toUpperCase() : '?' }}
                 </div>
                 <div>
                   <p class="text-sm text-white">{{ user.username }}</p>

@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WithoutBorder — Agent IA Configuration</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+:root{
+  --bg:#0E0E11;
+  --panel:#1e1e22;
+  --panel2:#161619;
+  --panel3:#252529;
+  --border:rgba(255,255,255,0.07);
+  --border-mid:rgba(255,255,255,0.12);
+  --text:#e4e4e7;
+  --text-2:#a1a1aa;
+  --text-3:#71717a;
+  --accent:#F97316;
+  --accent-h:#EA580C;
+  --accent-glow:rgba(249,115,22,0.14);
+  --inp-bg:#131316;
+  --glass:rgba(14,14,17,0.9);
+  --red:#EF4444;
+  --green:#22C55E;
+  --tr:all 0.26s cubic-bezier(0.4,0,0.2,1);
+}
+[data-theme="light"]{
+  --bg:#F0F0F2;
+  --panel:#FFFFFF;
+  --panel2:#F7F7F8;
+  --panel3:#EBEBED;
+  --border:rgba(0,0,0,0.07);
+  --border-mid:rgba(0,0,0,0.12);
+  --text:#18181b;
+  --text-2:#52525b;
+  --text-3:#a1a1aa;
+  --accent:#F97316;
+  --accent-h:#EA580C;
+  --accent-glow:rgba(249,115,22,0.1);
+  --inp-bg:#ffffff;
+  --glass:rgba(240,240,242,0.92);
+  --red:#EF4444;
+  --green:#16A34A;
+}
+
+html,body{height:100%;overflow:hidden}
+body{
+  font-family:'Inter',sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  font-size:14px;
+  line-height:1.5;
+  display:flex;
+  flex-direction:column;
+  transition:background 0.3s,color 0.3s;
+}
+
+/* ─── HEADER ─── */
+.hdr{
+  flex-shrink:0;
+  height:54px;
+  background:var(--glass);
+  backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+  border-bottom:1px solid var(--border);
+  padding:0 24px;
+  display:flex;align-items:center;
+  position:relative;
+  z-index:50;
+  transition:background 0.3s;
+}
+.hdr-l{display:flex;align-items:center;gap:10px}
+.hdr-c{position:absolute;left:50%;transform:translateX(-50%);font-weight:600;font-size:14.5px;letter-spacing:-0.015em;pointer-events:none}
+.hdr-r{margin-left:auto;display:flex;align-items:center;gap:8px}
+
+.iBtn{width:32px;height:32px;border-radius:8px;border:1px solid var(--border-mid);background:transparent;color:var(--text-2);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:var(--tr);flex-shrink:0}
+.iBtn svg{width:16px;height:16px}
+.iBtn:hover{color:var(--accent);border-color:var(--accent);background:var(--accent-glow)}
+
+.bc{display:flex;align-items:center;gap:5px;font-size:12.5px;color:var(--text-3)}
+.bc b{color:var(--text-2);font-weight:500}
+
+.badge{display:flex;align-items:center;gap:5px;padding:4px 9px;border-radius:20px;font-size:11.5px;font-weight:500;background:rgba(34,197,94,0.1);color:#22C55E;border:1px solid rgba(34,197,94,0.2)}
+.dot{width:5px;height:5px;border-radius:50%;background:#22C55E;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+/* ─── SCROLLABLE BODY ─── */
+.body-wrap{
+  flex:1;
+  overflow-y:auto;
+  padding:20px 24px 0;
+}
+/* space at bottom so content clears sticky footer */
+.body-wrap::after{content:'';display:block;height:130px}
+
+/* ─── TWO-COLUMN GRID ─── */
+/* Key fix: align-items:stretch so both cols always match height */
+.grid{
+  max-width:1180px;
+  margin:0 auto;
+  display:grid;
+  grid-template-columns:360px 1fr;
+  gap:16px;
+  align-items:stretch; /* ← equal height columns */
+}
+@media(max-width:960px){.grid{grid-template-columns:1fr}}
+
+.col{display:flex;flex-direction:column;gap:16px}
+
+/* ─── CARD ─── */
+.card{
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:14px;
+  overflow:hidden;
+  box-shadow:0 1px 3px rgba(0,0,0,0.3);
+  transition:background 0.3s,border-color 0.3s;
+  display:flex;flex-direction:column;
+}
+/* The last card in left col fills remaining space */
+.col-l .card:last-child{flex:1}
+/* Right col single card fills full height */
+.col-r .card{flex:1}
+
+.card-hdr{
+  padding:14px 18px;
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:10px;
+  flex-shrink:0;
+}
+.cico{width:30px;height:30px;border-radius:7px;background:var(--accent-glow);color:var(--accent);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.cico svg{width:14px;height:14px}
+.ctitle{font-weight:600;font-size:13px;letter-spacing:-0.01em}
+.csub{font-size:11px;color:var(--text-3);margin-top:1px}
+
+.card-body{padding:18px;flex:1;overflow-y:auto}
+
+/* ─── SCROLLABLE CARD BODY (right col) ─── */
+.scrollable{overflow-y:auto}
+.scrollable::-webkit-scrollbar{width:4px}
+.scrollable::-webkit-scrollbar-thumb{background:var(--border-mid);border-radius:2px}
+
+/* ─── FIELDS ─── */
+.field{margin-bottom:14px}
+.field:last-child{margin-bottom:0}
+.lbl{display:block;font-size:10.5px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--text-3);margin-bottom:5px}
+.inp{
+  width:100%;padding:9px 11px;
+  background:var(--inp-bg);border:1px solid var(--border-mid);
+  border-radius:8px;color:var(--text);
+  font-family:'Inter',sans-serif;font-size:13.5px;
+  transition:var(--tr);outline:none;
+}
+.inp:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-glow)}
+.inp::placeholder{color:var(--text-3)}
+select.inp{
+  appearance:none;cursor:pointer;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='11' viewBox='0 0 24 24' fill='none' stroke='%2371717a' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 11px center;padding-right:30px;
+}
+textarea.inp{resize:none;line-height:1.65}
+
+/* ─── STATUS ROW ─── */
+.status-row{
+  display:flex;align-items:center;gap:10px;
+  padding:10px 13px;border-radius:9px;
+  background:var(--panel2);border:1px solid var(--border);margin-bottom:14px;
+}
+.s-ico{width:30px;height:30px;border-radius:7px;background:var(--accent-glow);color:var(--accent);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.s-ico svg{width:14px;height:14px}
+.s-name{font-size:12.5px;font-weight:600}
+.s-desc{font-size:11px;color:var(--text-3);margin-top:1px}
+
+/* ─── TOGGLE ─── */
+.tog{position:relative;cursor:pointer;flex-shrink:0}
+.tog input{position:absolute;opacity:0;width:0;height:0}
+.tog-t{position:absolute;inset:0;border-radius:999px;background:var(--panel3);border:1px solid var(--border-mid);transition:var(--tr)}
+.tog-th{position:absolute;border-radius:50%;background:var(--text-3);box-shadow:0 1px 3px rgba(0,0,0,0.4);transition:transform 0.22s cubic-bezier(0.34,1.56,0.64,1),background 0.2s}
+.tog input:checked~.tog-t{background:var(--accent);border-color:var(--accent)}
+.tog input:checked~.tog-th{background:#fff}
+/* sizes */
+.tog.sm{width:36px;height:20px}.tog.sm .tog-th{width:13px;height:13px;top:3px;left:3px}
+.tog.sm input:checked~.tog-th{transform:translateX(16px)}
+.tog.md{width:42px;height:23px}.tog.md .tog-th{width:16px;height:16px;top:3px;left:3px}
+.tog.md input:checked~.tog-th{transform:translateX(19px)}
+
+/* ─── TOGGLE ROWS ─── */
+.tog-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)}
+.tog-row:last-child{border-bottom:none;padding-bottom:0}
+.tr-label{font-size:13px;font-weight:500}
+.tr-desc{font-size:11px;color:var(--text-3);margin-top:2px}
+
+/* ─── RADIO ─── */
+.radio-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.rad{position:relative;cursor:pointer}
+.rad input{position:absolute;opacity:0;width:0;height:0}
+.rad-l{display:flex;align-items:center;gap:7px;padding:8px 11px;border-radius:8px;border:1px solid var(--border-mid);background:var(--panel2);font-size:13px;font-weight:500;color:var(--text-2);transition:var(--tr);cursor:pointer}
+.rd{width:13px;height:13px;border-radius:50%;border:1.5px solid var(--text-3);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:var(--tr)}
+.rd::after{content:'';width:5px;height:5px;border-radius:50%;background:var(--accent);opacity:0;transition:opacity 0.18s}
+.rad input:checked~.rad-l{border-color:var(--accent);color:var(--text);background:var(--accent-glow)}
+.rad input:checked~.rad-l .rd{border-color:var(--accent)}
+.rad input:checked~.rad-l .rd::after{opacity:1}
+
+/* ─── SLIDER ─── */
+.sld-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:7px}
+.sld-name{font-size:13px;font-weight:500}
+.sld-val{font-size:11.5px;font-weight:600;color:var(--accent);background:var(--accent-glow);padding:2px 8px;border-radius:20px}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:4px;border-radius:2px;outline:none;cursor:pointer}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:var(--accent);border:2.5px solid var(--bg);box-shadow:0 1px 5px rgba(249,115,22,0.5);cursor:pointer;transition:transform 0.15s}
+input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.2)}
+
+/* ─── DIVIDER ─── */
+.divider{display:flex;align-items:center;gap:8px;margin:16px 0 12px}
+.divider-line{flex:1;height:1px;background:var(--border)}
+.divider-lbl{font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-3)}
+
+/* ─── CHAR COUNT ─── */
+.ta-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px}
+.cc{font-size:11px;color:var(--text-3)}
+.cc span{font-weight:600;color:var(--accent)}
+.ta-hint{font-size:11px;color:var(--text-3);text-align:right;margin-top:4px}
+
+/* ─── INFO BOX ─── */
+.infobox{padding:8px 11px;border-radius:8px;background:var(--panel2);border:1px solid var(--border);font-size:12px;color:var(--text-3);display:flex;gap:7px;align-items:flex-start;margin-top:2px}
+.infobox svg{width:13px;height:13px;flex-shrink:0;margin-top:1px;color:var(--accent)}
+
+/* ─── FILES ─── */
+.up-btn{display:flex;align-items:center;gap:7px;width:100%;padding:9px 13px;border-radius:8px;border:1.5px dashed var(--border-mid);background:transparent;color:var(--text-2);font-family:'Inter',sans-serif;font-size:12.5px;cursor:pointer;transition:var(--tr)}
+.up-btn:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-glow)}
+.up-btn svg{width:14px;height:14px;flex-shrink:0}
+.file-list{margin-top:9px;display:flex;flex-direction:column;gap:5px}
+.fi{display:flex;align-items:center;gap:7px;padding:6px 9px;border-radius:7px;background:var(--panel2);border:1px solid var(--border)}
+.fi-ico{color:var(--accent);flex-shrink:0}
+.fi-ico svg{width:13px;height:13px}
+.fi-name{font-size:12px;font-weight:500;color:var(--text);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fi-sz{font-size:11px;color:var(--text-3);flex-shrink:0}
+.fi-rm{background:none;border:none;color:var(--text-3);cursor:pointer;display:flex;padding:2px;border-radius:4px;transition:var(--tr);flex-shrink:0}
+.fi-rm:hover{color:var(--red);background:rgba(239,68,68,0.08)}
+.fi-rm svg{width:12px;height:12px}
+
+.prev-resp{margin-top:11px;padding:10px 12px;border-radius:8px;background:var(--panel2);border:1px solid var(--border);border-left:3px solid var(--accent)}
+.pr-lbl{font-size:10px;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;color:var(--accent);margin-bottom:5px}
+.pr-txt{font-size:12px;color:var(--text-2);line-height:1.65}
+
+/* ─── FOOTER ─── */
+.footer{
+  flex-shrink:0;
+  background:var(--glass);
+  backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
+  border-top:1px solid var(--border);
+  transition:background 0.3s;
+}
+.ft-test{max-width:1180px;margin:0 auto;padding:10px 24px;display:flex;gap:9px;align-items:center;border-bottom:1px solid var(--border)}
+.ft-test .inp{flex:1;height:36px;font-size:13px;padding:0 11px}
+.btn-prev{display:flex;align-items:center;gap:6px;height:36px;padding:0 14px;border-radius:8px;background:var(--accent);color:#fff;border:none;font-family:'Inter',sans-serif;font-size:13px;font-weight:500;cursor:pointer;transition:var(--tr);white-space:nowrap;flex-shrink:0}
+.btn-prev:hover{background:var(--accent-h)}
+.btn-prev svg{width:13px;height:13px}
+
+.prev-box{max-width:1180px;margin:0 auto;max-height:0;overflow:hidden;transition:max-height 0.3s cubic-bezier(0.4,0,0.2,1)}
+.prev-box.open{max-height:100px}
+.prev-inner{padding:9px 24px;border-bottom:1px solid var(--border)}
+.prev-hdr{display:flex;align-items:center;gap:7px;margin-bottom:5px}
+.prev-av{width:24px;height:24px;border-radius:6px;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#fff;flex-shrink:0}
+.prev-name{font-size:12px;font-weight:600}
+.prev-time{font-size:11px;color:var(--text-3);margin-left:auto}
+.prev-txt{font-size:12px;color:var(--text-2);line-height:1.6}
+.tdots{display:flex;gap:3px;align-items:center}
+.tdots span{width:5px;height:5px;border-radius:50%;background:var(--text-3);animation:td 1.2s infinite}
+.tdots span:nth-child(2){animation-delay:.2s}.tdots span:nth-child(3){animation-delay:.4s}
+@keyframes td{0%,60%,100%{transform:translateY(0);opacity:.5}30%{transform:translateY(-3px);opacity:1}}
+
+.ft-actions{max-width:1180px;margin:0 auto;padding:10px 24px;display:flex;align-items:center;gap:9px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;height:38px;padding:0 16px;border-radius:9px;font-family:'Inter',sans-serif;font-size:13px;font-weight:500;cursor:pointer;transition:var(--tr);border:1px solid transparent;white-space:nowrap}
+.btn svg{width:14px;height:14px}
+.btn-primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+.btn-primary:hover{background:var(--accent-h);transform:translateY(-1px);box-shadow:0 4px 14px rgba(249,115,22,0.3)}
+.btn-sec{background:transparent;color:var(--text-2);border-color:var(--border-mid)}
+.btn-sec:hover{color:var(--text);background:var(--panel2)}
+.btn-del{background:transparent;color:var(--red);border-color:rgba(239,68,68,0.2)}
+.btn-del:hover{background:rgba(239,68,68,0.08);border-color:var(--red)}
+
+/* ─── ANIMATIONS ─── */
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.col-l .card:nth-child(1){animation:fadeUp 0.3s 0.05s ease both}
+.col-l .card:nth-child(2){animation:fadeUp 0.3s 0.11s ease both}
+.col-r .card{animation:fadeUp 0.3s 0.08s ease both}
+
+::-webkit-scrollbar{width:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border-mid);border-radius:3px}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="hdr">
+  <div class="hdr-l">
+    <button class="iBtn" onclick="history.back()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+    </button>
+    <div class="bc"><span>Agents</span><span style="color:var(--border-mid)">›</span><b>Configuration</b></div>
+  </div>
+  <div class="hdr-c">Agent IA Configuration</div>
+  <div class="hdr-r">
+    <div class="badge"><div class="dot"></div>Active</div>
+    <button class="iBtn" onclick="toggleTheme()" title="Toggle theme">
+      <svg id="moonIco" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+      <svg id="sunIco" style="display:none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+    </button>
+  </div>
+</header>
+
+<!-- SCROLLABLE CONTENT -->
+<div class="body-wrap">
+  <div class="grid">
+
+    <!-- ═══ LEFT COLUMN ═══ -->
+    <div class="col col-l">
+
+      <!-- Agent Setup -->
+      <div class="card">
+        <div class="card-hdr">
+          <div class="cico">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+          </div>
+          <div><div class="ctitle">Agent Setup</div><div class="csub">Identity &amp; model configuration</div></div>
+        </div>
+        <div class="card-body">
+          <!-- Status -->
+          <div class="status-row">
+            <div class="s-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg></div>
+            <div style="flex:1">
+              <div class="s-name">Agent Status</div>
+              <div class="s-desc" id="sDesc">Active — responding to messages</div>
+            </div>
+            <label class="tog md">
+              <input type="checkbox" checked id="aStat" onchange="onStat(this)">
+              <div class="tog-t"></div><div class="tog-th"></div>
+            </label>
+          </div>
+
+          <div class="field">
+            <label class="lbl">Agent Name</label>
+            <input type="text" class="inp" value="ProjectBot" placeholder="Entrez le nom de l'agent...">
+          </div>
+          <div class="field">
+            <label class="lbl">Primary Language</label>
+            <select class="inp">
+              <option selected>🇫🇷  French</option>
+              <option>🇬🇧  English</option>
+              <option>🇪🇸  Spanish</option>
+              <option>🇨🇳  Chinese</option>
+            </select>
+          </div>
+          <div class="field">
+            <label class="lbl">AI Model</label>
+            <select class="inp">
+              <option>Gemma 4 · 9B — Balanced</option>
+              <option selected>Gemma 4 · 27B — High Accuracy</option>
+            </select>
+          </div>
+          <div class="infobox">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            <span>Using <strong style="color:var(--text)">Gemma 4 · 27B</strong> in multilingual mode. Auto-translates across 50+ languages.</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Context Documents — fills remaining height -->
+      <div class="card">
+        <div class="card-hdr">
+          <div class="cico">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+          </div>
+          <div style="flex:1"><div class="ctitle">Context Documents</div><div class="csub">Agent knowledge base</div></div>
+          <div id="fBadge" style="font-size:11px;color:var(--text-3);background:var(--panel2);border:1px solid var(--border);padding:2px 8px;border-radius:20px">3 files</div>
+        </div>
+        <div class="card-body">
+          <button class="up-btn" onclick="addFile()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            + Add context documents
+          </button>
+          <div class="file-list" id="fList">
+            <div class="fi"><div class="fi-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" style="width:13px;height:13px"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div><span class="fi-name">Q3_Project_Roadmap.pdf</span><span class="fi-sz">2.4 MB</span><button class="fi-rm" onclick="rmFile(this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
+            <div class="fi"><div class="fi-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" style="width:13px;height:13px"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div><span class="fi-name">Team_Guidelines_FR.docx</span><span class="fi-sz">890 KB</span><button class="fi-rm" onclick="rmFile(this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
+            <div class="fi"><div class="fi-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" style="width:13px;height:13px"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div><span class="fi-name">API_Documentation_v2.pdf</span><span class="fi-sz">1.1 MB</span><button class="fi-rm" onclick="rmFile(this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
+          </div>
+          <div class="prev-resp">
+            <div class="pr-lbl">Last AI Response</div>
+            <div class="pr-txt">Bonjour @Sophie — le jalon Q4 est prévu le 15 nov. Je peux organiser une réunion de synchronisation cette semaine si vous le souhaitez.</div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /col-l -->
+
+    <!-- ═══ RIGHT COLUMN ═══ -->
+    <div class="col col-r">
+
+      <!-- Behaviour — full height -->
+      <div class="card">
+        <div class="card-hdr">
+          <div class="cico">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+          </div>
+          <div style="flex:1"><div class="ctitle">Behaviour Configuration</div><div class="csub">Tone, response settings &amp; system prompt</div></div>
+          <div style="font-size:11px;color:var(--text-3);background:var(--panel2);border:1px solid var(--border);padding:2px 8px;border-radius:20px">demo@withoutborder.app</div>
+        </div>
+
+        <div class="card-body scrollable">
+
+          <!-- TONE -->
+          <div class="divider"><div class="divider-line"></div><div class="divider-lbl">Tone</div><div class="divider-line"></div></div>
+          <div class="radio-grid field">
+            <label class="rad"><input type="radio" name="tone" value="pro" checked><div class="rad-l"><div class="rd"></div>Professional</div></label>
+            <label class="rad"><input type="radio" name="tone" value="fr"><div class="rad-l"><div class="rd"></div>Friendly</div></label>
+            <label class="rad"><input type="radio" name="tone" value="fo"><div class="rad-l"><div class="rd"></div>Formal</div></label>
+            <label class="rad"><input type="radio" name="tone" value="ca"><div class="rad-l"><div class="rd"></div>Casual</div></label>
+          </div>
+
+          <!-- RESPONSE SETTINGS -->
+          <div class="divider"><div class="divider-line"></div><div class="divider-lbl">Response Settings</div><div class="divider-line"></div></div>
+
+          <div style="margin-bottom:14px">
+            <div class="tog-row">
+              <div><div class="tr-label">Auto-respond to @mentions</div><div class="tr-desc">Agent replies when tagged in any conversation</div></div>
+              <label class="tog sm"><input type="checkbox" checked><div class="tog-t"></div><div class="tog-th"></div></label>
+            </div>
+            <div class="tog-row">
+              <div><div class="tr-label">Auto-respond to direct messages</div><div class="tr-desc">Handles DMs automatically without supervision</div></div>
+              <label class="tog sm"><input type="checkbox"><div class="tog-t"></div><div class="tog-th"></div></label>
+            </div>
+          </div>
+
+          <div class="field">
+            <div class="sld-hdr"><span class="sld-name">Response delay</span><span class="sld-val" id="dVal">2.0s</span></div>
+            <input type="range" id="dSld" min="0" max="5" step="0.5" value="2" oninput="syncSld('dSld','dVal',true)" style="background:linear-gradient(to right,var(--accent) 40%,var(--panel3) 40%)">
+          </div>
+          <div class="field">
+            <div class="sld-hdr"><span class="sld-name">Confidence threshold</span><span class="sld-val" id="cVal">80%</span></div>
+            <input type="range" id="cSld" min="0" max="100" step="5" value="80" oninput="syncSld('cSld','cVal',false)" style="background:linear-gradient(to right,var(--accent) 80%,var(--panel3) 80%)">
+          </div>
+
+          <!-- SYSTEM PROMPT -->
+          <div class="divider"><div class="divider-line"></div><div class="divider-lbl">System Prompt</div><div class="divider-line"></div></div>
+          <div class="field">
+            <div class="ta-hdr">
+              <label class="lbl" style="margin:0">Instructions</label>
+              <div class="cc"><span id="ccn">247</span> / 500</div>
+            </div>
+            <textarea class="inp" id="sysP" rows="6" oninput="syncCC(this)" placeholder="e.g., You are a helpful project manager...">You are ProjectBot, a professional AI assistant for WithoutBorder. You respond to @mentions in French with a concise, professional tone. Always acknowledge the user by name. Escalate complex technical issues to human team members. Never share confidential project data.</textarea>
+            <div class="ta-hint">Max 500 characters · Included in every AI response</div>
+          </div>
+
+        </div><!-- /card-body -->
+      </div><!-- /card -->
+
+    </div><!-- /col-r -->
+
+  </div><!-- /grid -->
+</div><!-- /body-wrap -->
+
+<!-- FOOTER -->
+<div class="footer">
+  <div class="ft-test">
+    <input type="text" class="inp" placeholder="Type a test message… e.g., @ProjectBot what's the Q4 deadline?" style="flex:1;height:36px">
+    <button class="btn-prev" onclick="runPreview()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+      Preview AI Response
+    </button>
+  </div>
+  <div class="prev-box" id="prevBox">
+    <div class="prev-inner">
+      <div class="prev-hdr">
+        <div class="prev-av">PB</div>
+        <div class="prev-name">ProjectBot</div>
+        <div class="prev-time">just now</div>
+      </div>
+      <div id="prevContent"><div class="tdots"><span></span><span></span><span></span></div></div>
+    </div>
+  </div>
+  <div class="ft-actions">
+    <button class="btn btn-primary" onclick="doSave(event)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+      Save Configuration
+    </button>
+    <button class="btn btn-sec">Cancel</button>
+    <button class="btn btn-del" style="margin-left:auto">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+      Delete Agent
+    </button>
+  </div>
+</div>
+
+<script>
+/* theme */
+function toggleTheme(){
+  const h=document.documentElement,d=h.getAttribute('data-theme')==='dark';
+  h.setAttribute('data-theme',d?'light':'dark');
+  document.getElementById('moonIco').style.display=d?'none':'block';
+  document.getElementById('sunIco').style.display=d?'block':'none';
+  syncSld('dSld','dVal',true);syncSld('cSld','cVal',false);
+}
+/* status */
+function onStat(cb){document.getElementById('sDesc').textContent=cb.checked?'Active — responding to messages':'Inactive — responses paused'}
+/* sliders */
+function syncSld(id,vid,isDec){
+  const s=document.getElementById(id),v=parseFloat(s.value),m=parseFloat(s.max);
+  const p=Math.round(v/m*100);
+  s.style.background=`linear-gradient(to right,var(--accent) ${p}%,var(--panel3) ${p}%)`;
+  document.getElementById(vid).textContent=isDec?v.toFixed(1)+'s':Math.round(v)+'%';
+}
+/* char count */
+function syncCC(ta){const n=ta.value.length,el=document.getElementById('ccn');el.textContent=n;el.style.color=n>480?'var(--red)':'var(--accent)'}
+/* files */
+const extraF=[{n:'Meeting_Notes_Oct.txt',s:'45 KB'},{n:'Sprint_Review_Q3.pdf',s:'3.2 MB'},{n:'Stakeholder_Map.docx',s:'780 KB'}];
+let fi=0;
+function upBadge(){const n=document.querySelectorAll('#fList .fi').length;document.getElementById('fBadge').textContent=n+' file'+(n!==1?'s':'')}
+function rmFile(btn){const el=btn.closest('.fi');el.style.cssText='opacity:0;transform:translateX(6px);transition:all .2s';setTimeout(()=>{el.remove();upBadge()},200)}
+function addFile(){
+  const f=extraF[fi%extraF.length];fi++;
+  const el=document.createElement('div');el.className='fi';
+  const sv=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" style="width:13px;height:13px"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>`;
+  const xv=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`;
+  el.innerHTML=`<div class="fi-ico">${sv}</div><span class="fi-name">${f.n}</span><span class="fi-sz">${f.s}</span><button class="fi-rm" onclick="rmFile(this)">${xv}</button>`;
+  el.style.cssText='opacity:0;transform:translateY(4px)';
+  document.getElementById('fList').appendChild(el);
+  setTimeout(()=>{el.style.cssText='transition:all .2s ease;opacity:1;transform:translateY(0)';upBadge()},10);
+}
+/* preview */
+const reps=[
+  "Bonjour @utilisateur — d'après la roadmap Q4, le jalon principal est prévu le 15 novembre. Je peux planifier une réunion de synchronisation si nécessaire.",
+  "Bonjour ! Selon la documentation disponible, le délai estimé est de 3–5 jours ouvrables. N'hésitez pas pour tout suivi.",
+  "Cette fonctionnalité est prévue pour la prochaine release. Je peux vous connecter avec l'équipe technique si nécessaire.",
+];
+let ri=0;
+function runPreview(){
+  const box=document.getElementById('prevBox'),cnt=document.getElementById('prevContent');
+  box.classList.add('open');
+  cnt.style.opacity='1';cnt.innerHTML='<div class="tdots"><span></span><span></span><span></span></div>';
+  const msg=reps[ri%reps.length];ri++;
+  setTimeout(()=>{cnt.style.cssText='transition:opacity .22s;opacity:0';setTimeout(()=>{cnt.innerHTML=`<div class="prev-txt">${msg}</div>`;cnt.style.opacity='1'},200)},1700);
+}
+/* save */
+function doSave(e){
+  const b=e.target.closest('.btn'),orig=b.innerHTML;
+  b.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px"><polyline points="20 6 9 17 4 12"/></svg> Saved!';
+  b.style.cssText='background:var(--green);border-color:var(--green)';
+  setTimeout(()=>{b.innerHTML=orig;b.style.cssText=''},2300);
+}
+</script>
+</body>
+</html>

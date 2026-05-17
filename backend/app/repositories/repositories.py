@@ -70,9 +70,15 @@ class ChannelRepository:
             select(Channel)
             .join(ChannelMember, ChannelMember.channel_id == Channel.id)
             .where(ChannelMember.user_id == user_id, Channel.is_archived == False)
-            .order_by(Channel.created_at.desc())
+            .order_by(Channel.id.asc())
         )
         return list(r.scalars().all())
+
+    async def get_message_count(self, channel_id: uuid.UUID) -> int:
+        r = await self.db.execute(
+            select(func.count()).where(Message.channel_id == channel_id)
+        )
+        return r.scalar() or 0
 
     async def get_members(self, channel_id: uuid.UUID) -> list[User]:
         r = await self.db.execute(

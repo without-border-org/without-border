@@ -1,56 +1,85 @@
 import { Injectable, inject, signal, computed } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
-import { tap, catchError, throwError } from 'rxjs';
+import Keycloak from 'keycloak-js';
+import { Observable, firstValueFrom, from, of, switchMap } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { AuthTokens, User } from '../models';
+import { User } from '../models';
 
-const KEYS = { access: 'wb_at', refresh: 'wb_rt' } as const;
-
+/**
+ * Authentication Service
+ *
+ * Wraps the Keycloak instance (injected directly via DI from provideKeycloak).
+ * - Normal mode: delegates all auth to Keycloak
+ * - AUTH_DISABLED mode: bypasses Keycloak, direct DB access
+ */
 @Injectable({ providedIn: 'root' })
 export class AuthService {
+  private keycloak = inject(Keycloak);
   private http = inject(HttpClient);
   private router = inject(Router);
-  private readonly base = `${environment.apiUrl}/api/v1/auth`;
 
   private _user = signal<User | null>(null);
   readonly user = this._user.asReadonly();
-  readonly isLoggedIn = computed(() => !!this._user());
+  readonly isLoggedIn = computed(() => !!this._user() || environment.authDisabled);
 
-  register(email: string, username: string, password: string, preferredLanguage: string) {
-    return this.http.post<AuthTokens>(`${this.base}/register`, { email, username, password, preferred_language: preferredLanguage }).pipe(
-      tap(tokens => this._storeTokens(tokens))
+  async loadCurrentUser(): Promise<User | null> {
+    if (environment.authDisabled) {
+      const u = await firstValueFrom(
+        this.http.get<User>(`${environment.apiUrl}/api/v1/users/me`)
+      );
+      this._user.set(u);
+      return u;
+    }
+
+    if (!this.keycloak.authenticated) {
+      return null;
+    }
+
+    const u = await firstValueFrom(
+      this.http.get<User>(`${environment.apiUrl}/api/v1/users/me`)
     );
+    this._user.set(u);
+    return u;
   }
 
-  login(email: string, password: string) {
-    return this.http.post<AuthTokens>(`${this.base}/login`, { email, password }).pipe(
-      tap(tokens => this._storeTokens(tokens))
-    );
+  login(): void {
+    if (environment.authDisabled) return;
+    this.keycloak.login({ redirectUri: window.location.origin });
   }
 
-  refresh() {
-    const refreshToken = this.getRefreshToken();
-    if (!refreshToken) return throwError(() => new Error('No refresh token'));
-    return this.http.post<AuthTokens>(`${this.base}/refresh`, { refresh_token: refreshToken }).pipe(
-      tap(tokens => this._storeTokens(tokens))
-    );
-  }
-
-  logout() {
-    localStorage.removeItem(KEYS.access);
-    localStorage.removeItem(KEYS.refresh);
+  logout(): void {
     this._user.set(null);
-    this.router.navigate(['/auth/login']);
+    if (environment.authDisabled) {
+      this.router.navigate(['/']);
+      return;
+    }
+    this.keycloak.logout({ redirectUri: window.location.origin });
   }
 
-  setUser(user: User) { this._user.set(user); }
-  getAccessToken() { return localStorage.getItem(KEYS.access); }
-  getRefreshToken() { return localStorage.getItem(KEYS.refresh); }
-  hasToken() { return !!this.getAccessToken(); }
+  async getToken(): Promise<string | null> {
+    if (environment.authDisabled) return null;
+    return this.keycloak.token ?? null;
+  }
 
-  private _storeTokens(tokens: AuthTokens) {
-    localStorage.setItem(KEYS.access, tokens.accessToken);
-    localStorage.setItem(KEYS.refresh, tokens.refreshToken);
+  setUser(user: User) {
+    this._user.set(user);
+  }
+
+  hasToken(): boolean {
+    if (environment.authDisabled) return true;
+    return !!this.keycloak.token;
+  }
+
+  getAccessToken(): string | null {
+    if (environment.authDisabled) return null;
+    return this.keycloak.token ?? null;
+  }
+
+  refresh(): Observable<string | null> {
+    if (environment.authDisabled) return of(null);
+    return from(this.keycloak.updateToken(-1)).pipe(
+      switchMap(() => of(this.keycloak.token ?? null))
+    );
   }
 }

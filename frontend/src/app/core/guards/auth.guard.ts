@@ -1,11 +1,20 @@
-// auth.guard.ts
 import { inject } from '@angular/core';
-import { CanActivateFn, Router } from '@angular/router';
-import { AuthService } from '../services/auth.service';
+import { CanActivateFn } from '@angular/router';
+import Keycloak from 'keycloak-js';
+import { environment } from '../../../environments/environment';
 
+/**
+ * Authentication Guard
+ *
+ * With onLoad: 'login-required', Keycloak handles the redirect BEFORE Angular
+ * boots (inside provideKeycloak init). By the time this guard runs, the user
+ * is already authenticated. This guard is a safety net only.
+ */
 export const authGuard: CanActivateFn = () => {
-  const auth = inject(AuthService);
-  const router = inject(Router);
-  if (auth.hasToken()) return true;
-  return router.createUrlTree(['/auth/login']);
+  if (environment.authDisabled) {
+    return true;
+  }
+  const keycloak = inject(Keycloak);
+  return !!keycloak.authenticated;
 };
+

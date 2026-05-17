@@ -1,6 +1,6 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { tap } from 'rxjs';
+import { tap, map } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { Channel, Message, PaginatedMessages } from '../models';
 
@@ -12,30 +12,36 @@ function mapChannel(raw: Record<string, unknown>): Channel {
     type: raw['type'] as Channel['type'],
     createdBy: raw['created_by'] as string,
     isArchived: raw['is_archived'] as boolean,
-    memberCount: raw['member_count'] as number ?? 0,
-    unreadCount: 0,
+    memberCount: (raw['member_count'] as number) ?? 0,
+    unreadCount: (raw['unread_count'] as number) ?? 0,
     createdAt: raw['created_at'] as string,
   };
 }
 
 function mapMessage(raw: Record<string, unknown>): Message {
+  const reactions = (raw['reactions'] as Array<{emoji: string; count: number; reacted_by_me: boolean}>)?.map(r => ({
+    emoji: r.emoji,
+    count: r.count,
+    reactedByMe: r.reacted_by_me ?? false,
+  })) ?? [];
+
   return {
     id: raw['id'] as string,
     channelId: raw['channel_id'] as string,
     senderId: raw['sender_id'] as string,
-    senderUsername: raw['sender_username'] as string,
+    senderUsername: (raw['sender_username'] as string) ?? 'Unknown',
     senderAvatar: raw['sender_avatar'] as string | undefined,
     originalContent: raw['original_content'] as string,
     translatedContent: raw['translated_content'] as string | undefined,
     originalLanguage: raw['original_language'] as string,
     isAgentic: raw['is_agentic'] as boolean,
-    isPinned: raw['is_pinned'] as boolean ?? false,
+    isPinned: (raw['is_pinned'] as boolean) ?? false,
     parentId: raw['parent_id'] as string | undefined,
     fileUrl: raw['file_url'] as string | undefined,
     fileName: raw['file_name'] as string | undefined,
     fileType: raw['file_type'] as string | undefined,
-    reactions: (raw['reactions'] as unknown[]) as Message['reactions'] ?? [],
-    replyCount: raw['reply_count'] as number ?? 0,
+    reactions,
+    replyCount: (raw['reply_count'] as number) ?? 0,
     createdAt: raw['created_at'] as string,
     updatedAt: raw['updated_at'] as string,
   };
@@ -87,15 +93,27 @@ export class MessageService {
   private readonly base = `${environment.apiUrl}/api/v1`;
 
   getMessages(channelId: string, page = 1) {
-    return this.http.get<PaginatedMessages>(`${this.base}/channels/${channelId}/messages?page=${page}&page_size=50`);
+    return this.http.get<unknown>(`${this.base}/channels/${channelId}/messages?page=${page}&page_size=50`).pipe(
+      map((data: unknown) => {
+        const raw = data as Record<string, unknown>;
+        return {
+          ...raw,
+          items: ((raw['items'] as unknown[]) ?? []).map(msg => mapMessage(msg as Record<string, unknown>))
+        } as PaginatedMessages;
+      })
+    );
   }
 
   getPinned(channelId: string) {
-    return this.http.get<Message[]>(`${this.base}/channels/${channelId}/messages/pinned`);
+    return this.http.get<unknown[]>(`${this.base}/channels/${channelId}/messages/pinned`).pipe(
+      map(msgs => msgs.map(msg => mapMessage(msg as Record<string, unknown>)))
+    );
   }
 
   searchMessages(channelId: string, query: string) {
-    return this.http.get<Message[]>(`${this.base}/channels/${channelId}/messages/search?q=${encodeURIComponent(query)}`);
+    return this.http.get<unknown[]>(`${this.base}/channels/${channelId}/messages/search?q=${encodeURIComponent(query)}`).pipe(
+      map(msgs => msgs.map(msg => mapMessage(msg as Record<string, unknown>)))
+    );
   }
 
   pinMessage(messageId: string) {

@@ -1,0 +1,131 @@
+{
+  "realm": "without-border",
+  "enabled": true,
+  "displayName": "WithoutBorder",
+  "registrationAllowed": false,
+  "resetPasswordAllowed": true,
+  "rememberMe": true,
+  "loginWithEmailAllowed": true,
+  "sslRequired": "none",
+  "roles": {
+    "realm": [
+      { "name": "user",       "description": "Utilisateur standard WithoutBorder" },
+      { "name": "admin",      "description": "Administrateur WithoutBorder" },
+      { "name": "superadmin", "description": "Super administrateur WithoutBorder" }
+    ]
+  },
+  "clients": [
+    {
+      "clientId": "without-border-frontend",
+      "name": "WithoutBorder Frontend",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": true,
+      "implicitFlowEnabled": false,
+      "serviceAccountsEnabled": false,
+      "redirectUris": [
+        "http://localhost:4200/*",
+        "http://127.0.0.1:4200/*"
+      ],
+      "webOrigins": [
+        "http://localhost:4200",
+        "http://127.0.0.1:4200"
+      ],
+      "attributes": {
+        "pkce.code.challenge.method": "S256"
+      },
+      "protocolMappers": [
+        {
+          "name": "audience-mapper",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "consentRequired": false,
+          "config": {
+            "included.client.audience": "without-border-frontend",
+            "id.token.claim": "false",
+            "access.token.claim": "true"
+          }
+        }
+      ]
+    }
+  ],
+  "users": [
+    {
+      "id": "00000000-0000-0000-0000-000000000001",
+      "username": "Sophie Martin",
+      "email": "demo@withoutborder.app",
+      "enabled": true,
+      "emailVerified": true,
+      "requiredActions": [],
+      "firstName": "Sophie",
+      "lastName": "Martin",
+      "attributes": { "locale": ["fr"] },
+      "credentials": [
+        { "type": "password", "value": "demo1234", "temporary": false }
+      ],
+      "realmRoles": ["user"]
+    },
+    {
+      "id": "00000000-0000-0000-0000-000000000002",
+      "username": "John Carter",
+      "email": "john@withoutborder.app",
+      "enabled": true,
+      "emailVerified": true,
+      "requiredActions": [],
+      "firstName": "John",
+      "lastName": "Carter",
+      "attributes": { "locale": ["en"] },
+      "credentials": [
+        { "type": "password", "value": "demo1234", "temporary": false }
+      ],
+      "realmRoles": ["admin"]
+    },
+    {
+      "id": "00000000-0000-0000-0000-000000000003",
+      "username": "María García",
+      "email": "maria@withoutborder.app",
+      "enabled": true,
+      "emailVerified": true,
+      "requiredActions": [],
+      "firstName": "María",
+      "lastName": "García",
+      "attributes": { "locale": ["es"] },
+      "credentials": [
+        { "type": "password", "value": "demo1234", "temporary": false }
+      ],
+      "realmRoles": ["user"]
+    },
+    {
+      "id": "00000000-0000-0000-0000-000000000004",
+      "username": "Kevin Lee",
+      "email": "kevin@withoutborder.app",
+      "enabled": true,
+      "emailVerified": true,
+      "requiredActions": [],
+      "firstName": "Kevin",
+      "lastName": "Lee",
+      "attributes": { "locale": ["ko"] },
+      "credentials": [
+        { "type": "password", "value": "demo1234", "temporary": false }
+      ],
+      "realmRoles": ["user"]
+    },
+    {
+      "id": "00000000-0000-0000-0000-000000000005",
+      "username": "Sarah Wilson",
+      "email": "sarah@withoutborder.app",
+      "enabled": true,
+      "emailVerified": true,
+      "requiredActions": [],
+      "firstName": "Sarah",
+      "lastName": "Wilson",
+      "attributes": { "locale": ["en"] },
+      "credentials": [
+        { "type": "password", "value": "demo1234", "temporary": false }
+      ],
+      "realmRoles": ["user"]
+    }
+  ]
+}

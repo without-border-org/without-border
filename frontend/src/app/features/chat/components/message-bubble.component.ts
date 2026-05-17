@@ -1,136 +1,145 @@
 import { Component, Input, Output, EventEmitter, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Message } from '../../../core/models';
-
-const EMOJI_QUICK = ['👍', '❤️', '😂', '🔥', '👏', '🚀'];
+import { Message, LANGUAGE_MAP, getUserColor, getInitials } from '../../../core/models';
 
 @Component({
   selector: 'wb-message-bubble',
   standalone: true,
   imports: [CommonModule],
   template: `
-    <div class="group flex items-start gap-3 py-1 px-2 rounded-xl hover:bg-white/3 transition-all"
-         [class]="isOwn ? 'flex-row-reverse' : 'flex-row'">
+    <div class="flex gap-4 group">
 
       <!-- Avatar -->
-      <div class="flex-shrink-0 mt-0.5" *ngIf="!isOwn">
-        <div class="w-8 h-8 rounded-full overflow-hidden flex items-center justify-center font-bold text-xs
-                    bg-gradient-to-br"
-             [class]="message.isAgentic ? 'from-accent-violet/40 to-primary-600/40' : 'from-primary-600/40 to-accent-pink/30'">
-          <img *ngIf="message.senderAvatar" [src]="message.senderAvatar" class="w-full h-full object-cover" />
-          <span *ngIf="!message.senderAvatar" class="text-white">
-            {{ message.isAgentic ? '🤖' : message.senderUsername[0].toUpperCase() }}
-          </span>
-        </div>
+      <div class="w-9 h-9 rounded-xl flex items-center justify-center text-xs font-bold
+                  flex-shrink-0 shadow-sm"
+           [ngClass]="avatarClass()">
+        {{ initials() }}
       </div>
 
-      <!-- Bubble content -->
-      <div class="max-w-[70%] min-w-0" [class]="isOwn ? 'items-end flex flex-col' : 'items-start flex flex-col'">
+      <!-- Contenu -->
+      <div class="flex-1 min-w-0">
 
-        <!-- Header -->
-        <div class="flex items-center gap-2 mb-1 px-1" [class]="isOwn ? 'flex-row-reverse' : 'flex-row'">
-          <span class="text-xs font-semibold"
-                [class]="message.isAgentic ? 'text-accent-violet' : isOwn ? 'text-primary-400' : 'text-gray-300'">
+        <!-- Ligne métadonnées : nom · heure · langue · traduit · agentic -->
+        <div class="flex items-center gap-2 mb-1.5 flex-wrap">
+          <span class="text-xs font-bold dark:text-zinc-100 text-zinc-900">
             {{ message.senderUsername }}
           </span>
-          <span *ngIf="message.isAgentic"
-            class="text-xs bg-accent-violet/15 text-accent-violet border border-accent-violet/20 px-1.5 py-0.5 rounded-full font-medium">
-            🤖 AI Agent
+          <span class="text-[10px] text-zinc-400 font-medium">
+            {{ message.createdAt | date:'HH:mm' }}
           </span>
-          <span *ngIf="message.isPinned" class="text-xs text-amber-500">📌</span>
-          <span class="text-xs text-gray-600">{{ message.createdAt | date:'HH:mm' }}</span>
+          <span class="text-[9px] px-1.5 py-0.5 rounded font-bold text-zinc-500 dark:text-zinc-400
+                       dark:bg-white/10 bg-zinc-100 border dark:border-white/5 border-zinc-200">
+            {{ langBadge() }}
+          </span>
+          <span *ngIf="isTranslated()"
+                class="text-[9px] flex items-center text-brand-orange font-bold px-1.5 py-0.5
+                       rounded-full bg-brand-orange/10">
+            文 traduit
+          </span>
+          <span *ngIf="message.isAgentic"
+                class="text-[8px] px-1.5 py-0.5 bg-brand-orange/20 text-brand-orange
+                       rounded-full font-bold uppercase tracking-tighter">
+            Agentic
+          </span>
+          <span *ngIf="message.isPinned" class="text-[9px] text-amber-400">📌</span>
         </div>
 
-        <!-- Reply preview -->
-        <div *ngIf="message.parentId"
-             class="px-3 py-1.5 mb-1 bg-white/5 border-l-2 border-primary-500/50 rounded-r-lg text-xs text-gray-400 max-w-full truncate">
-          ↩ Replying to a message
-        </div>
-
-        <!-- Message bubble -->
+        <!-- Bulle de message -->
         <div class="relative" (mouseenter)="hover.set(true)" (mouseleave)="hover.set(false)">
-          <div class="px-4 py-2.5 rounded-2xl text-sm leading-relaxed break-words"
-               [class]="bubbleClass()">
+          <div class="p-3.5 rounded-2xl rounded-tl-sm text-sm block shadow-sm leading-relaxed break-words"
+               [ngClass]="bubbleClass()">
 
-            <!-- File attachment -->
+            <!-- Fichier joint -->
             <div *ngIf="message.fileUrl" class="mb-2">
               <img *ngIf="isImage()" [src]="message.fileUrl" class="max-w-xs rounded-lg" />
               <a *ngIf="!isImage()" [href]="message.fileUrl" target="_blank"
-                 class="flex items-center gap-2 px-3 py-2 bg-white/10 rounded-lg hover:bg-white/15 transition-colors">
+                 class="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors">
                 <span>📎</span>
                 <span class="text-xs underline">{{ message.fileName }}</span>
               </a>
             </div>
 
-            <!-- Text content -->
-            <p *ngIf="!showOriginal()" class="text-white">
-              {{ message.translatedContent || message.originalContent }}
-            </p>
-            <p *ngIf="showOriginal()" class="text-gray-300 italic">
-              {{ message.originalContent }}
-            </p>
+            <!-- Contenu texte -->
+            <p *ngIf="!showOriginal()">{{ displayContent() }}</p>
+            <p *ngIf="showOriginal()" class="italic opacity-75">{{ message.originalContent }}</p>
 
-            <!-- Translation toggle -->
+            <!-- Toggle original / traduction -->
             <button *ngIf="message.translatedContent && message.translatedContent !== message.originalContent"
-              (click)="showOriginal.update(v => !v)"
-              class="mt-1 text-xs text-gray-500 hover:text-primary-400 transition-colors block">
-              {{ showOriginal() ? '🌍 Show translation' : '📝 See original (' + message.originalLanguage + ')' }}
+                    (click)="showOriginal.update(v => !v)"
+                    class="mt-1.5 text-[10px] opacity-60 hover:opacity-100 transition-opacity block">
+              {{ showOriginal() ? '🌍 Voir la traduction' : '📝 Voir l\'original (' + langBadge() + ')' }}
             </button>
           </div>
 
-          <!-- Quick reactions hover toolbar -->
+          <!-- Toolbar de réactions (hover) -->
           <div *ngIf="hover()"
-               class="absolute -top-9 flex items-center gap-1 bg-surface-800 border border-white/10 rounded-xl px-2 py-1 shadow-glass z-10 animate-scale-in"
-               [class]="isOwn ? 'right-0' : 'left-0'">
+               class="absolute -top-9 left-0 flex items-center gap-1
+                      dark:bg-brand-darkPanel bg-white border dark:border-brand-darkBorder border-zinc-200
+                      rounded-xl px-2 py-1 shadow-glass z-10 animate-scale-in">
             <button *ngFor="let emoji of quickEmojis"
-              (click)="react.emit(emoji)"
-              class="hover:scale-125 transition-transform text-base leading-none p-0.5">{{ emoji }}</button>
-            <div class="w-px h-4 bg-white/10 mx-0.5"></div>
-            <button (click)="reply.emit()" class="text-gray-400 hover:text-white p-0.5 text-xs transition-colors" title="Reply">↩</button>
-            <button *ngIf="isOwn" (click)="pin.emit()" class="text-gray-400 hover:text-amber-400 p-0.5 text-xs transition-colors" title="Pin">📌</button>
-            <button *ngIf="isOwn" (click)="delete.emit()" class="text-gray-400 hover:text-red-400 p-0.5 text-xs transition-colors" title="Delete">🗑</button>
+                    (click)="react.emit(emoji)"
+                    class="hover:scale-125 transition-transform text-base leading-none p-0.5">
+              {{ emoji }}
+            </button>
           </div>
         </div>
 
-        <!-- Reactions display -->
-        <div *ngIf="message.reactions.length" class="flex flex-wrap gap-1 mt-1.5 px-1"
-             [class]="isOwn ? 'justify-end' : 'justify-start'">
+        <!-- Réactions -->
+        <div *ngIf="message.reactions && message.reactions.length" class="flex gap-1.5 mt-2 flex-wrap">
           <button *ngFor="let r of message.reactions"
-            (click)="react.emit(r.emoji)"
-            class="flex items-center gap-1 px-2 py-0.5 rounded-full text-xs transition-all border"
-            [class]="r.reactedByMe
-              ? 'bg-primary-500/20 border-primary-500/40 text-primary-300'
-              : 'bg-white/5 border-white/10 text-gray-400 hover:bg-white/10'">
-            {{ r.emoji }} {{ r.count }}
+                  (click)="react.emit(r.emoji)"
+                  class="reaction-pill"
+                  [class.ring-1]="r.reactedByMe"
+                  [class.ring-brand-orange]="r.reactedByMe">
+            <span>{{ r.emoji }}</span>
+            <span>{{ r.count }}</span>
           </button>
         </div>
+
       </div>
     </div>
   `,
 })
 export class MessageBubbleComponent {
   @Input() message!: Message;
-  @Input() isOwn = false;
+  @Input() currentUserLang = 'fr';
   @Output() react = new EventEmitter<string>();
-  @Output() pin = new EventEmitter<void>();
-  @Output() delete = new EventEmitter<void>();
-  @Output() reply = new EventEmitter<void>();
 
-  hover = signal(false);
+  hover       = signal(false);
   showOriginal = signal(false);
-  quickEmojis = EMOJI_QUICK;
 
-  isImage() {
-    return this.message.fileType?.startsWith('image/');
+  quickEmojis = ['👍', '❤️', '😂', '🔥', '👏', '🚀'];
+
+  initials() { return getInitials(this.message.senderUsername); }
+
+  avatarClass(): string {
+    const c = getUserColor(this.message.senderId);
+    return `bg-${c}-500/10 text-${c}-500 border border-${c}-500/10`;
   }
 
-  bubbleClass() {
+  bubbleClass(): string {
     if (this.message.isAgentic) {
-      return 'bg-accent-violet/15 border border-accent-violet/20';
+      return 'bg-brand-orange text-white shadow-lg shadow-orange-500/20';
     }
-    if (this.isOwn) {
-      return 'bg-primary-500/20 border border-primary-500/20';
-    }
-    return 'bg-surface-800 border border-white/5';
+    return 'dark:bg-brand-darkPanel bg-white border dark:border-brand-darkBorder border-zinc-200 dark:text-zinc-200 text-zinc-800';
+  }
+
+  langBadge(): string {
+    const lang = this.message.originalLanguage;
+    if (!lang) return '??';
+    return LANGUAGE_MAP[lang]?.badge ?? lang.toUpperCase();
+  }
+
+  isTranslated(): boolean {
+    const originalLang = this.message.originalLanguage;
+    return !!originalLang && originalLang !== this.currentUserLang && !!this.message.translatedContent;
+  }
+
+  displayContent(): string {
+    return this.message.translatedContent || this.message.originalContent;
+  }
+
+  isImage(): boolean {
+    return !!this.message.fileType?.startsWith('image/');
   }
 }

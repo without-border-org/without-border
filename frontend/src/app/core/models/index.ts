@@ -26,6 +26,14 @@ export interface Channel {
   createdAt: string;
 }
 
+export interface ChannelMember {
+  userId: string;
+  username: string;
+  status: UserStatus;
+  role: string;
+  preferredLanguage?: string;
+}
+
 export interface Reaction {
   emoji: string;
   count: number;
@@ -51,7 +59,7 @@ export interface Message {
   replyCount: number;
   createdAt: string;
   updatedAt: string;
-  showOriginal?: boolean; // UI only
+  showOriginal?: boolean; // UI-only flag
 }
 
 export interface AuthTokens {
@@ -74,8 +82,11 @@ export interface PaginatedMessages {
   items: Message[];
   total: number;
   page: number;
-  pageSize: number;
-  hasMore: boolean;
+  page_size: number;
+  has_more: boolean;
+  // aliases used by the component layer
+  pageSize?: number;
+  hasMore?: boolean;
 }
 
 export interface WsEvent {
@@ -89,17 +100,43 @@ export interface PresenceUser {
   status: 'online' | 'offline';
 }
 
-export const LANGUAGE_MAP: Record<string, { name: string; flag: string }> = {
-  fr: { name: 'Français', flag: '🇫🇷' },
-  en: { name: 'English', flag: '🇬🇧' },
-  es: { name: 'Español', flag: '🇪🇸' },
-  de: { name: 'Deutsch', flag: '🇩🇪' },
-  zh: { name: '中文', flag: '🇨🇳' },
-  ar: { name: 'العربية', flag: '🇸🇦' },
-  pt: { name: 'Português', flag: '🇧🇷' },
-  ru: { name: 'Русский', flag: '🇷🇺' },
-  ja: { name: '日本語', flag: '🇯🇵' },
-  ko: { name: '한국어', flag: '🇰🇷' },
-  it: { name: 'Italiano', flag: '🇮🇹' },
-  nl: { name: 'Nederlands', flag: '🇳🇱' },
+/** Language metadata including UI badge code (country code used in message headers). */
+export const LANGUAGE_MAP: Record<string, { name: string; flag: string; badge: string }> = {
+  fr: { name: 'Français',   flag: '🇫🇷', badge: 'FR' },
+  en: { name: 'English',    flag: '🇬🇧', badge: 'GB' },
+  es: { name: 'Español',    flag: '🇪🇸', badge: 'ES' },
+  de: { name: 'Deutsch',    flag: '🇩🇪', badge: 'DE' },
+  zh: { name: '中文',        flag: '🇨🇳', badge: 'CN' },
+  ar: { name: 'العربية',    flag: '🇸🇦', badge: 'SA' },
+  pt: { name: 'Português',  flag: '🇧🇷', badge: 'BR' },
+  ru: { name: 'Русский',    flag: '🇷🇺', badge: 'RU' },
+  ja: { name: '日本語',      flag: '🇯🇵', badge: 'JP' },
+  ko: { name: '한국어',      flag: '🇰🇷', badge: 'KR' },
+  it: { name: 'Italiano',   flag: '🇮🇹', badge: 'IT' },
+  nl: { name: 'Nederlands', flag: '🇳🇱', badge: 'NL' },
 };
+
+/**
+ * Returns the Tailwind color name for a given userId.
+ * Uses the last byte of the UUID (hex) modulo the palette length.
+ * Colors are chosen to match the mockup user assignments:
+ *   000...001 → orange (Sophie), 002 → blue (John), 003 → emerald (María),
+ *   004 → zinc (Kevin), 005 → purple (Sarah)
+ */
+export function getUserColor(userId: string): string {
+  const COLORS = ['violet', 'orange', 'blue', 'emerald', 'zinc', 'purple', 'pink', 'teal'];
+  const lastByte = parseInt(userId?.replace(/-/g, '').slice(-2), 16) || 0;
+  return COLORS[lastByte % COLORS.length];
+}
+
+/** Returns 2-letter initials from a full name (e.g. "Sophie Martin" → "SM"). */
+export function getInitials(name: string | null | undefined): string {
+  if (!name || typeof name !== 'string') return '?';
+  const parts = name.trim().split(' ').filter(p => p.length > 0);
+  if (parts.length === 0) return '?';
+  return parts
+    .slice(0, 2)
+    .map(w => w[0])
+    .join('')
+    .toUpperCase() || '?';
+}

@@ -69,10 +69,10 @@ class UserPublic(BaseModel):
 
 
 class UserUpdateRequest(BaseModel):
-    username: Optional[str] = None
     preferred_language: Optional[str] = None
     agentic_enabled: Optional[bool] = None
     agentic_persona: Optional[str] = None
+
 
 
 class UserStatusUpdate(BaseModel):

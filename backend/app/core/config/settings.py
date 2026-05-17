@@ -9,6 +9,14 @@ class Settings(BaseSettings):
 
     DATABASE_URL: str = "postgresql+asyncpg://wb_user:wb_password@localhost:5432/withoutborder"
 
+    # ── Keycloak / OIDC ──────────────────────────────────────────────────────
+    KEYCLOAK_URL: str = ""
+    KEYCLOAK_REALM: str = "without-border"
+    KEYCLOAK_AUDIENCE: str = "without-border-frontend"
+    KEYCLOAK_VERIFY_AUD: bool = True
+    KEYCLOAK_JWKS_CACHE_TTL: int = 3600
+
+    # ── Legacy JWT (kept for backward compatibility, not used with Keycloak) ─
     SECRET_KEY: str = "change-me-in-production"
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
@@ -35,6 +43,16 @@ class Settings(BaseSettings):
     class Config:
         env_file = ".env"
         case_sensitive = True
+
+    @property
+    def keycloak_issuer(self) -> str:
+        """Construct Keycloak issuer URL from base URL and realm."""
+        return f"{self.KEYCLOAK_URL.rstrip('/')}/realms/{self.KEYCLOAK_REALM}"
+
+    @property
+    def keycloak_jwks_url(self) -> str:
+        """Construct JWKS endpoint URL."""
+        return f"{self.keycloak_issuer}/protocol/openid-connect/certs"
 
     def model_post_init(self, __context):
         import os

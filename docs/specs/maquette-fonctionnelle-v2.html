@@ -1,0 +1,1253 @@
+<!DOCTYPE html>
+<html lang="fr" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WithoutBorder | Workspace</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: {
+                        brand: {
+                            orange: '#F97316', orangeHover: '#EA580C',
+                            sky: '#2A8AD8', skyDeep: '#1E6FB8',
+                            darkBg: '#0E0E11', darkSidebar: '#18181B', darkPanel: '#27272A',
+                            darkBorder: 'rgba(255,255,255,0.06)',
+                            /* Light theme — palette back-office : gris + indigo + mint + violet */
+                            violet: '#7C3AED', violetHover: '#6D28D9',
+                            mint: '#5EEAD4', mintDeep: '#14B8A6',
+                            lightBg: '#F3F3F6',
+                            lightSidebar: '#1B1442',
+                            lightPanel: '#FFFFFF',
+                            lightPanel2: '#FAFAFC',
+                            lightBorder: 'rgba(15,15,30,0.07)'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        :root{
+            --c-accent:#F97316;
+            --c-accent-h:#EA580C;
+            --c-accent-glow:rgba(249,115,22,.14);
+            --c-sky:#2A8AD8;
+            --c-sky-glow:rgba(42,138,216,.12);
+        }
+        body{-webkit-font-smoothing:antialiased}
+        .custom-scrollbar::-webkit-scrollbar{width:5px;height:5px}
+        .custom-scrollbar::-webkit-scrollbar-track{background:transparent}
+        .custom-scrollbar::-webkit-scrollbar-thumb{background:#3F3F46;border-radius:10px}
+        .light .custom-scrollbar::-webkit-scrollbar-thumb{background:rgba(30,80,160,.18)}
+        .transition-ui{transition:all .25s cubic-bezier(.4,0,.2,1)}
+        .sidebar-right-hidden{transform:translateX(100%);width:0;opacity:0;pointer-events:none}
+        .sidebar-right-visible{transform:translateX(0);width:340px;opacity:1}
+        .nav-item-active{background:rgba(249,115,22,.10)!important;color:#F97316!important;border-left:3px solid #F97316;border-radius:0 8px 8px 0}
+        .nav-item-active-sky{background:rgba(42,138,216,.10)!important;color:#1E6FB8!important;border-left:3px solid #2A8AD8;border-radius:0 8px 8px 0}
+        .light .nav-item-active-sky{color:#1E6FB8!important}
+        .dark .nav-item-active-sky{color:#5BAEEC!important;background:rgba(42,138,216,.15)!important}
+
+        .dark  .glass-header{background:rgba(14,14,17,.8);backdrop-filter:blur(12px);border-bottom:1px solid rgba(255,255,255,.06)}
+        .light .glass-header{background:rgba(238,245,253,.82);backdrop-filter:blur(12px);border-bottom:1px solid rgba(30,80,160,.10)}
+
+        .reaction-pill{display:flex;align-items:center;gap:4px;padding:2px 8px;border-radius:99px;font-size:10px;font-weight:700;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.05);cursor:pointer;transition:all .2s}
+        .light .reaction-pill{border:1px solid rgba(30,80,160,.10);background:rgba(30,80,160,.04)}
+        .reaction-pill:hover{transform:scale(1.05);background:rgba(249,115,22,.1);border-color:rgba(249,115,22,.3)}
+
+        .translate-label::before{content:"文";font-size:10px;margin-right:3px}
+
+        .editor-tool{display:flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:6px;color:inherit;opacity:.45;cursor:pointer;transition:opacity .15s,background .15s;flex-shrink:0;background:transparent;border:0}
+        .editor-tool:hover{opacity:1}
+        .dark  .editor-tool:hover{background:rgba(255,255,255,.07)}
+        .light .editor-tool:hover{background:rgba(30,80,160,.08)}
+
+        #send-btn{opacity:.22;cursor:not-allowed}
+        #send-btn.active{opacity:1;cursor:pointer;color:#F97316}
+        #send-btn.active:hover{background:rgba(249,115,22,.12)}
+
+        /* === Agent configuration view === */
+        .agent-card{background:var(--c-panel);border:1px solid var(--c-border);border-radius:14px;overflow:hidden}
+        .dark .agent-card{background:#1E1E22;border-color:rgba(255,255,255,.07)}
+        .light .agent-card{background:#FFFFFF;border-color:rgba(30,80,160,.10);box-shadow:0 1px 2px rgba(30,80,160,.04)}
+
+        .agent-card-hdr{padding:14px 18px;display:flex;align-items:center;gap:10px}
+        .dark .agent-card-hdr{border-bottom:1px solid rgba(255,255,255,.07)}
+        .light .agent-card-hdr{border-bottom:1px solid rgba(30,80,160,.10)}
+
+        .cico{width:30px;height:30px;border-radius:7px;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#F97316;background:rgba(249,115,22,.12)}
+        .cico.sky{color:#1E6FB8;background:rgba(42,138,216,.14)}
+
+        .lbl{display:block;font-size:10.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;margin-bottom:5px}
+        .dark .lbl{color:#71717a}
+        .light .lbl{color:#5d738f}
+
+        .inp{width:100%;padding:9px 11px;border-radius:8px;font-family:'Inter',sans-serif;font-size:13.5px;outline:none;transition:all .2s;border:1px solid;background-color:transparent;background-image:none;background-repeat:no-repeat}
+        .dark .inp{background-color:#131316;border-color:rgba(255,255,255,.12);color:#e4e4e7}
+        .light .inp{background-color:#FFFFFF;border-color:rgba(30,80,160,.18);color:#0F172A}
+        .inp:focus{border-color:#F97316;box-shadow:0 0 0 3px var(--c-accent-glow)}
+        .dark .inp::placeholder{color:#71717a}
+        .light .inp::placeholder{color:#9BACC4}
+
+        select.inp{appearance:none;cursor:pointer;background-repeat:no-repeat!important;background-position:right 11px center!important;padding-right:30px}
+        .dark select.inp{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='11' viewBox='0 0 24 24' fill='none' stroke='%2371717a' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E")!important}
+        .light select.inp{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='11' viewBox='0 0 24 24' fill='none' stroke='%235d738f' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E")!important}
+        textarea.inp{resize:none;line-height:1.65}
+
+        .tog{position:relative;cursor:pointer;flex-shrink:0;display:inline-block}
+        .tog input{position:absolute;opacity:0;width:0;height:0}
+        .tog-t{position:absolute;inset:0;border-radius:999px;transition:all .25s}
+        .dark .tog-t{background:#27272A;border:1px solid rgba(255,255,255,.12)}
+        .light .tog-t{background:#D7E6F6;border:1px solid rgba(30,80,160,.12)}
+        .tog-th{position:absolute;border-radius:50%;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:transform .22s cubic-bezier(.34,1.56,.64,1),background .2s;background:#fff}
+        .dark .tog-th{background:#a1a1aa}
+        .tog input:checked~.tog-t{background:#F97316;border-color:#F97316}
+        .tog input:checked~.tog-th{background:#fff}
+        .tog.sm{width:36px;height:20px}.tog.sm .tog-th{width:13px;height:13px;top:3px;left:3px}
+        .tog.sm input:checked~.tog-th{transform:translateX(16px)}
+        .tog.md{width:42px;height:23px}.tog.md .tog-th{width:16px;height:16px;top:3px;left:3px}
+        .tog.md input:checked~.tog-th{transform:translateX(19px)}
+
+        .tog-row{display:flex;align-items:center;justify-content:space-between;padding:11px 0}
+        .dark .tog-row + .tog-row{border-top:1px solid rgba(255,255,255,.06)}
+        .light .tog-row + .tog-row{border-top:1px solid rgba(30,80,160,.08)}
+
+        .rad{position:relative;cursor:pointer}
+        .rad input{position:absolute;opacity:0;width:0;height:0}
+        .rad-l{display:flex;align-items:center;gap:7px;padding:9px 11px;border-radius:8px;font-size:13px;font-weight:500;transition:all .2s;cursor:pointer;border:1px solid}
+        .dark .rad-l{border-color:rgba(255,255,255,.12);background:#19191D;color:#a1a1aa}
+        .light .rad-l{border-color:rgba(30,80,160,.14);background:#F4F8FD;color:#52525b}
+        .rd{width:13px;height:13px;border-radius:50%;border:1.5px solid currentColor;display:flex;align-items:center;justify-content:center;flex-shrink:0;opacity:.55}
+        .rd::after{content:'';width:5px;height:5px;border-radius:50%;background:#F97316;opacity:0;transition:opacity .18s}
+        .rad input:checked~.rad-l{border-color:#F97316;background:var(--c-accent-glow)}
+        .dark .rad input:checked~.rad-l{color:#fff}
+        .light .rad input:checked~.rad-l{color:#0F172A}
+        .rad input:checked~.rad-l .rd{border-color:#F97316;opacity:1}
+        .rad input:checked~.rad-l .rd::after{opacity:1}
+
+        .sld-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:7px}
+        .sld-val{font-size:11.5px;font-weight:600;color:#F97316;background:var(--c-accent-glow);padding:2px 8px;border-radius:20px}
+        input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:4px;border-radius:2px;outline:none;cursor:pointer}
+        .dark input[type=range]{background:#27272A}
+        .light input[type=range]{background:#D7E6F6}
+        input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:#F97316;border:2.5px solid;box-shadow:0 1px 5px rgba(249,115,22,.5);cursor:pointer;transition:transform .15s}
+        .dark input[type=range]::-webkit-slider-thumb{border-color:#0E0E11}
+        .light input[type=range]::-webkit-slider-thumb{border-color:#FFFFFF}
+        input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.18)}
+
+        .divider{display:flex;align-items:center;gap:8px;margin:18px 0 12px}
+        .divider-line{flex:1;height:1px}
+        .dark .divider-line{background:rgba(255,255,255,.07)}
+        .light .divider-line{background:rgba(30,80,160,.10)}
+        .divider-lbl{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase}
+        .dark .divider-lbl{color:#71717a}
+        .light .divider-lbl{color:#5d738f}
+
+        .up-btn{display:flex;align-items:center;justify-content:center;gap:7px;width:100%;padding:10px 13px;border-radius:8px;border:1.5px dashed;background:transparent;font-family:'Inter',sans-serif;font-size:12.5px;cursor:pointer;transition:all .2s}
+        .dark .up-btn{border-color:rgba(255,255,255,.14);color:#a1a1aa}
+        .light .up-btn{border-color:rgba(30,80,160,.22);color:#5d738f}
+        .up-btn:hover{border-color:#F97316;color:#F97316;background:var(--c-accent-glow);border-style:solid}
+
+        .fi{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:8px;border:1px solid}
+        .dark .fi{background:#19191D;border-color:rgba(255,255,255,.06)}
+        .light .fi{background:#F4F8FD;border-color:rgba(30,80,160,.08)}
+
+        .infobox{padding:9px 11px;border-radius:8px;border:1px solid;font-size:12px;display:flex;gap:8px;align-items:flex-start;line-height:1.55}
+        .dark .infobox{background:#19191D;border-color:rgba(255,255,255,.06);color:#a1a1aa}
+        .light .infobox{background:#E6F0FB;border-color:rgba(30,80,160,.10);color:#3F5878}
+        .infobox svg{width:14px;height:14px;flex-shrink:0;margin-top:1px;color:#2A8AD8}
+
+        .ft-actions{display:flex;align-items:center;gap:9px;padding:14px 24px;border-top:1px solid}
+        .dark .ft-actions{background:rgba(14,14,17,.85);border-color:rgba(255,255,255,.07);backdrop-filter:blur(12px)}
+        .light .ft-actions{background:rgba(238,245,253,.88);border-color:rgba(30,80,160,.10);backdrop-filter:blur(12px)}
+
+        .btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;height:38px;padding:0 16px;border-radius:9px;font-family:'Inter',sans-serif;font-size:13px;font-weight:500;cursor:pointer;transition:all .2s;border:1px solid transparent;white-space:nowrap}
+        .btn-primary{background:#F97316;color:#fff;border-color:#F97316}
+        .btn-primary:hover{background:#EA580C}
+        .btn-sec{background:transparent}
+        .dark .btn-sec{color:#a1a1aa;border-color:rgba(255,255,255,.12)}
+        .light .btn-sec{color:#3F5878;border-color:rgba(30,80,160,.18)}
+        .dark .btn-sec:hover{background:rgba(255,255,255,.04);color:#fff}
+        .light .btn-sec:hover{background:rgba(30,80,160,.06);color:#0F172A}
+        .btn-del{background:transparent;color:#EF4444;border-color:rgba(239,68,68,.25)}
+        .btn-del:hover{background:rgba(239,68,68,.08);border-color:#EF4444}
+
+        .tab-bar{display:flex;align-items:center;gap:4px;padding:4px;border-radius:10px}
+        .dark .tab-bar{background:rgba(255,255,255,.04)}
+        .light .tab-bar{background:rgba(30,80,160,.06)}
+        .tab-btn{padding:6px 14px;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;background:transparent;border:0;display:flex;align-items:center;gap:6px}
+        .dark .tab-btn{color:#a1a1aa}
+        .light .tab-btn{color:#5d738f}
+        .tab-btn.active{background:#F97316;color:#fff;box-shadow:0 1px 4px rgba(249,115,22,.3)}
+
+        .badge-live{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:20px;font-size:10.5px;font-weight:600;background:rgba(34,197,94,.12);color:#16A34A;border:1px solid rgba(34,197,94,.2)}
+        .dark .badge-live{color:#22C55E}
+        .dot-pulse{width:5px;height:5px;border-radius:50%;background:currentColor;animation:dotPulse 2s infinite}
+        @keyframes dotPulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+        /* === Theme toggle icon swap === */
+        .dark .moon-ico{display:none}
+        .light .sun-ico{display:none}
+        .light #theme-toggle{color:#5EEAD4}
+        .light #theme-toggle:hover{background:rgba(94,234,212,.16)}
+
+        /* === Agent gear button (toujours visible) === */
+        .agent-row{position:relative}
+        .agent-gear{opacity:.55!important}
+        .agent-row:hover .agent-gear{opacity:1!important}
+        .dark .agent-gear{color:#a1a1aa}
+        .light .agent-gear{color:rgba(255,255,255,.65)}
+        .dark .agent-gear:hover{background:rgba(255,255,255,.10);color:#fff}
+        .light .agent-gear:hover{background:rgba(255,255,255,.12);color:#5EEAD4}
+
+        /* === Agent avatar & pills (s'adaptent au thème) === */
+        .dark .agent-avatar{background:rgba(42,138,216,.14);color:#5BAEEC;border-color:rgba(42,138,216,.32)}
+        .light .agent-avatar{background:rgba(94,234,212,.18);color:#5EEAD4;border-color:rgba(94,234,212,.32)}
+        .dark .agent-ia-pill{background:rgba(42,138,216,.18);color:#5BAEEC}
+        .light .agent-ia-pill{background:rgba(94,234,212,.22);color:#5EEAD4}
+        .light .sidebar-main .nav-item-active .agent-avatar{background:rgba(15,15,30,.10)!important;color:#0E0E11!important;border-color:rgba(15,15,30,.18)!important}
+        .light .sidebar-main .nav-item-active .agent-ia-pill{background:rgba(15,15,30,.10)!important;color:#0E0E11!important}
+
+        /* =========================================== */
+        /* === LIGHT THEME OVERRIDES — Back-office === */
+        /* Indigo sidebar · Mint actifs · Violet CTA  */
+        /* =========================================== */
+
+        /* — Sidebar reste foncée même en clair — */
+        .light .sidebar-main{background:#1B1442!important;border-right:1px solid rgba(255,255,255,.06)!important}
+        .light .sidebar-main .sidebar-brand{color:#5EEAD4!important;letter-spacing:.14em;font-size:11px}
+        .light .sidebar-main .text-slate-900{color:#fff!important}
+        .light .sidebar-main .text-slate-800{color:#fff!important}
+        .light .sidebar-main .text-slate-700{color:rgba(255,255,255,.85)!important}
+        .light .sidebar-main .text-slate-600{color:rgba(255,255,255,.75)!important}
+        .light .sidebar-main .text-slate-500{color:rgba(255,255,255,.50)!important}
+        .light .sidebar-main .text-slate-400{color:rgba(255,255,255,.45)!important}
+        .light .sidebar-main .border-brand-lightBorder{border-color:rgba(255,255,255,.07)!important}
+        .light .sidebar-main .bg-white{background:rgba(255,255,255,.06)!important;backdrop-filter:none}
+        .light .sidebar-main input[type=text]{background:rgba(255,255,255,.06)!important;border-color:rgba(255,255,255,.10)!important;color:#fff!important}
+        .light .sidebar-main input[type=text]::placeholder{color:rgba(255,255,255,.45)!important}
+        .light .sidebar-main .hover\:bg-slate-200\/70:hover{background:rgba(255,255,255,.06)!important}
+        .light .sidebar-main .bg-brand-orange{background:#7C3AED!important}
+        .light .sidebar-main .text-brand-sky{color:#5EEAD4!important}
+
+        /* — Active items dans la sidebar — */
+        .light .sidebar-main .nav-item-active{
+            background:#5EEAD4!important;color:#0E0E11!important;
+            border-left:3px solid #14B8A6!important;border-radius:0 8px 8px 0;
+        }
+        .light .sidebar-main .nav-item-active span{color:#0E0E11!important}
+        .light .sidebar-main .nav-item-active-sky{
+            background:rgba(124,58,237,.28)!important;color:#fff!important;
+            border-left:3px solid #7C3AED!important;border-radius:0 8px 8px 0;
+        }
+        .light .sidebar-main .nav-item-active-sky span{color:#fff!important}
+
+        /* — Main area : surfaces — */
+        .light .glass-header{background:rgba(243,243,246,.85)!important;border-bottom:1px solid rgba(15,15,30,.07)!important}
+        .light body{color:#1F1B3A}
+        .light .border-brand-lightBorder{border-color:rgba(15,15,30,.08)}
+
+        /* — Brand orange → Violet partout (mode clair) — */
+        .light .bg-brand-orange{background-color:#7C3AED!important}
+        .light .text-brand-orange{color:#7C3AED!important}
+        .light .border-brand-orange{border-color:#7C3AED!important}
+        .light .bg-brand-orange\/10{background-color:rgba(124,58,237,.10)!important}
+        .light .bg-brand-orange\/20{background-color:rgba(124,58,237,.20)!important}
+        .light .hover\:bg-brand-orange\/10:hover{background-color:rgba(124,58,237,.10)!important}
+        .light .border-brand-orange\/30{border-color:rgba(124,58,237,.30)!important}
+        .light .border-brand-orange\/40{border-color:rgba(124,58,237,.40)!important}
+        .light .focus\:border-brand-orange\/50:focus{border-color:rgba(124,58,237,.50)!important}
+        .light .focus-within\:border-brand-orange\/40:focus-within{border-color:rgba(124,58,237,.40)!important}
+        .light .focus-within\:border-brand-orange\/30:focus-within{border-color:rgba(124,58,237,.30)!important}
+
+        /* nav-item-active hors sidebar (au cas où) */
+        .light main .nav-item-active{background:rgba(124,58,237,.10)!important;color:#7C3AED!important;border-left:3px solid #7C3AED!important}
+
+        /* — Send btn / reaction / translate badge — */
+        .light #send-btn.active{color:#7C3AED!important}
+        .light #send-btn.active:hover{background:rgba(124,58,237,.12)!important}
+        .light .reaction-pill:hover{background:rgba(124,58,237,.10)!important;border-color:rgba(124,58,237,.30)!important}
+        .light .translate-label{color:#7C3AED!important;background:rgba(124,58,237,.10)!important}
+
+        /* — Config controls — */
+        .light .inp:focus{border-color:#7C3AED!important;box-shadow:0 0 0 3px rgba(124,58,237,.14)!important}
+        .light .tog input:checked~.tog-t{background:#7C3AED!important;border-color:#7C3AED!important}
+        .light .rad input:checked~.rad-l{border-color:#7C3AED!important;background:rgba(124,58,237,.10)!important}
+        .light .rad input:checked~.rad-l .rd{border-color:#7C3AED!important}
+        .light .rad input:checked~.rad-l .rd::after{background:#7C3AED!important}
+        .light input[type=range]::-webkit-slider-thumb{background:#7C3AED!important;box-shadow:0 1px 5px rgba(124,58,237,.4)!important}
+        .light input[type=range]{background:#E5E1F2!important}
+        .light .sld-val{color:#7C3AED!important;background:rgba(124,58,237,.12)!important}
+        .light .up-btn:hover{border-color:#7C3AED!important;color:#7C3AED!important;background:rgba(124,58,237,.08)!important}
+
+        /* — Buttons primary / tabs / cico — */
+        .light .btn-primary{background:#7C3AED!important;border-color:#7C3AED!important}
+        .light .btn-primary:hover{background:#6D28D9!important}
+        .light .tab-btn.active{background:#7C3AED!important;box-shadow:0 1px 4px rgba(124,58,237,.30)!important}
+        .light .cico{color:#7C3AED!important;background:rgba(124,58,237,.12)!important}
+        .light .cico.sky{color:#14B8A6!important;background:rgba(94,234,212,.20)!important}
+
+        /* — Agent config sub-areas — */
+        .light .infobox svg{color:#7C3AED!important}
+        .light .composer-section{background:#F3F3F6!important}
+
+        /* — Cards & panels (light theme) — */
+        .light .ft-actions{background:rgba(243,243,246,.92)!important;border-color:rgba(15,15,30,.07)!important}
+        .light .agent-card{box-shadow:0 1px 2px rgba(15,15,30,.04),0 1px 3px rgba(15,15,30,.03)!important}
+
+        /* — Chat composer wrapper — */
+        .light .composer-wrap{background:#F3F3F6!important;border-color:rgba(15,15,30,.07)!important}
+
+        /* — Count badges des équipes : mint en mode clair (plus vibrant) — */
+        .light .sidebar-main #nav-teams .bg-brand-orange{background:#5EEAD4!important;color:#0B1B17!important;box-shadow:0 1px 3px rgba(94,234,212,.35)!important}
+
+        /* — Bottom user-card avatar in sidebar : violet — */
+        .light .sidebar-main .bg-brand-orange.text-white{background:#7C3AED!important}
+
+        /* — Override agent IA pill color in dark sidebar (mint) — */
+        .light .sidebar-main .nav-item-active-sky .agent-ia-pill{background:rgba(94,234,212,.25)!important;color:#5EEAD4!important}
+
+        /* === User Status Menu === */
+        .status-menu,.agent-picker{
+            position:absolute;bottom:calc(100% + 8px);left:16px;right:16px;
+            border-radius:14px;border:1px solid;z-index:50;
+            box-shadow:0 12px 40px rgba(0,0,0,.22);
+            animation:statusFadeUp .15s ease-out;
+        }
+        @keyframes statusFadeUp{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+        .dark .status-menu,.dark .agent-picker{background:#1C1C20;border-color:rgba(255,255,255,.09)}
+        .light .status-menu,.light .agent-picker{background:#FFFFFF;border-color:rgba(30,80,160,.13);box-shadow:0 8px 32px rgba(15,15,30,.12)}
+        .smenu-hdr{padding:10px 14px;font-size:9.5px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;display:flex;align-items:center;gap:8px}
+        .dark .smenu-hdr{border-bottom:1px solid rgba(255,255,255,.07);color:#71717a}
+        .light .smenu-hdr{border-bottom:1px solid rgba(30,80,160,.08);color:#7d8fa6}
+        .smenu-body{padding:6px}
+        .status-opt{display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:9px;font-size:12.5px;font-weight:500;border:0;background:transparent;width:100%;text-align:left;cursor:pointer;transition:background .14s;font-family:'Inter',sans-serif}
+        .dark .status-opt{color:#d4d4d8}
+        .light .status-opt{color:#334155}
+        .dark .status-opt:hover{background:rgba(255,255,255,.06)}
+        .light .status-opt:hover{background:rgba(30,80,160,.06)}
+        .status-opt .s-chk{margin-left:auto;opacity:0;transition:opacity .15s;flex-shrink:0}
+        .status-opt.so-active .s-chk{opacity:1}
+        .back-btn{display:flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:6px;border:0;background:transparent;cursor:pointer;transition:background .14s;flex-shrink:0}
+        .dark .back-btn{color:#a1a1aa}
+        .light .back-btn{color:#64748b}
+        .dark .back-btn:hover{background:rgba(255,255,255,.08);color:#fff}
+        .light .back-btn:hover{background:rgba(30,80,160,.08);color:#1E40AF}
+
+        /* Agentic pulsing dot */
+        .dot-agentic{animation:agPulse 1.8s ease-in-out infinite}
+        @keyframes agPulse{0%,100%{box-shadow:0 0 0 0 rgba(249,115,22,.7)}70%{box-shadow:0 0 0 5px rgba(249,115,22,0)}}
+        .avatar-agentic{box-shadow:0 0 0 2.5px #F97316,0 0 10px rgba(249,115,22,.35);border-radius:8px;transition:box-shadow .3s}
+    </style>
+</head>
+<body class="h-screen flex overflow-hidden transition-colors duration-300 dark:bg-brand-darkBg bg-brand-lightBg dark:text-zinc-200 text-slate-800">
+
+<!-- ============ SIDEBAR GAUCHE ============ -->
+<aside class="sidebar-main w-64 flex flex-col flex-shrink-0 dark:bg-brand-darkSidebar bg-brand-lightSidebar border-r dark:border-brand-darkBorder border-brand-lightBorder z-30">
+
+    <div class="h-16 flex items-center px-5 border-b dark:border-brand-darkBorder border-brand-lightBorder gap-2">
+        <span class="sidebar-brand font-bold text-sm tracking-wide dark:text-white text-slate-900 uppercase">WithoutBorder</span>
+        <button id="theme-toggle" class="p-1.5 rounded-lg hover:bg-brand-orange/10 text-brand-orange transition-ui ml-auto" title="Basculer le thème">
+            <svg class="w-5 h-5 sun-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="5"/>
+                <line x1="12" y1="1" x2="12" y2="3"/>
+                <line x1="12" y1="21" x2="12" y2="23"/>
+                <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+                <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+                <line x1="1" y1="12" x2="3" y2="12"/>
+                <line x1="21" y1="12" x2="23" y2="12"/>
+                <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+                <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+            </svg>
+            <svg class="w-5 h-5 moon-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+            </svg>
+        </button>
+    </div>
+
+    <div class="px-4 py-4">
+        <div class="relative">
+            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none dark:text-zinc-500 text-slate-400">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                </svg>
+            </div>
+            <input type="text" placeholder="Rechercher..."
+                class="w-full dark:bg-brand-darkPanel bg-white border dark:border-brand-darkBorder border-brand-lightBorder rounded-lg py-2 pl-9 pr-3 text-xs focus:outline-none focus:border-brand-orange/50 transition-ui">
+        </div>
+    </div>
+
+    <nav class="flex-1 overflow-y-auto custom-scrollbar pr-2 space-y-5">
+        <div>
+            <div class="px-5 mb-2"><span class="text-[10px] font-bold dark:text-zinc-500 text-slate-500 uppercase tracking-widest">Équipes</span></div>
+            <ul class="space-y-0.5" id="nav-teams"></ul>
+        </div>
+        <div>
+            <div class="px-5 mb-2 flex items-center justify-between">
+                <span class="text-[10px] font-bold dark:text-zinc-500 text-slate-500 uppercase tracking-widest">Agents IA</span>
+                <button onclick="openNewAgent()" title="Nouvel agent" class="text-brand-sky hover:opacity-80 transition-ui">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+                </button>
+            </div>
+            <ul class="space-y-0.5" id="nav-agents"></ul>
+        </div>
+        <div>
+            <div class="px-5 mb-2"><span class="text-[10px] font-bold dark:text-zinc-500 text-slate-500 uppercase tracking-widest">Binômes</span></div>
+            <ul class="space-y-0.5" id="nav-dms"></ul>
+        </div>
+    </nav>
+
+    <div class="p-4 border-t dark:border-brand-darkBorder border-brand-lightBorder" id="user-card-wrap" style="position:relative">
+
+        <!-- Status dropdown -->
+        <div id="status-menu" class="status-menu" style="display:none">
+            <div class="smenu-hdr">Mon statut</div>
+            <div class="smenu-body space-y-0.5">
+                <button class="status-opt so-active" data-status="actif" onclick="setUserStatus('actif')">
+                    <div class="w-2.5 h-2.5 rounded-full flex-shrink-0" style="background:#22C55E"></div>
+                    <span>Actif</span>
+                    <svg class="s-chk w-3 h-3" style="color:#22C55E" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+                </button>
+                <button class="status-opt" data-status="absent" onclick="setUserStatus('absent')">
+                    <div class="w-2.5 h-2.5 rounded-full flex-shrink-0" style="background:#FBBF24"></div>
+                    <span>Absent</span>
+                    <svg class="s-chk w-3 h-3" style="color:#FBBF24" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+                </button>
+                <button class="status-opt" data-status="communication" onclick="setUserStatus('communication')">
+                    <div class="w-2.5 h-2.5 rounded-full flex-shrink-0" style="background:#3B82F6"></div>
+                    <span>En communication</span>
+                    <svg class="s-chk w-3 h-3" style="color:#3B82F6" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+                </button>
+                <button class="status-opt" data-status="agentic" onclick="setUserStatus('agentic')">
+                    <div class="w-2.5 h-2.5 rounded-full flex-shrink-0 dot-agentic" style="background:#F97316"></div>
+                    <div style="display:flex;flex-direction:column;align-items:flex-start;flex:1;min-width:0">
+                        <span>Mode Agent</span>
+                        <span id="agentic-opt-sub" style="font-size:9px;opacity:.6">Déléguer à un agent IA</span>
+                    </div>
+                    <svg class="s-chk w-3 h-3" style="color:#F97316" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Agent picker -->
+        <div id="agent-picker" class="agent-picker" style="display:none">
+            <div class="smenu-hdr">
+                <button class="back-btn" onclick="backToStatusMenu()">
+                    <svg style="width:14px;height:14px" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+                </button>
+                Choisir un agent
+            </div>
+            <div class="smenu-body space-y-0.5" id="agent-picker-list"></div>
+        </div>
+
+        <!-- Clickable user card -->
+        <div id="user-card" onclick="toggleStatusMenu(event)"
+            class="flex items-center gap-3 p-2 rounded-xl dark:bg-brand-darkPanel bg-white border dark:border-brand-darkBorder border-brand-lightBorder cursor-pointer hover:opacity-80 transition-ui select-none">
+            <div class="relative flex-shrink-0">
+                <div id="user-avatar" class="w-8 h-8 rounded-lg bg-brand-orange text-white flex items-center justify-center text-[11px] font-bold shadow-sm">SM</div>
+                <!-- Bot badge (visible in agentic mode only) -->
+                <div id="user-bot-badge" style="display:none;position:absolute;top:-5px;right:-5px;width:16px;height:16px;border-radius:50%;background:#F97316;border:2px solid #18181B;align-items:center;justify-content:center">
+                    <svg style="width:8px;height:8px;flex-shrink:0" viewBox="0 0 20 20" fill="white">
+                        <path d="M10 2a1.5 1.5 0 011.5 1.5c0 .45-.2.86-.5 1.14V6h1A5 5 0 0117 11h.5a.5.5 0 010 1H17v.5A4 4 0 0113 16.5v.5a.5.5 0 01-1 0v-.5H8v.5a.5.5 0 01-1 0v-.5A4 4 0 013 12.5V12h-.5a.5.5 0 010-1H3A5 5 0 018 6h1V4.64c-.3-.28-.5-.69-.5-1.14A1.5 1.5 0 0110 2zM7.5 10a1.5 1.5 0 100 3 1.5 1.5 0 000-3zm5 0a1.5 1.5 0 100 3 1.5 1.5 0 000-3z"/>
+                    </svg>
+                </div>
+            </div>
+            <div class="flex-1 min-w-0">
+                <p class="text-xs font-bold truncate dark:text-zinc-100 text-slate-900">Sophie Martin</p>
+                <p id="user-status-label" class="text-[9px] dark:text-zinc-500 text-slate-500 font-medium">FR · Designer</p>
+            </div>
+            <div id="user-status-dot" class="w-2 h-2 rounded-full bg-green-500 flex-shrink-0"></div>
+        </div>
+    </div>
+</aside>
+
+<!-- ============ ZONE PRINCIPALE ============ -->
+<main class="flex-1 flex flex-col relative min-w-0">
+
+    <!-- HEADER -->
+    <header class="h-16 glass-header absolute top-0 left-0 right-0 z-20 flex items-center justify-between px-6">
+        <div class="flex items-center gap-3 min-w-0">
+            <div id="header-icon" class="p-2 rounded-lg transition-ui flex-shrink-0"></div>
+            <div class="min-w-0">
+                <h2 id="chat-title" class="text-sm font-bold truncate dark:text-zinc-100 text-slate-900">...</h2>
+                <p id="chat-subtitle" class="text-[10px] dark:text-zinc-500 text-slate-500 font-medium tracking-wide">Chargement...</p>
+            </div>
+        </div>
+
+        <!-- Tab switch (visible only on agents) -->
+        <div id="agent-tabs" class="hidden tab-bar mx-4">
+            <button id="tab-chat" class="tab-btn active" onclick="setAgentTab('chat')">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.86 9.86 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+                Conversation
+            </button>
+            <button id="tab-config" class="tab-btn" onclick="setAgentTab('config')">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                Configuration
+            </button>
+        </div>
+
+        <button id="toggle-sidebar-right" class="flex -space-x-2.5 hover:opacity-80 transition-ui p-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-white/5">
+            <div class="w-8 h-8 rounded-full bg-orange-500  border-2 dark:border-brand-darkBg border-brand-lightBg flex items-center justify-center text-[10px] text-white font-bold z-30 shadow-sm">SM</div>
+            <div class="w-8 h-8 rounded-full bg-blue-500   border-2 dark:border-brand-darkBg border-brand-lightBg flex items-center justify-center text-[10px] text-white font-bold z-20 shadow-sm">JC</div>
+            <div class="w-8 h-8 rounded-full bg-emerald-500 border-2 dark:border-brand-darkBg border-brand-lightBg flex items-center justify-center text-[10px] text-white font-bold z-10 shadow-sm">MG</div>
+            <div class="w-8 h-8 rounded-full bg-slate-400  border-2 dark:border-brand-darkBg border-brand-lightBg flex items-center justify-center text-[10px] text-white font-bold z-0  shadow-sm">+2</div>
+        </button>
+    </header>
+
+    <!-- ===== CHAT VIEW ===== -->
+    <div id="view-chat" class="flex-1 flex flex-col min-h-0">
+        <div id="chat-messages" class="flex-1 overflow-y-auto custom-scrollbar px-6 pt-24 pb-4 space-y-6"></div>
+
+        <!-- COMPOSITEUR -->
+        <div class="px-4 pb-4 pt-2 border-t dark:border-brand-darkBorder border-brand-lightBorder dark:bg-brand-darkBg bg-brand-lightBg">
+            <div class="dark:bg-brand-darkPanel bg-white border dark:border-brand-darkBorder border-brand-lightBorder rounded-2xl transition-ui focus-within:border-brand-orange/40 overflow-hidden shadow-sm">
+                <div class="flex items-center gap-0.5 px-3 pt-2.5 pb-2 border-b dark:border-white/[0.05] border-brand-lightBorder">
+                    <button class="editor-tool font-bold text-xs">B</button>
+                    <button class="editor-tool text-xs" style="font-style:italic;font-weight:500">I</button>
+                    <button class="editor-tool text-xs" style="text-decoration:underline">U</button>
+                    <button class="editor-tool text-xs" style="text-decoration:line-through">S</button>
+                    <div class="w-px h-3.5 dark:bg-white/10 bg-slate-300 mx-1.5 flex-shrink-0"></div>
+                    <button class="editor-tool" title="Lien">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>
+                    </button>
+                    <div class="w-px h-3.5 dark:bg-white/10 bg-slate-300 mx-1.5 flex-shrink-0"></div>
+                    <button class="editor-tool" title="Liste ordonnée">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg>
+                    </button>
+                    <button class="editor-tool" title="Liste à puces">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>
+                    </button>
+                    <div class="w-px h-3.5 dark:bg-white/10 bg-slate-300 mx-1.5 flex-shrink-0"></div>
+                    <button class="editor-tool" title="Code">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg>
+                    </button>
+                    <button class="editor-tool" title="Citation">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/></svg>
+                    </button>
+                </div>
+
+                <textarea id="chat-input" rows="3"
+                    class="w-full bg-transparent text-sm focus:outline-none resize-none px-4 py-3 dark:placeholder-zinc-600 placeholder-slate-400"
+                    placeholder="Envoyer un message..."></textarea>
+
+                <div class="flex items-center gap-0.5 px-3 pb-2.5 pt-1">
+                    <button class="editor-tool" title="Joindre un fichier">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                    </button>
+                    <button class="editor-tool text-[10px] font-semibold" title="Format">Aa</button>
+                    <button class="editor-tool" title="Emoji">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    </button>
+                    <button class="editor-tool text-[11px] font-bold" title="Mentionner">@</button>
+                    <div class="w-px h-3.5 dark:bg-white/10 bg-slate-300 mx-1.5 flex-shrink-0"></div>
+                    <button class="editor-tool" title="Clip vidéo">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.069A1 1 0 0121 8.82v6.36a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                    </button>
+                    <button class="editor-tool" title="Message vocal">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/></svg>
+                    </button>
+                    <button class="editor-tool text-[11px] font-bold" title="Commandes">/</button>
+                    <div class="flex-1"></div>
+                    <button id="send-btn" onclick="handleSend()" class="editor-tool rounded-lg" title="Envoyer (Entrée)">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== AGENT CONFIG VIEW ===== -->
+    <div id="view-config" class="hidden flex-1 flex flex-col min-h-0">
+        <div class="flex-1 overflow-y-auto custom-scrollbar pt-20 pb-6 px-6">
+            <div class="max-w-[1180px] mx-auto grid md:grid-cols-[360px_1fr] gap-4 items-stretch">
+
+                <!-- LEFT COLUMN -->
+                <div class="flex flex-col gap-4">
+
+                    <!-- Agent Setup -->
+                    <div class="agent-card">
+                        <div class="agent-card-hdr">
+                            <div class="cico sky">
+                                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+                            </div>
+                            <div class="flex-1">
+                                <div class="text-[13px] font-semibold tracking-tight dark:text-zinc-100 text-slate-900">Identité de l'agent</div>
+                                <div class="text-[11px] dark:text-zinc-500 text-slate-500">Nom, langue & modèle IA</div>
+                            </div>
+                            <span class="badge-live"><span class="dot-pulse"></span>Actif</span>
+                        </div>
+                        <div class="p-[18px]">
+                            <div class="flex items-center gap-3 p-3 rounded-xl mb-4" style="background:var(--c-sky-glow);border:1px solid rgba(42,138,216,.18)">
+                                <div class="w-9 h-9 rounded-lg bg-brand-sky text-white flex items-center justify-center text-[11px] font-bold">PB</div>
+                                <div class="flex-1 min-w-0">
+                                    <div class="text-[13px] font-bold dark:text-zinc-100 text-slate-900" id="agentNameLabel">ProjectBot</div>
+                                    <div class="text-[10.5px] dark:text-zinc-400 text-slate-500">Répond aux mentions · Multilingue</div>
+                                </div>
+                                <label class="tog md">
+                                    <input type="checkbox" checked id="aStat">
+                                    <div class="tog-t"></div><div class="tog-th"></div>
+                                </label>
+                            </div>
+
+                            <div class="mb-3.5">
+                                <label class="lbl">Nom de l'agent</label>
+                                <input type="text" class="inp" value="ProjectBot" id="agentNameInp" oninput="document.getElementById('agentNameLabel').textContent=this.value||'Agent'">
+                            </div>
+                            <div class="mb-3.5">
+                                <label class="lbl">Langue principale</label>
+                                <select class="inp">
+                                    <option selected>🇫🇷  Français</option>
+                                    <option>🇬🇧  Anglais</option>
+                                    <option>🇪🇸  Espagnol</option>
+                                    <option>🇨🇳  Chinois</option>
+                                </select>
+                            </div>
+                            <div class="mb-3.5">
+                                <label class="lbl">Modèle IA</label>
+                                <select class="inp">
+                                    <option>Gemma 4 · 9B — Équilibré</option>
+                                    <option selected>Gemma 4 · 27B — Haute précision</option>
+                                    <option>Claude Haiku 4.5 — Rapide</option>
+                                </select>
+                            </div>
+                            <div class="infobox">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                                <span>Mode multilingue : traduit automatiquement les réponses dans 50+ langues selon le profil du destinataire.</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Context docs -->
+                    <div class="agent-card flex-1">
+                        <div class="agent-card-hdr">
+                            <div class="cico">
+                                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+                            </div>
+                            <div class="flex-1">
+                                <div class="text-[13px] font-semibold tracking-tight dark:text-zinc-100 text-slate-900">Documents de contexte</div>
+                                <div class="text-[11px] dark:text-zinc-500 text-slate-500">Base de connaissances</div>
+                            </div>
+                            <div id="fBadge" class="text-[11px] dark:text-zinc-400 text-slate-500 px-2 py-0.5 rounded-full dark:bg-white/5 bg-slate-100 border dark:border-white/10 border-brand-lightBorder">3 fichiers</div>
+                        </div>
+                        <div class="p-[18px]">
+                            <button class="up-btn" onclick="addFile()">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                                Ajouter des documents
+                            </button>
+                            <div class="mt-2.5 flex flex-col gap-1.5" id="fList">
+                                <div class="fi"><div style="color:#F97316"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" class="w-3.5 h-3.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div><span class="text-[12px] font-medium flex-1 truncate dark:text-zinc-200 text-slate-700">Roadmap_Q4_2026.pdf</span><span class="text-[11px] dark:text-zinc-500 text-slate-500">2.4 MB</span><button class="dark:text-zinc-500 text-slate-400 hover:text-red-500 transition-ui" onclick="rmFile(this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-3 h-3"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
+                                <div class="fi"><div style="color:#F97316"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" class="w-3.5 h-3.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div><span class="text-[12px] font-medium flex-1 truncate dark:text-zinc-200 text-slate-700">Charte_équipe_FR.docx</span><span class="text-[11px] dark:text-zinc-500 text-slate-500">890 KB</span><button class="dark:text-zinc-500 text-slate-400 hover:text-red-500 transition-ui" onclick="rmFile(this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-3 h-3"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
+                                <div class="fi"><div style="color:#F97316"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" class="w-3.5 h-3.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div><span class="text-[12px] font-medium flex-1 truncate dark:text-zinc-200 text-slate-700">API_documentation_v2.pdf</span><span class="text-[11px] dark:text-zinc-500 text-slate-500">1.1 MB</span><button class="dark:text-zinc-500 text-slate-400 hover:text-red-500 transition-ui" onclick="rmFile(this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-3 h-3"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
+                            </div>
+
+                            <div class="mt-3 p-3 rounded-lg border-l-[3px]" style="border-left-color:#F97316;background:var(--c-accent-glow)">
+                                <div class="text-[10px] font-bold uppercase tracking-wider text-brand-orange mb-1">Dernière réponse IA</div>
+                                <div class="text-[12px] dark:text-zinc-300 text-slate-700 leading-relaxed">Bonjour @Sophie — le jalon Q4 est prévu le 15 nov. Je peux organiser une réunion de synchronisation cette semaine si vous le souhaitez.</div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- RIGHT COLUMN -->
+                <div class="flex flex-col gap-4">
+                    <div class="agent-card flex-1">
+                        <div class="agent-card-hdr">
+                            <div class="cico">
+                                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                            </div>
+                            <div class="flex-1">
+                                <div class="text-[13px] font-semibold tracking-tight dark:text-zinc-100 text-slate-900">Comportement</div>
+                                <div class="text-[11px] dark:text-zinc-500 text-slate-500">Ton, déclencheurs & instructions système</div>
+                            </div>
+                            <div class="text-[11px] dark:text-zinc-400 text-slate-500 px-2 py-0.5 rounded-full dark:bg-white/5 bg-slate-100 border dark:border-white/10 border-brand-lightBorder">demo@withoutborder.app</div>
+                        </div>
+                        <div class="p-[18px]">
+
+                            <!-- TON -->
+                            <div class="divider"><div class="divider-line"></div><div class="divider-lbl">Ton de la réponse</div><div class="divider-line"></div></div>
+                            <div class="grid grid-cols-2 gap-2 mb-2">
+                                <label class="rad"><input type="radio" name="tone" value="pro" checked><div class="rad-l"><div class="rd"></div>Professionnel</div></label>
+                                <label class="rad"><input type="radio" name="tone" value="fr"><div class="rad-l"><div class="rd"></div>Amical</div></label>
+                                <label class="rad"><input type="radio" name="tone" value="fo"><div class="rad-l"><div class="rd"></div>Formel</div></label>
+                                <label class="rad"><input type="radio" name="tone" value="ca"><div class="rad-l"><div class="rd"></div>Décontracté</div></label>
+                            </div>
+
+                            <!-- RÉPONSE -->
+                            <div class="divider"><div class="divider-line"></div><div class="divider-lbl">Paramètres de réponse</div><div class="divider-line"></div></div>
+
+                            <div class="tog-row">
+                                <div>
+                                    <div class="text-[13px] font-medium dark:text-zinc-200 text-slate-800">Répondre aux @mentions</div>
+                                    <div class="text-[11px] dark:text-zinc-500 text-slate-500 mt-0.5">L'agent répond automatiquement quand il est mentionné</div>
+                                </div>
+                                <label class="tog sm"><input type="checkbox" checked><div class="tog-t"></div><div class="tog-th"></div></label>
+                            </div>
+                            <div class="tog-row">
+                                <div>
+                                    <div class="text-[13px] font-medium dark:text-zinc-200 text-slate-800">Répondre aux messages directs</div>
+                                    <div class="text-[11px] dark:text-zinc-500 text-slate-500 mt-0.5">Gère les DM sans supervision humaine</div>
+                                </div>
+                                <label class="tog sm"><input type="checkbox"><div class="tog-t"></div><div class="tog-th"></div></label>
+                            </div>
+                            <div class="tog-row">
+                                <div>
+                                    <div class="text-[13px] font-medium dark:text-zinc-200 text-slate-800">Traduire automatiquement</div>
+                                    <div class="text-[11px] dark:text-zinc-500 text-slate-500 mt-0.5">Adapte la langue selon le profil du destinataire</div>
+                                </div>
+                                <label class="tog sm"><input type="checkbox" checked><div class="tog-t"></div><div class="tog-th"></div></label>
+                            </div>
+
+                            <div class="mt-4">
+                                <div class="sld-hdr"><span class="text-[13px] font-medium dark:text-zinc-200 text-slate-800">Délai de réponse</span><span class="sld-val" id="dVal">2.0s</span></div>
+                                <input type="range" id="dSld" min="0" max="5" step="0.5" value="2" oninput="syncSld('dSld','dVal',true)">
+                            </div>
+                            <div class="mt-4">
+                                <div class="sld-hdr"><span class="text-[13px] font-medium dark:text-zinc-200 text-slate-800">Seuil de confiance</span><span class="sld-val" id="cVal">80%</span></div>
+                                <input type="range" id="cSld" min="0" max="100" step="5" value="80" oninput="syncSld('cSld','cVal',false)">
+                            </div>
+
+                            <!-- SYSTEM PROMPT -->
+                            <div class="divider"><div class="divider-line"></div><div class="divider-lbl">Instructions système</div><div class="divider-line"></div></div>
+                            <div>
+                                <div class="flex justify-between items-center mb-1">
+                                    <label class="lbl" style="margin:0">Prompt</label>
+                                    <div class="text-[11px] dark:text-zinc-500 text-slate-500"><span id="ccn" class="font-semibold text-brand-orange">247</span> / 500</div>
+                                </div>
+                                <textarea class="inp" id="sysP" rows="6" oninput="syncCC(this)" placeholder="Ex. : Tu es un chef de projet bienveillant...">Tu es ProjectBot, un assistant IA professionnel pour WithoutBorder. Tu réponds aux @mentions en français avec un ton concis et professionnel. Adresse-toi toujours à l'utilisateur par son prénom. Escalade les questions techniques complexes aux membres de l'équipe. Ne partage jamais de données confidentielles.</textarea>
+                                <div class="text-[11px] dark:text-zinc-500 text-slate-500 text-right mt-1">Max 500 caractères · Inclus dans chaque réponse</div>
+                            </div>
+
+                            <!-- Test row -->
+                            <div class="divider"><div class="divider-line"></div><div class="divider-lbl">Tester la réponse</div><div class="divider-line"></div></div>
+                            <div class="flex gap-2">
+                                <input type="text" class="inp" id="testInp" placeholder="Ex : @ProjectBot quand est la deadline Q4 ?" style="flex:1">
+                                <button class="btn btn-primary" onclick="runPreview()" style="height:auto">
+                                    <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                                    Aperçu
+                                </button>
+                            </div>
+                            <div id="prevBox" class="hidden mt-3 p-3 rounded-lg" style="background:var(--c-sky-glow);border:1px solid rgba(42,138,216,.18)">
+                                <div class="flex items-center gap-2 mb-1.5">
+                                    <div class="w-6 h-6 rounded-md bg-brand-sky text-white flex items-center justify-center text-[9px] font-bold">PB</div>
+                                    <div class="text-[12px] font-bold dark:text-zinc-100 text-slate-900">ProjectBot</div>
+                                    <div class="text-[10.5px] dark:text-zinc-500 text-slate-500 ml-auto">à l'instant</div>
+                                </div>
+                                <div id="prevContent" class="text-[12.5px] dark:text-zinc-300 text-slate-700 leading-relaxed"></div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- FOOTER ACTIONS -->
+        <div class="ft-actions">
+            <div class="max-w-[1180px] mx-auto w-full flex items-center gap-2">
+                <button class="btn btn-primary" onclick="doSave(event)">
+                    <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                    Enregistrer la configuration
+                </button>
+                <button class="btn btn-sec" onclick="setAgentTab('chat')">Annuler</button>
+                <button class="btn btn-del" style="margin-left:auto">
+                    <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                    Supprimer l'agent
+                </button>
+            </div>
+        </div>
+    </div>
+
+</main>
+
+<!-- ============ SIDEBAR DROITE ============ -->
+<aside id="sidebar-right" class="sidebar-right-hidden flex flex-col flex-shrink-0 dark:bg-brand-darkSidebar bg-white border-l dark:border-brand-darkBorder border-brand-lightBorder transition-ui z-40">
+    <div class="h-16 flex items-center justify-between px-6 border-b dark:border-brand-darkBorder border-brand-lightBorder">
+        <h3 class="text-sm font-bold tracking-tight dark:text-zinc-100 text-slate-900">Participants <span id="participant-count" class="ml-1 dark:text-zinc-500 text-slate-400 font-normal"></span></h3>
+        <button onclick="toggleSidebarRight()" class="p-1 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-lg dark:text-zinc-500 text-slate-500 transition-ui">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+        </button>
+    </div>
+    <div class="flex-1 overflow-y-auto custom-scrollbar p-4 space-y-1" id="participants-list"></div>
+</aside>
+
+<script>
+const state = {
+    activeChatId: 't1',
+    agentTab: 'chat',
+    teams: [
+        { id: 't1', name: 'Annonces Générales',         subtitle: 'TechCorp Workspace' },
+        { id: 't2', name: 'Équipe Développement Front', subtitle: 'Projet Apollo'       },
+        { id: 't3', name: 'Design System',              subtitle: 'Charte graphique'    },
+        { id: 't4', name: 'Marketing & Com',            subtitle: 'Campagnes 2025'      }
+    ],
+    agents: [
+        { id: 'a1', name: 'ProjectBot',  initials:'PB', role: 'Chef de projet', status:'Actif',  description:'Suivi roadmap & jalons' },
+        { id: 'a2', name: 'TransBot',    initials:'TB', role: 'Traducteur',     status:'Veille', description:'Traduction multilingue' }
+    ],
+    dms: [
+        { id: 'd1', name: 'John Carter',  status: 'En ligne',   color: 'blue',    initials: 'JC', role: 'Product Manager' },
+        { id: 'd2', name: 'María García', status: 'Agentic',    color: 'emerald', initials: 'MG', role: 'Lead Developer'  },
+        { id: 'd3', name: 'Kevin Lee',    status: 'Hors ligne', color: 'zinc',    initials: 'KL', role: 'Fullstack Dev'   }
+    ],
+    messages: {
+        t1: [
+            { user:'John Carter',  text:"Bonjour à toute l'équipe ! Je tenais à vous souhaiter la bienvenue sur notre nouvel espace WithoutBorder. Nous avons mis en place cet outil pour fluidifier nos échanges internationaux et supprimer les barrières linguistiques. N'oubliez pas de renseigner votre langue native dans les paramètres de votre profil afin d'activer la traduction automatique.", time:'09:12', avatar:'JC', color:'blue',   lang:'GB', reactions:[{e:'🔥',c:2},{e:'👋',c:4}] },
+            { user:'Sarah Wilson', text:"C'est une excellente nouvelle John ! Pour le lancement de la version Beta prévu lundi prochain, est-ce que nous avons déjà finalisé le listing des testeurs externes ou faut-il que je m'en occupe d'ici la fin de journée ? J'ai déjà une liste de 15 contacts issus de notre programme early-adopters que je peux mobiliser rapidement.", time:'10:45', avatar:'SW', color:'purple', lang:'US' },
+            { user:'Sophie Martin',text:"De mon côté, je suis en pleine phase de polissage des interfaces de paiement. Je devrais pouvoir soumettre ma Pull Request d'ici ce soir. Tout sera prêt pour la revue de code de demain matin. J'ai également ajouté les états d'erreur et de succès manquants sur les formulaires de facturation, ne vous inquiétez pas !", time:'11:12', avatar:'SM', color:'orange', lang:'FR', reactions:[{e:'❤️',c:5},{e:'✅',c:3}] }
+        ],
+        t2: [
+            { user:'María García', text:"Le composant de navigation que j'ai partagé hier sur le repo de staging est désormais totalement réactif. J'aimerais que vous testiez la fluidité des animations, notamment sur les navigateurs mobiles d'anciennes générations. Le code est documenté et des stories Storybook sont disponibles pour chaque variante.", time:'14:20', avatar:'MG', color:'emerald', lang:'ES', reactions:[{e:'🚀',c:1}] },
+            { user:'John Carter',  text:"Beau boulot María. Je vais libérer un créneau dans mon agenda cet après-midi pour tester ça en profondeur sur iOS Safari et Chrome Android. Si tout est correct, on pourra l'intégrer au master dès demain matin et planifier la démo client pour jeudi.", time:'14:25', avatar:'JC', color:'blue',    lang:'GB' },
+            { user:'Sophie Martin',text:"J'ai identifié une régression dans le module de gestion des tokens d'authentification sur Safari 16. Le problème semble lié à une incompatibilité avec la nouvelle politique SameSite des cookies. Je vais ouvrir un ticket Jira avec les étapes de reproduction et prioriser le correctif pour demain matin avant le standup.", time:'15:02', avatar:'SM', color:'orange',  lang:'FR', reactions:[{e:'🔍',c:2}] },
+            { user:'Kevin Lee',    text:"Rapport de tests inter-navigateurs : Chrome 120 ✓, Firefox 121 ✓, Safari 16 → bug tokens confirmé (Sophie s'en occupe), Edge 120 ✓. Sur mobile, j'ai noté un décalage de 3px sur l'alignement vertical des icônes sous Android 12. Rien de bloquant pour le lancement, mais j'ouvre un ticket P3 pour le corriger la semaine prochaine.", time:'15:48', avatar:'KL', color:'zinc',    lang:'KR' }
+        ],
+        t3: [
+            { user:'Sophie Martin',text:"J'ai finalisé la première version de notre système de design tokens. Vous trouverez dans Figma les nouvelles variables pour les couleurs, la typographie et les espacements. Toutes les couleurs sont déclinées en mode sombre et clair avec des ratios de contraste conformes aux normes WCAG 2.1 AA. Le lien de review est dans le ticket DS-42.", time:'10:05', avatar:'SM', color:'orange',  lang:'FR', reactions:[{e:'🎨',c:3},{e:'❤️',c:2}] },
+            { user:'María García', text:"Super boulot Sophie ! J'ai commencé à intégrer les tokens dans la codebase via des variables CSS custom properties. Pour les animations, je propose d'ajouter deux variables : --transition-fast à 150ms et --transition-smooth à 250ms, pour standardiser les durées à travers toute l'application.", time:'10:32', avatar:'MG', color:'emerald', lang:'ES', reactions:[{e:'✅',c:4}] }
+        ],
+        t4: [
+            { user:'Sarah Wilson', text:"Bonne nouvelle pour la campagne Q2 : les résultats des tests A/B sur nos landing pages montrent que la variante avec un témoignage client en haut de page génère 34 % de conversions supplémentaires. Je recommande de déployer cette version sur l'ensemble de nos marchés actifs dès lundi prochain.", time:'09:30', avatar:'SW', color:'purple',  lang:'US', reactions:[{e:'📈',c:5},{e:'🔥',c:3}] }
+        ],
+        a1: [
+            { user:'Sophie Martin', text:"@ProjectBot peux-tu me résumer où en est le sprint en cours ?", time:'09:02', avatar:'SM', color:'orange', lang:'FR' },
+            { user:'ProjectBot',    text:"Bonjour Sophie ! Sprint 14 : 18 tickets terminés sur 23 (78 %). Trois sont en revue de code, deux bloqués sur dépendance externe. Le jalon Q4 reste planifié au 15 nov. Voulez-vous le détail par épopée ?", time:'09:02', avatar:'PB', color:'sky', lang:'FR', isAgentic:true }
+        ],
+        a2: [
+            { user:'TransBot', text:"Mode veille. Je traduis automatiquement les messages dès qu'un membre n'a pas la langue de l'expéditeur dans son profil. Activez les déclencheurs dans la configuration pour me solliciter manuellement.", time:'08:30', avatar:'TB', color:'sky', lang:'FR', isAgentic:true }
+        ],
+        d1: [
+            { user:'John Carter',  text:"Salut Sophie, est-ce que tu as quelques minutes pour discuter des derniers ajustements du design ? J'ai reçu des retours client assez précis sur la taille des boutons de validation sur mobile.", time:'14:10', avatar:'JC', color:'blue',   lang:'GB' },
+            { user:'Sophie Martin',text:"Salut John ! Oui bien sûr. Sur les écrans 5 pouces le padding actuel est insuffisant. Je vais augmenter la zone tactile à 48×48 px minimum et revoir les marges internes.", time:'14:15', avatar:'SM', color:'orange', lang:'FR', reactions:[{e:'🙏',c:1}] }
+        ],
+        d2: [
+            { user:'María García', text:"Bonjour Sophie ! Mode Agentic activé. J'ai analysé vos 14 derniers commits sur la branche feature/i18n et identifié plusieurs zones d'amélioration dans la documentation.", time:'08:00', avatar:'MG', color:'emerald', lang:'ES', isAgentic:true },
+            { user:'Sophie Martin',text:"Parfait, c'est exactement ce dont j'avais besoin ! Peux-tu me résumer les changements structurants sur l'API de traduction depuis le sprint 11 ?", time:'08:05', avatar:'SM', color:'orange',  lang:'FR' }
+        ],
+        d3: [
+            { user:'Kevin Lee', text:"Hey Sophie, j'ai enfin isolé la cause du bug sur les z-index de la modale de profil. Le correctif est sur la branche bugfix/profile-modal, peux-tu valider ?", time:'Hier', avatar:'KL', color:'zinc', lang:'KR', reactions:[{e:'🐛',c:1}] }
+        ]
+    },
+    participants: [
+        { name:'Sophie Martin', initials:'SM', color:'orange',  status:'online',  role:'Designer UI/UX'  },
+        { name:'John Carter',   initials:'JC', color:'blue',    status:'online',  role:'Product Manager' },
+        { name:'María García',  initials:'MG', color:'emerald', status:'agentic', role:'Lead Developer'  },
+        { name:'Kevin Lee',     initials:'KL', color:'zinc',    status:'offline', role:'Fullstack Dev'   },
+        { name:'Sarah Wilson',  initials:'SW', color:'purple',  status:'online',  role:'Marketing Lead'  }
+    ]
+};
+
+const html         = document.documentElement;
+const themeBtn     = document.getElementById('theme-toggle');
+const teamNav      = document.getElementById('nav-teams');
+const agentNav     = document.getElementById('nav-agents');
+const dmNav        = document.getElementById('nav-dms');
+const chatMessages = document.getElementById('chat-messages');
+const chatInput    = document.getElementById('chat-input');
+const sidebarRight = document.getElementById('sidebar-right');
+const headerIcon   = document.getElementById('header-icon');
+const sendBtn      = document.getElementById('send-btn');
+const viewChat     = document.getElementById('view-chat');
+const viewConfig   = document.getElementById('view-config');
+const agentTabs    = document.getElementById('agent-tabs');
+
+themeBtn.addEventListener('click', () => {
+    html.classList.toggle('dark');
+    html.classList.toggle('light', !html.classList.contains('dark'));
+});
+// Init class
+html.classList.toggle('light', !html.classList.contains('dark'));
+
+function isAgent(id){ return state.agents.some(a => a.id === id); }
+
+// ── Navigation ──
+function renderNav() {
+    teamNav.innerHTML = state.teams.map((t,i) => {
+        const active    = state.activeChatId === t.id;
+        const msgCount  = (state.messages[t.id]||[]).length;
+        return `<li><button onclick="setActiveChat('${t.id}')"
+            class="w-full flex items-center justify-between px-4 py-2 text-xs font-medium transition-ui ${active?'nav-item-active':'dark:text-zinc-400 text-slate-600 hover:bg-slate-200/70 dark:hover:bg-zinc-800'}">
+            <div class="flex items-center gap-3 truncate">
+                <span class="opacity-40 font-bold text-[10px] w-4 text-right flex-shrink-0">#${i+1}</span>
+                <span class="truncate">${t.name}</span>
+            </div>
+            ${msgCount?`<span class="bg-brand-orange text-white text-[9px] px-1.5 py-0.5 rounded-full font-bold shadow-sm min-w-[18px] text-center flex-shrink-0">${msgCount}</span>`:''}
+        </button></li>`;
+    }).join('');
+
+    agentNav.innerHTML = state.agents.map(a => {
+        const active  = state.activeChatId === a.id;
+        const isOn    = a.status === 'Actif';
+        const dot     = isOn ? 'bg-green-500' : 'bg-amber-400';
+        return `<li><div class="agent-row group relative">
+            <button onclick="setActiveChat('${a.id}')"
+            class="w-full flex items-center gap-3 px-4 py-2.5 text-xs font-medium transition-ui ${active?'nav-item-active-sky':'dark:text-zinc-400 text-slate-600 hover:bg-slate-200/70 dark:hover:bg-zinc-800'}">
+            <div class="relative flex-shrink-0">
+                <div class="agent-avatar w-8 h-8 rounded-lg flex items-center justify-center text-[10px] font-bold border">${a.initials}</div>
+                <div class="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 dark:border-brand-darkSidebar border-brand-lightSidebar ${dot}"></div>
+            </div>
+            <div class="flex flex-col items-start min-w-0 flex-1">
+                <div class="flex items-center gap-1.5 w-full">
+                    <span class="${active?'':'dark:text-zinc-200 text-slate-800'} font-bold text-[11px] truncate text-left">${a.name}</span>
+                    <span class="agent-ia-pill text-[8px] px-1 py-0.5 rounded font-bold uppercase tracking-tight">IA</span>
+                </div>
+                <span class="text-[9px] opacity-60 font-medium truncate w-full text-left">${a.role}</span>
+            </div>
+            </button>
+            <button onclick="event.stopPropagation();openAgentConfig('${a.id}')" title="Configurer l'agent" class="agent-gear absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-md transition-ui opacity-0 group-hover:opacity-100 hover:bg-black/10 dark:hover:bg-white/10">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+            </button>
+        </div></li>`;
+    }).join('');
+
+    dmNav.innerHTML = state.dms.map(d => {
+        const active    = state.activeChatId === d.id;
+        const agentic   = d.status === 'Agentic';
+        const dot       = d.status==='En ligne' ? 'bg-green-500' : agentic ? 'bg-brand-orange' : 'bg-slate-400';
+        const sub       = agentic
+            ? `<span class="text-[8px] px-1 py-0.5 bg-brand-orange/20 text-brand-orange rounded font-bold uppercase tracking-tight">${d.status}</span>`
+            : `<span class="text-[9px] opacity-60 font-medium">${d.role}</span>`;
+        return `<li><button onclick="setActiveChat('${d.id}')"
+            class="w-full flex items-center gap-3 px-4 py-2.5 text-xs font-medium transition-ui ${active?'nav-item-active':'dark:text-zinc-400 text-slate-600 hover:bg-slate-200/70 dark:hover:bg-zinc-800'}">
+            <div class="relative flex-shrink-0">
+                <div class="w-8 h-8 rounded-lg bg-${d.color}-500/10 flex items-center justify-center text-[10px] font-bold text-${d.color}-500 border border-${d.color}-500/30">${d.initials}</div>
+                <div class="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 dark:border-brand-darkSidebar border-brand-lightSidebar ${dot}"></div>
+            </div>
+            <div class="flex flex-col items-start min-w-0 flex-1">
+                <span class="${active?'text-brand-orange':'dark:text-zinc-200 text-slate-800'} font-bold text-[11px] truncate w-full text-left">${d.name}</span>
+                ${sub}
+            </div>
+        </button></li>`;
+    }).join('');
+}
+
+// ── Messages ──
+function renderMessages() {
+    const msgs = state.messages[state.activeChatId]||[];
+    chatMessages.innerHTML = msgs.map(m => {
+        const tr = m.lang && m.lang!=='FR';
+        const isSky = m.color==='sky';
+        const avatarStyle = isSky
+            ? `style="background:rgba(42,138,216,.12);color:#1E6FB8;border-color:rgba(42,138,216,.18)"`
+            : '';
+        const avatarCls = isSky ? '' : `bg-${m.color||'orange'}-500/10 text-${m.color||'orange'}-500 border-${m.color||'orange'}-500/10`;
+        const bubble = m.isAgentic
+            ? 'text-white shadow-lg'
+            : 'dark:bg-brand-darkPanel bg-white border dark:border-brand-darkBorder border-brand-lightBorder dark:text-zinc-200 text-slate-700';
+        const bubbleStyle = m.isAgentic
+            ? (isSky ? 'background:linear-gradient(135deg,#2A8AD8,#1E6FB8);box-shadow:0 6px 20px rgba(42,138,216,.25)'
+                     : 'background:#F97316;box-shadow:0 6px 20px rgba(249,115,22,.22)')
+            : '';
+        return `
+        <div class="flex gap-4 group">
+            <div class="w-9 h-9 rounded-xl flex items-center justify-center text-xs font-bold flex-shrink-0 shadow-sm border ${avatarCls}" ${avatarStyle}>${m.avatar}</div>
+            <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2 mb-1.5 flex-wrap">
+                    <span class="text-xs font-bold dark:text-zinc-100 text-slate-900">${m.user}</span>
+                    <span class="text-[10px] dark:text-zinc-500 text-slate-400 font-medium">${m.time}</span>
+                    <span class="text-[9px] px-1.5 py-0.5 dark:bg-white/10 bg-slate-100 rounded font-bold dark:text-zinc-400 text-slate-500 border dark:border-white/5 border-brand-lightBorder">${m.lang||'FR'}</span>
+                    ${tr?`<span class="translate-label text-[9px] flex items-center text-brand-orange font-bold px-1.5 py-0.5 rounded-full bg-brand-orange/10">traduit</span>`:''}
+                    ${m.isAgentic?`<span class="text-[8px] px-1.5 py-0.5 rounded-full font-bold uppercase tracking-tighter" style="background:rgba(42,138,216,.16);color:#1E6FB8">${isSky?'Agent IA':'Agentic'}</span>`:''}
+                </div>
+                <div class="p-3.5 rounded-2xl rounded-tl-sm text-sm block shadow-sm leading-relaxed ${bubble}" style="${bubbleStyle}">
+                    ${m.text}
+                </div>
+                ${m.reactions?`<div class="flex gap-1.5 mt-2 flex-wrap">${m.reactions.map(r=>`<div class="reaction-pill"><span>${r.e}</span><span>${r.c}</span></div>`).join('')}</div>`:''}
+            </div>
+        </div>`;
+    }).join('');
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+// ── Set active chat ──
+function setActiveChat(id) {
+    state.activeChatId = id;
+    state.agentTab = 'chat';
+    let info = state.teams.find(t=>t.id===id);
+    let mode = 'team';
+    if (!info) {
+        info = state.agents.find(a=>a.id===id);
+        if (info) mode = 'agent';
+    }
+    if (!info) {
+        info = state.dms.find(d=>d.id===id);
+        if (info) mode = 'dm';
+    }
+    document.getElementById('chat-title').innerText    = info.name;
+    document.getElementById('chat-subtitle').innerText = mode==='team' ? info.subtitle : (mode==='agent' ? `${info.role} · ${info.description}` : info.role);
+
+    if (mode === 'agent') {
+        headerIcon.className = 'p-2 rounded-lg flex-shrink-0';
+        headerIcon.style.background = 'rgba(42,138,216,.14)';
+        headerIcon.style.color = '#1E6FB8';
+        headerIcon.innerHTML = `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>`;
+        agentTabs.classList.remove('hidden');
+        agentTabs.classList.add('flex');
+    } else {
+        headerIcon.className = 'p-2 rounded-lg bg-orange-500/10 text-brand-orange transition-ui flex-shrink-0';
+        headerIcon.style.background = '';
+        headerIcon.style.color = '';
+        agentTabs.classList.add('hidden');
+        agentTabs.classList.remove('flex');
+        headerIcon.innerHTML = mode==='dm'
+            ? `<div class="w-5 h-5 flex items-center justify-center font-bold text-[10px] text-brand-orange">${info.initials}</div>`
+            : `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>`;
+    }
+
+    setAgentTab('chat');
+    renderNav(); renderMessages();
+}
+
+function setAgentTab(tab){
+    state.agentTab = tab;
+    const isAgentNow = isAgent(state.activeChatId);
+    document.getElementById('tab-chat').classList.toggle('active', tab==='chat');
+    document.getElementById('tab-config').classList.toggle('active', tab==='config');
+
+    if (isAgentNow && tab==='config') {
+        viewChat.classList.add('hidden');
+        viewConfig.classList.remove('hidden');
+        viewConfig.classList.add('flex');
+    } else {
+        viewConfig.classList.add('hidden');
+        viewConfig.classList.remove('flex');
+        viewChat.classList.remove('hidden');
+        viewChat.classList.add('flex');
+    }
+}
+
+// Send
+function handleSend() {
+    const text = chatInput.value.trim();
+    if (!text) return;
+    const now = new Date();
+    const t = `${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}`;
+    if (!state.messages[state.activeChatId]) state.messages[state.activeChatId]=[];
+    state.messages[state.activeChatId].push({user:'Sophie Martin',text,time:t,avatar:'SM',color:'orange',lang:'FR'});
+    chatInput.value='';
+    updateSendBtn();
+    renderNav(); renderMessages();
+}
+function updateSendBtn() { sendBtn.classList.toggle('active', chatInput.value.trim().length>0); }
+chatInput.addEventListener('input', updateSendBtn);
+chatInput.addEventListener('keydown', e => { if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();handleSend();} });
+
+// Right sidebar
+function toggleSidebarRight() {
+    sidebarRight.classList.toggle('sidebar-right-hidden');
+    sidebarRight.classList.toggle('sidebar-right-visible');
+}
+
+// Participants
+function renderParticipants() {
+    document.getElementById('participant-count').innerText = `(${state.participants.length})`;
+    document.getElementById('participants-list').innerHTML = state.participants.map(p => {
+        const dotCls = p.status==='online' ? 'bg-green-500'
+            : p.status==='agentic'        ? ''
+            : p.status==='absent'         ? 'bg-amber-400'
+            : p.status==='communication'  ? 'bg-blue-500'
+            : 'bg-slate-400';
+        const dotStyle = p.status==='agentic' ? 'style="background:#F97316"' : '';
+        const badge = p.status==='agentic'
+            ? `<span class="text-[8px] px-1.5 py-0.5 rounded font-bold uppercase tracking-tight" style="background:rgba(249,115,22,.18);color:#F97316">Agentic</span>`
+            : p.status==='communication'
+            ? `<span class="text-[8px] px-1.5 py-0.5 rounded font-bold uppercase tracking-tight" style="background:rgba(59,130,246,.12);color:#3B82F6">En com.</span>`
+            : p.status==='absent'
+            ? `<span class="text-[8px] px-1.5 py-0.5 rounded font-bold uppercase tracking-tight" style="background:rgba(251,191,36,.12);color:#B45309">Absent</span>`
+            : '';
+        return `<div class="flex items-center gap-3 p-2.5 rounded-xl hover:bg-slate-50 dark:hover:bg-white/5 cursor-pointer transition-ui">
+            <div class="relative">
+                <div class="w-9 h-9 rounded-full bg-${p.color}-500/10 flex items-center justify-center text-xs font-bold text-${p.color}-500 border border-${p.color}-500/20">${p.initials}</div>
+                <div class="absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 dark:border-brand-darkSidebar border-white ${dotCls}" ${dotStyle}></div>
+            </div>
+            <div class="flex-1 min-w-0">
+                <p class="text-xs font-bold truncate dark:text-zinc-100 text-slate-800">${p.name}</p>
+                <p class="text-[10px] dark:text-zinc-500 text-slate-500 font-medium">${p.role}</p>
+            </div>
+            ${badge}
+        </div>`;
+    }).join('');
+}
+renderParticipants();
+
+// ── Config helpers ──
+function syncSld(id,vid,isDec){
+    const s=document.getElementById(id),v=parseFloat(s.value),m=parseFloat(s.max);
+    const p=Math.round(v/m*100);
+    s.style.background=`linear-gradient(to right,#F97316 ${p}%, ${getComputedStyle(document.documentElement).getPropertyValue('--track-bg')||(html.classList.contains('dark')?'#27272A':'#D7E6F6')} ${p}%)`;
+    document.getElementById(vid).textContent = isDec ? v.toFixed(1)+'s' : Math.round(v)+'%';
+}
+function syncCC(ta){
+    const n=ta.value.length, el=document.getElementById('ccn');
+    el.textContent=n;
+    el.style.color = n>480 ? '#EF4444' : '#F97316';
+}
+const extraF=[{n:'Meeting_Notes_Oct.txt',s:'45 KB'},{n:'Sprint_Review_Q3.pdf',s:'3.2 MB'},{n:'Stakeholder_Map.docx',s:'780 KB'}];
+let fi=0;
+function upBadge(){const n=document.querySelectorAll('#fList .fi').length;document.getElementById('fBadge').textContent=n+' fichier'+(n!==1?'s':'')}
+function rmFile(btn){const el=btn.closest('.fi');el.style.cssText='opacity:0;transform:translateX(6px);transition:all .2s';setTimeout(()=>{el.remove();upBadge()},200)}
+function addFile(){
+    const f=extraF[fi%extraF.length];fi++;
+    const el=document.createElement('div');el.className='fi';
+    const sv=`<div style="color:#F97316"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" class="w-3.5 h-3.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>`;
+    const xv=`<button class="dark:text-zinc-500 text-slate-400 hover:text-red-500 transition-ui" onclick="rmFile(this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-3 h-3"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>`;
+    el.innerHTML=`${sv}<span class="text-[12px] font-medium flex-1 truncate dark:text-zinc-200 text-slate-700">${f.n}</span><span class="text-[11px] dark:text-zinc-500 text-slate-500">${f.s}</span>${xv}`;
+    el.style.cssText='opacity:0;transform:translateY(4px)';
+    document.getElementById('fList').appendChild(el);
+    setTimeout(()=>{el.style.cssText='transition:all .2s ease;opacity:1;transform:translateY(0)';upBadge()},10);
+}
+const reps=[
+    "Bonjour @utilisateur — selon la roadmap Q4, le jalon principal est prévu le 15 novembre. Je peux planifier une réunion de synchronisation si nécessaire.",
+    "D'après la documentation, le délai estimé est de 3 à 5 jours ouvrables. N'hésitez pas pour tout suivi.",
+    "Cette fonctionnalité est prévue pour la prochaine release. Je peux vous mettre en relation avec l'équipe technique."
+];
+let ri=0;
+function runPreview(){
+    const box=document.getElementById('prevBox'),cnt=document.getElementById('prevContent');
+    box.classList.remove('hidden');
+    cnt.innerHTML = '<span class="inline-flex gap-1 items-center"><span class="w-1.5 h-1.5 rounded-full bg-current opacity-40 inline-block"></span><span class="w-1.5 h-1.5 rounded-full bg-current opacity-40 inline-block"></span><span class="w-1.5 h-1.5 rounded-full bg-current opacity-40 inline-block"></span></span>';
+    const msg = reps[ri%reps.length]; ri++;
+    setTimeout(()=>{ cnt.textContent = msg; }, 900);
+}
+function doSave(e){
+    const b=e.target.closest('.btn'),orig=b.innerHTML;
+    b.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="w-3.5 h-3.5"><polyline points="20 6 9 17 4 12"/></svg> Enregistré !';
+    b.style.cssText='background:#16A34A;border-color:#16A34A';
+    setTimeout(()=>{b.innerHTML=orig;b.style.cssText=''},2200);
+}
+function openNewAgent(){
+    setActiveChat('a1');
+    setAgentTab('config');
+}
+function openAgentConfig(id){
+    setActiveChat(id);
+    setAgentTab('config');
+}
+
+document.getElementById('toggle-sidebar-right').addEventListener('click', toggleSidebarRight);
+
+// ── User Status Management ──
+let currentUserStatus = 'actif';
+let _statusMenuOpen = false;
+
+function toggleStatusMenu(e) {
+    e.stopPropagation();
+    _statusMenuOpen = !_statusMenuOpen;
+    document.getElementById('status-menu').style.display = _statusMenuOpen ? 'block' : 'none';
+    if (!_statusMenuOpen) document.getElementById('agent-picker').style.display = 'none';
+}
+
+function _closeStatusMenus() {
+    _statusMenuOpen = false;
+    document.getElementById('status-menu').style.display = 'none';
+    document.getElementById('agent-picker').style.display = 'none';
+}
+
+document.addEventListener('click', e => {
+    if (!e.target.closest('#user-card-wrap')) _closeStatusMenus();
+});
+
+function setUserStatus(status) {
+    if (status === 'agentic') { _openAgentPicker(); return; }
+    _applyUserStatus(status, null);
+    _closeStatusMenus();
+}
+
+function _openAgentPicker() {
+    document.getElementById('status-menu').style.display = 'none';
+    document.getElementById('agent-picker-list').innerHTML = state.agents.map(a => {
+        const on = a.status === 'Actif';
+        return `<button onclick="_activateAgentic('${a.id}')" class="status-opt">
+            <div class="agent-avatar w-7 h-7 rounded-lg flex items-center justify-center text-[10px] font-bold border flex-shrink-0">${a.initials}</div>
+            <div style="display:flex;flex-direction:column;align-items:flex-start;flex:1;min-width:0;padding:0 2px">
+                <div style="font-size:12px;font-weight:700">${a.name}</div>
+                <div style="font-size:10px;opacity:.55">${a.role}</div>
+            </div>
+            <div class="w-2 h-2 rounded-full flex-shrink-0 ${on?'bg-green-500':'bg-amber-400'}"></div>
+        </button>`;
+    }).join('');
+    document.getElementById('agent-picker').style.display = 'block';
+}
+
+function backToStatusMenu() {
+    document.getElementById('agent-picker').style.display = 'none';
+    document.getElementById('status-menu').style.display = 'block';
+}
+
+function _activateAgentic(agentId) {
+    const agent = state.agents.find(a => a.id === agentId);
+    _applyUserStatus('agentic', agent);
+    _closeStatusMenus();
+}
+
+function _applyUserStatus(status, agent) {
+    currentUserStatus = status;
+    const dot    = document.getElementById('user-status-dot');
+    const badge  = document.getElementById('user-bot-badge');
+    const label  = document.getElementById('user-status-label');
+    const avatar = document.getElementById('user-avatar');
+    const sub    = document.getElementById('agentic-opt-sub');
+
+    // Reset dot
+    dot.className = 'w-2 h-2 rounded-full flex-shrink-0';
+    dot.style.backgroundColor = '';
+    badge.style.display = 'none';
+    avatar.classList.remove('avatar-agentic');
+
+    // Highlight selected option
+    document.querySelectorAll('.status-opt[data-status]').forEach(b => b.classList.toggle('so-active', b.dataset.status === status));
+
+    switch(status) {
+        case 'actif':
+            dot.classList.add('bg-green-500');
+            label.textContent = 'FR · Designer';
+            break;
+        case 'absent':
+            dot.classList.add('bg-amber-400');
+            label.textContent = 'Absent';
+            break;
+        case 'communication':
+            dot.classList.add('bg-blue-500');
+            label.textContent = 'En communication';
+            break;
+        case 'agentic':
+            dot.classList.add('dot-agentic');
+            dot.style.backgroundColor = '#F97316';
+            badge.style.display = 'flex';
+            badge.style.borderColor = html.classList.contains('dark') ? '#18181B' : '#1B1442';
+            avatar.classList.add('avatar-agentic');
+            label.textContent = agent ? `Agent: ${agent.name}` : 'Mode Agent';
+            if (sub) sub.textContent = agent ? `Actif: ${agent.name}` : 'Déléguer à un agent IA';
+            break;
+    }
+
+    // Sync participants list (Sophie = SM)
+    const sophie = state.participants.find(p => p.initials === 'SM');
+    if (sophie) {
+        sophie.status = status === 'actif' ? 'online' : status;
+        renderParticipants();
+    }
+}
+
+// Keep badge border color in sync when theme toggles
+themeBtn.addEventListener('click', () => {
+    if (currentUserStatus === 'agentic') {
+        const badge = document.getElementById('user-bot-badge');
+        setTimeout(() => { badge.style.borderColor = html.classList.contains('dark') ? '#18181B' : '#1B1442'; }, 0);
+    }
+});
+
+// Init
+setActiveChat('t1');
+// Init slider visuals
+setTimeout(()=>{ syncSld('dSld','dVal',true); syncSld('cSld','cVal',false); }, 50);
+</script>
+</body>
+</html>

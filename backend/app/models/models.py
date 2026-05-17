@@ -12,9 +12,8 @@ class User(Base):
     __tablename__ = "users"
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    email: Mapped[str] = mapped_column(String(255), unique=True, nullable=False, index=True)
-    username: Mapped[str] = mapped_column(String(100), unique=True, nullable=False)
-    hashed_password: Mapped[str] = mapped_column(String(255), nullable=False)
+    email: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
+    username: Mapped[str] = mapped_column(String(100), nullable=False, index=True)
     preferred_language: Mapped[str] = mapped_column(String(10), default="fr", nullable=False)
     status: Mapped[str] = mapped_column(
         Enum("active", "agentic", "inactive", name="user_status"), default="active"

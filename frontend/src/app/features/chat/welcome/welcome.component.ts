@@ -10,62 +10,59 @@ import { LANGUAGE_MAP } from '../../../core/models';
   imports: [CommonModule],
   template: `
     <div class="flex-1 flex flex-col items-center justify-center p-8 text-center relative overflow-hidden">
-      <!-- BG orbs -->
+      <!-- BG orbs brand -->
       <div class="absolute inset-0 overflow-hidden pointer-events-none">
-        <div class="absolute top-1/4 left-1/4 w-64 h-64 bg-primary-500/10 rounded-full blur-3xl animate-pulse-slow"></div>
-        <div class="absolute bottom-1/4 right-1/4 w-64 h-64 bg-accent-pink/8 rounded-full blur-3xl animate-pulse-slow" style="animation-delay:2s"></div>
+        <div class="absolute top-1/4 left-1/4 w-64 h-64 bg-brand-orange/5 rounded-full blur-3xl animate-pulse-slow"></div>
+        <div class="absolute bottom-1/4 right-1/4 w-64 h-64 bg-brand-orange/3 rounded-full blur-3xl animate-pulse-slow" style="animation-delay:2s"></div>
       </div>
 
       <div class="relative z-10 max-w-md animate-fade-in">
-        <!-- Logo big -->
-        <div class="w-24 h-24 bg-gradient-to-br from-primary-500 to-accent-pink rounded-3xl flex items-center justify-center mx-auto mb-8 shadow-glow-primary">
-          <span class="text-5xl">🌍</span>
+        <!-- Logo -->
+        <div class="w-20 h-20 bg-brand-orange/10 border border-brand-orange/20 rounded-2xl flex items-center justify-center mx-auto mb-6">
+          <svg class="w-10 h-10 text-brand-orange" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+              d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
         </div>
 
-        <h1 class="text-3xl font-bold bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent mb-3">
-          Welcome, {{ user()?.username }}!
+        <h1 class="text-2xl font-bold dark:text-white text-zinc-900 mb-2">
+          Bonjour, {{ user()?.username }} !
         </h1>
-        <p class="text-gray-400 leading-relaxed mb-8">
-          Break language barriers with AI-powered translation. Every message reaches your teammates in their language — powered by <span class="text-primary-400 font-medium">Gemma 4</span>.
+        <p class="dark:text-zinc-500 text-zinc-500 text-sm leading-relaxed mb-8">
+          Chaque message est automatiquement traduit dans la langue de chaque membre — sans barrières linguistiques.
         </p>
 
         <!-- Language badge -->
-        <div class="inline-flex items-center gap-2 bg-primary-500/10 border border-primary-500/20 rounded-2xl px-5 py-3 mb-8">
-          <span class="text-2xl">{{ langInfo()?.flag }}</span>
+        <div class="inline-flex items-center gap-3 bg-brand-orange/10 border border-brand-orange/20 rounded-xl px-4 py-2.5 mb-8">
+          <span class="text-xl">{{ langInfo()?.flag }}</span>
           <div class="text-left">
-            <p class="text-xs text-gray-500">Your language</p>
-            <p class="text-sm font-semibold text-primary-300">{{ langInfo()?.name }}</p>
+            <p class="text-[10px] text-zinc-500 font-medium uppercase tracking-wide">Votre langue</p>
+            <p class="text-sm font-semibold text-brand-orange">{{ langInfo()?.name }}</p>
           </div>
         </div>
 
         <!-- Features -->
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8 text-left">
-          <div class="bg-surface-850/60 border border-white/5 rounded-2xl p-4">
-            <div class="text-2xl mb-2">🗣️</div>
-            <h3 class="text-sm font-semibold text-white mb-1">Real-time Translation</h3>
-            <p class="text-xs text-gray-500 leading-relaxed">Messages translated instantly for every member</p>
+        <div class="grid grid-cols-3 gap-3 mb-8 text-left">
+          <div class="dark:bg-brand-darkPanel bg-white border dark:border-brand-darkBorder border-zinc-200 rounded-xl p-3">
+            <div class="text-xl mb-2">🌍</div>
+            <h3 class="text-xs font-semibold dark:text-white text-zinc-900 mb-1">Traduction temps réel</h3>
+            <p class="text-[10px] dark:text-zinc-500 text-zinc-500 leading-relaxed">Messages traduits instantanément</p>
           </div>
-          <div class="bg-surface-850/60 border border-white/5 rounded-2xl p-4">
-            <div class="text-2xl mb-2">🤖</div>
-            <h3 class="text-sm font-semibold text-white mb-1">AI Backup Agent</h3>
-            <p class="text-xs text-gray-500 leading-relaxed">Your AI replies when you're away</p>
+          <div class="dark:bg-brand-darkPanel bg-white border dark:border-brand-darkBorder border-zinc-200 rounded-xl p-3">
+            <div class="text-xl mb-2">🤖</div>
+            <h3 class="text-xs font-semibold dark:text-white text-zinc-900 mb-1">Agent IA</h3>
+            <p class="text-[10px] dark:text-zinc-500 text-zinc-500 leading-relaxed">Répond en votre absence</p>
           </div>
-          <div class="bg-surface-850/60 border border-white/5 rounded-2xl p-4">
-            <div class="text-2xl mb-2">✨</div>
-            <h3 class="text-sm font-semibold text-white mb-1">Smart Summaries</h3>
-            <p class="text-xs text-gray-500 leading-relaxed">Auto-generated summaries and action plans</p>
+          <div class="dark:bg-brand-darkPanel bg-white border dark:border-brand-darkBorder border-zinc-200 rounded-xl p-3">
+            <div class="text-xl mb-2">✨</div>
+            <h3 class="text-xs font-semibold dark:text-white text-zinc-900 mb-1">Résumés auto</h3>
+            <p class="text-[10px] dark:text-zinc-500 text-zinc-500 leading-relaxed">Synthèse et plans d'action</p>
           </div>
         </div>
 
-        <!-- CTA -->
-        <div class="flex items-center gap-3 justify-center">
-          <p class="text-sm text-gray-500">
-            {{ channels().length > 0 ? 'Select a channel from the sidebar or' : 'Get started by' }}
-          </p>
-          <button class="flex items-center gap-2 bg-primary-500 hover:bg-primary-400 text-white text-sm font-medium px-4 py-2 rounded-xl transition-all transform hover:-translate-y-0.5 shadow-glow-primary">
-            <span>+</span> New Channel
-          </button>
-        </div>
+        <p class="text-sm dark:text-zinc-500 text-zinc-400">
+          Sélectionnez un canal dans la barre latérale pour commencer.
+        </p>
       </div>
     </div>
   `,
