@@ -1,4 +1,4 @@
-export type UserStatus = 'active' | 'agentic' | 'inactive';
+export type UserStatus = 'active' | 'agentic' | 'inactive' | 'absent' | 'communication';
 export type ChannelType = 'team' | 'pair';
 export type NotificationType = 'mention' | 'reply' | 'agentic_reply' | 'summary_ready' | 'new_member';
 
@@ -98,6 +98,15 @@ export interface PresenceUser {
   userId: string;
   username: string;
   status: 'online' | 'offline';
+}
+
+export interface Agent {
+  id: string;
+  name: string;
+  description?: string;
+  agentType: string;
+  persona?: string;
+  isActive: boolean;
 }
 
 /** Language metadata including UI badge code (country code used in message headers). */

@@ -78,6 +78,14 @@ class UserUpdateRequest(BaseModel):
 class UserStatusUpdate(BaseModel):
     status: str
 
+    @field_validator("status")
+    @classmethod
+    def status_valid(cls, v: str) -> str:
+        allowed = {"active", "agentic", "inactive", "absent", "communication"}
+        if v not in allowed:
+            raise ValueError(f"status must be one of {sorted(allowed)}")
+        return v
+
 
 # ─── Channel ─────────────────────────────────────────────────────────────────
 
