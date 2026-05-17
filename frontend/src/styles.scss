@@ -41,7 +41,7 @@
   /* ── Glass header ── */
   .glass-header { backdrop-filter: blur(12px); }
   .dark  .glass-header { background: rgba(14,14,17,.8);  border-bottom: 1px solid rgba(255,255,255,.06); }
-  .light .glass-header { background: rgba(255,255,255,.8); border-bottom: 1px solid rgba(0,0,0,.06); }
+  .light .glass-header { background: rgba(243,243,246,.85) !important; border-bottom: 1px solid rgba(15,15,30,.07) !important; }
 
   /* ── Reaction pills ── */
   .reaction-pill {
@@ -119,3 +119,61 @@ wb-welcome {
   border-radius: 8px;
   transition: box-shadow 0.3s;
 }
+
+/* ── Light theme overrides — matches maquette v2 ── */
+.light body { color: #1F1B3A; }
+
+/* Sidebar reste sombre en mode clair */
+.light aside.sidebar-main,
+html.light .sidebar-main { background: #1B1442 !important; border-right: 1px solid rgba(255,255,255,.06) !important; }
+html.light .sidebar-main .border-brand-lightBorder { border-color: rgba(255,255,255,.07) !important; }
+html.light .sidebar-main input[type=text] { background: rgba(255,255,255,.06) !important; border-color: rgba(255,255,255,.10) !important; color: #fff !important; }
+html.light .sidebar-main input[type=text]::placeholder { color: rgba(255,255,255,.45) !important; }
+html.light .sidebar-main .hover\:bg-slate-200\/70:hover { background: rgba(255,255,255,.06) !important; }
+
+/* Textes dans la sidebar sombre */
+html.light .sidebar-main .text-zinc-900,
+html.light .sidebar-main .text-zinc-800 { color: #fff !important; }
+html.light .sidebar-main .text-zinc-700 { color: rgba(255,255,255,.85) !important; }
+html.light .sidebar-main .text-zinc-600 { color: rgba(255,255,255,.75) !important; }
+html.light .sidebar-main .text-zinc-500 { color: rgba(255,255,255,.50) !important; }
+html.light .sidebar-main .text-zinc-400 { color: rgba(255,255,255,.45) !important; }
+html.light .sidebar-main .bg-brand-darkPanel,
+html.light .sidebar-main .bg-white { background: rgba(255,255,255,.06) !important; }
+
+/* Nav items actifs dans la sidebar */
+html.light .sidebar-main .nav-item-active {
+  background: #5EEAD4 !important; color: #0E0E11 !important;
+  border-left: 3px solid #14B8A6 !important; border-radius: 0 8px 8px 0;
+}
+html.light .sidebar-main .nav-item-active span { color: #0E0E11 !important; }
+
+/* Brand orange → Violet en mode clair */
+html.light .bg-brand-orange { background-color: #7C3AED !important; }
+html.light .text-brand-orange { color: #7C3AED !important; }
+html.light .border-brand-orange { border-color: #7C3AED !important; }
+html.light .bg-brand-orange\/10 { background-color: rgba(124,58,237,.10) !important; }
+html.light .bg-brand-orange\/20 { background-color: rgba(124,58,237,.20) !important; }
+html.light .hover\:bg-brand-orange\/10:hover { background-color: rgba(124,58,237,.10) !important; }
+html.light .border-brand-orange\/30 { border-color: rgba(124,58,237,.30) !important; }
+html.light .border-brand-orange\/40 { border-color: rgba(124,58,237,.40) !important; }
+html.light .focus\:border-brand-orange\/50:focus { border-color: rgba(124,58,237,.50) !important; }
+html.light .focus-within\:border-brand-orange\/40:focus-within { border-color: rgba(124,58,237,.40) !important; }
+html.light .focus-within\:border-brand-orange\/30:focus-within { border-color: rgba(124,58,237,.30) !important; }
+
+/* Sidebar brand logo */
+html.light .sidebar-brand { color: #5EEAD4 !important; letter-spacing: .14em; font-size: 11px; }
+
+/* Avatars agents dans sidebar */
+html.light .sidebar-main .agent-avatar { background: rgba(94,234,212,.18) !important; color: #5EEAD4 !important; border-color: rgba(94,234,212,.32) !important; }
+html.light .sidebar-main .agent-ia-pill { background: rgba(94,234,212,.22) !important; color: #5EEAD4 !important; }
+
+/* Glass header zone principale */
+html.light .glass-header { background: rgba(243,243,246,.85) !important; border-bottom: 1px solid rgba(15,15,30,.07) !important; }
+
+/* Scrollbar en mode clair */
+html.light .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(30,80,160,.18); }
+
+/* Status menu / agent picker en mode clair */
+html.light .status-menu,
+html.light .agent-picker { background: #FFFFFF; border-color: rgba(30,80,160,.13); box-shadow: 0 8px 32px rgba(15,15,30,.12); }

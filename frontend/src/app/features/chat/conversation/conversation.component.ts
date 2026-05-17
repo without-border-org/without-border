@@ -1,5 +1,5 @@
 import {
-  Component, inject, signal, computed, OnInit, OnDestroy, OnChanges, SimpleChanges,
+  Component, inject, signal, computed, effect, OnInit, OnDestroy, OnChanges, SimpleChanges,
   ViewChild, ElementRef, AfterViewChecked, Input,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
@@ -302,9 +302,12 @@ import { AgentService } from '../../../core/services/agent.service';
                   <!-- Fields -->
                   <div class="mb-[14px]">
                     <label class="block text-[10.5px] font-semibold uppercase tracking-wider dark:text-zinc-500 text-zinc-400 mb-[5px]">Agent Name</label>
-                    <div class="w-full px-[11px] py-[9px] dark:bg-zinc-950 bg-zinc-50 border dark:border-white/10 border-zinc-300 rounded-lg dark:text-zinc-200 text-zinc-800 text-[13.5px]">
-                      {{ currentAgent()?.name ?? '—' }}
-                    </div>
+                    <input
+                      [ngModel]="editAgentName()"
+                      (ngModelChange)="editAgentName.set($event)"
+                      class="w-full px-[11px] py-[9px] dark:bg-zinc-950 bg-zinc-50 border dark:border-white/10 border-zinc-300 rounded-lg dark:text-zinc-200 text-zinc-800 text-[13.5px] focus:outline-none focus:border-brand-orange/50 transition-colors"
+                      placeholder="Agent name"
+                    />
                   </div>
                   <div class="mb-[14px]">
                     <label class="block text-[10.5px] font-semibold uppercase tracking-wider dark:text-zinc-500 text-zinc-400 mb-[5px]">Type</label>
@@ -426,12 +429,17 @@ import { AgentService } from '../../../core/services/agent.service';
                   <div class="flex justify-between items-center mb-1.5">
                     <label class="text-[10.5px] font-semibold uppercase tracking-wider dark:text-zinc-500 text-zinc-400">Instructions</label>
                     <span class="text-[11px] dark:text-zinc-500 text-zinc-400">
-                      <span class="font-semibold text-brand-orange">{{ (currentAgent()?.persona ?? '').length }}</span> / 500
+                      <span class="font-semibold text-brand-orange">{{ editAgentPersona().length }}</span> / 500
                     </span>
                   </div>
-                  <div class="w-full px-[11px] py-[9px] dark:bg-zinc-950 bg-zinc-50 border dark:border-white/10 border-zinc-300 rounded-lg dark:text-zinc-300 text-zinc-600 text-[13px] leading-[1.65] min-h-[120px] whitespace-pre-wrap">
-                    {{ currentAgent()?.persona ?? '—' }}
-                  </div>
+                  <textarea
+                    [ngModel]="editAgentPersona()"
+                    (ngModelChange)="editAgentPersona.set($event)"
+                    rows="6"
+                    maxlength="500"
+                    class="w-full px-[11px] py-[9px] dark:bg-zinc-950 bg-zinc-50 border dark:border-white/10 border-zinc-300 rounded-lg dark:text-zinc-300 text-zinc-600 text-[13px] leading-[1.65] resize-none focus:outline-none focus:border-brand-orange/50 transition-colors"
+                    placeholder="Define the agent behaviour...">
+                  </textarea>
                   <div class="text-[11px] dark:text-zinc-500 text-zinc-400 text-right mt-1">Max 500 characters · Included in every AI response</div>
                 </div>
 
@@ -527,6 +535,8 @@ export class ConversationComponent implements OnInit, OnChanges, OnDestroy, Afte
   currentPage    = signal(1);
   showParticipants = signal(false);
   agentTab       = signal<'chat' | 'config'>('config');
+  editAgentName   = signal('');
+  editAgentPersona = signal('');
   messageText    = '';
   typingText     = signal('');
 
@@ -553,6 +563,12 @@ export class ConversationComponent implements OnInit, OnChanges, OnDestroy, Afte
       return 'Bonjour @Sophie — le jalon Q4 est prévu le 15 nov. Je peux organiser une réunion de synchronisation cette semaine si vous le souhaitez.';
     }
     return "Mode veille. Activation automatique dès qu'un message nécessite une traduction.";
+  });
+
+  private readonly syncAgentEditFields = effect(() => {
+    const agent = this.currentAgent();
+    this.editAgentName.set(agent?.name ?? '');
+    this.editAgentPersona.set(agent?.persona ?? '');
   });
 
   private subs: Subscription[] = [];
