@@ -206,3 +206,15 @@ class AIHealthResponse(BaseModel):
     model: str
     available: bool
     message: str
+
+
+# --- Agent ---
+
+class AgentRead(BaseModel):
+    id: uuid.UUID
+    name: str
+    description: Optional[str]
+    agent_type: str
+    persona: Optional[str]
+    is_active: bool
+    model_config = {"from_attributes": True}
