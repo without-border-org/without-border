@@ -70,11 +70,19 @@ DEMO_USERS = [
     },
     {
         "id":         "00000000-0000-0000-0000-000000000004",
-        "email":      "li@withoutborder.app",
-        "username":   "li",
-        "firstName":  "Li Ming",
-        "lastName":   "",
-        "locale":     "zh",
+        "email":      "kevin@withoutborder.app",
+        "username":   "kevin",
+        "firstName":  "Kevin",
+        "lastName":   "Lee",
+        "locale":     "ko",
+    },
+    {
+        "id":         "00000000-0000-0000-0000-000000000005",
+        "email":      "sarah@withoutborder.app",
+        "username":   "sarah",
+        "firstName":  "Sarah",
+        "lastName":   "Wilson",
+        "locale":     "en",
     },
 ]
 

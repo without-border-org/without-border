@@ -1,5 +1,5 @@
 import {
-  Component, inject, signal, computed, OnInit, OnDestroy,
+  Component, inject, signal, computed, OnInit, OnDestroy, OnChanges, SimpleChanges,
   ViewChild, ElementRef, AfterViewChecked, Input,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
@@ -282,7 +282,7 @@ import { MessageBubbleComponent } from '../components/message-bubble.component';
     </div>
   `,
 })
-export class ConversationComponent implements OnInit, OnDestroy, AfterViewChecked {
+export class ConversationComponent implements OnInit, OnChanges, OnDestroy, AfterViewChecked {
   @Input() channelId!: string;
   @ViewChild('messagesEl')  private messagesEl!:  ElementRef<HTMLDivElement>;
   @ViewChild('textareaEl') private textareaEl!: ElementRef<HTMLTextAreaElement>;
@@ -314,6 +314,38 @@ export class ConversationComponent implements OnInit, OnDestroy, AfterViewChecke
   private subs: Subscription[] = [];
   private shouldScroll = true;
   private typingTimer: ReturnType<typeof setTimeout> | null = null;
+
+  ngOnChanges(changes: SimpleChanges) {
+    if (changes['channelId'] && !changes['channelId'].firstChange) {
+      this.subs.forEach(s => s.unsubscribe());
+      this.subs = [];
+      this.wsSvc.disconnect();
+      if (this.typingTimer) { clearTimeout(this.typingTimer); this.typingTimer = null; }
+      this.messages.set([]);
+      this.channel.set(null);
+      this.members.set([]);
+      this.loading.set(true);
+      this.shouldScroll = true;
+      this.typingText.set('');
+
+      this.loadChannel();
+      this.loadMessages();
+      this.loadMembers();
+      this.wsSvc.connect(this.channelId);
+
+      this.subs.push(
+        this.wsSvc.messages$.subscribe(msg => {
+          this.messages.update(list => [...list, msg]);
+          this.shouldScroll = true;
+        }),
+        this.wsSvc.typing$.subscribe(({ username }) => {
+          this.typingText.set(`${username} écrit…`);
+          if (this.typingTimer) clearTimeout(this.typingTimer);
+          this.typingTimer = setTimeout(() => this.typingText.set(''), 2500);
+        }),
+      );
+    }
+  }
 
   ngOnInit() {
     this.loadChannel();

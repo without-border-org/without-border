@@ -6,7 +6,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from fastapi.testclient import TestClient
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, AsyncSessionLocal
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
 
 from app.main import create_app
 from app.core.config.settings import settings
@@ -78,11 +78,10 @@ class TestKeycloakUserSync:
         engine = create_async_engine("sqlite+aiosqlite:///:memory:", echo=False)
         async with engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
-        
-        AsyncSessionLocal_test = AsyncSessionLocal
-        AsyncSessionLocal_test.configure(bind=engine)
-        
-        async with AsyncSessionLocal_test() as db:
+
+        TestSessionLocal = async_sessionmaker(bind=engine, class_=AsyncSession, expire_on_commit=False)
+
+        async with TestSessionLocal() as db:
             sync_service = KeycloakUserSyncService(db)
             user = await sync_service.upsert_from_token(valid_token_claims)
             
@@ -97,11 +96,10 @@ class TestKeycloakUserSync:
         engine = create_async_engine("sqlite+aiosqlite:///:memory:", echo=False)
         async with engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
-        
-        AsyncSessionLocal_test = AsyncSessionLocal
-        AsyncSessionLocal_test.configure(bind=engine)
-        
-        async with AsyncSessionLocal_test() as db:
+
+        TestSessionLocal = async_sessionmaker(bind=engine, class_=AsyncSession, expire_on_commit=False)
+
+        async with TestSessionLocal() as db:
             sync_service = KeycloakUserSyncService(db)
             
             # Create user first time

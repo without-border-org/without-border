@@ -258,7 +258,7 @@ export class ChatLayoutComponent implements OnInit, OnDestroy {
 
   private autoNavigateToFirstChannel() {
     if (!this.activeChannelId()) {
-      const first = this.teamChannels()[0];
+      const first = this.teamChannels()[0] ?? this.pairChannels()[0];
       if (first) this.router.navigate(['/chat', first.id], { replaceUrl: true });
     }
   }

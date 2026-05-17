@@ -132,7 +132,7 @@ export class MessageBubbleComponent {
 
   isTranslated(): boolean {
     const originalLang = this.message.originalLanguage;
-    return !!originalLang && originalLang !== this.currentUserLang;
+    return !!originalLang && originalLang !== this.currentUserLang && !!this.message.translatedContent;
   }
 
   displayContent(): string {
