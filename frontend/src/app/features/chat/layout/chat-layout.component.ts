@@ -496,7 +496,11 @@ export class ChatLayoutComponent implements OnInit, OnDestroy {
 
   dmStatusDot(channelId: string): string {
     const s = this.dmPartnerStatus(channelId);
-    return s === 'agentic' ? 'bg-brand-orange' : s === 'inactive' ? 'bg-zinc-400' : 'bg-green-500';
+    if (s === 'agentic') return 'bg-brand-orange';
+    if (s === 'absent') return 'bg-amber-400';
+    if (s === 'communication') return 'bg-blue-500';
+    if (s === 'inactive') return 'bg-zinc-400';
+    return 'bg-green-500';
   }
 
   dmAvatarClass(channelId: string): string {
