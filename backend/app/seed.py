@@ -1,7 +1,7 @@
 """
 Seed script — full demo data matching the functional mockup.
 
-5 users, 4 team channels, 3 DMs, messages with reactions.
+5 users, 2 agents, 4 team channels, 5 DMs (3 human + 2 agent), messages with reactions.
 All message content is stored in French (Sophie's native language) for demo
 consistency. The original_language field reflects each sender's actual language
 so the frontend shows the correct language badge and "traduit" indicator.
@@ -16,7 +16,7 @@ from sqlalchemy import select
 from app.core.database import AsyncSessionLocal, create_tables
 from app.models.models import (
     User, Channel, ChannelMember,
-    Message, MessageReaction,
+    Message, MessageReaction, Agent,
 )
 
 # ── Fixed UUIDs — must match Keycloak realm users ───────────────────────────
@@ -36,6 +36,43 @@ C_MARKETING = uuid.UUID("00000000-0000-0000-0001-000000000004")
 C_DM_JOHN  = uuid.UUID("00000000-0000-0000-0002-000000000001")
 C_DM_MARIA = uuid.UUID("00000000-0000-0000-0002-000000000002")
 C_DM_KEVIN = uuid.UUID("00000000-0000-0000-0002-000000000003")
+
+# Agent UUIDs
+A_PROJECTBOT = uuid.UUID("00000000-0000-0000-0003-000000000001")
+A_TRANSBOT   = uuid.UUID("00000000-0000-0000-0003-000000000002")
+
+# Channel UUIDs — agent DM channels (from Sophie's perspective)
+C_DM_PROJECTBOT = uuid.UUID("00000000-0000-0000-0002-000000000004")
+C_DM_TRANSBOT   = uuid.UUID("00000000-0000-0000-0002-000000000005")
+
+# ── Agents ───────────────────────────────────────────────────────────────────
+DEMO_AGENTS = [
+    dict(
+        id=A_PROJECTBOT,
+        name="ProjectBot",
+        description="Suivi de roadmap, jalons et sprints",
+        agent_type="project_manager",
+        persona=(
+            "Tu es ProjectBot, un assistant IA professionnel pour WithoutBorder. "
+            "Tu réponds aux @mentions en français avec un ton concis et professionnel. "
+            "Tu connais le détail du Sprint 14 (18/23 tickets terminés, jalon Q4 le 15 nov). "
+            "Adresse-toi toujours à l'utilisateur par son prénom."
+        ),
+        is_active=True,
+    ),
+    dict(
+        id=A_TRANSBOT,
+        name="TransBot",
+        description="Traduction multilingue automatique",
+        agent_type="translator",
+        persona=(
+            "Tu es TransBot, spécialisé en traduction multilingue pour WithoutBorder. "
+            "Tu traduis automatiquement les messages selon le profil linguistique du destinataire. "
+            "Tu opères en mode veille par défaut et peux être activé manuellement."
+        ),
+        is_active=True,
+    ),
+]
 
 # ── Users ────────────────────────────────────────────────────────────────────
 DEMO_USERS = [
@@ -72,6 +109,9 @@ CHANNEL_DEFS = [
     dict(id=C_DM_JOHN,  name="John Carter",  type="pair", description="", created_by=U_SOPHIE),
     dict(id=C_DM_MARIA, name="María García", type="pair", description="", created_by=U_SOPHIE),
     dict(id=C_DM_KEVIN, name="Kevin Lee",    type="pair", description="", created_by=U_SOPHIE),
+    # Agent DM channels
+    dict(id=C_DM_PROJECTBOT, name="ProjectBot", type="pair", description="Agent IA", created_by=U_SOPHIE),
+    dict(id=C_DM_TRANSBOT,   name="TransBot",   type="pair", description="Agent IA", created_by=U_SOPHIE),
 ]
 
 # (user_id, role)
@@ -83,6 +123,8 @@ CHANNEL_MEMBERS: dict[uuid.UUID, list[tuple[uuid.UUID, str]]] = {
     C_DM_JOHN:   [(U_SOPHIE, "member"), (U_JOHN, "member")],
     C_DM_MARIA:  [(U_SOPHIE, "member"), (U_MARIA, "member")],
     C_DM_KEVIN:  [(U_SOPHIE, "member"), (U_KEVIN, "member")],
+    C_DM_PROJECTBOT: [(U_SOPHIE, "member")],
+    C_DM_TRANSBOT:   [(U_SOPHIE, "member")],
 }
 
 # ── Messages ─────────────────────────────────────────────────────────────────
@@ -312,6 +354,33 @@ MESSAGES: dict[uuid.UUID, list[dict]] = {
             reactions=[(U_SOPHIE, "🐛")],
         ),
     ],
+    C_DM_PROJECTBOT: [
+        dict(
+            sender=U_SOPHIE, lang="fr", hour=9, minute=2,
+            content="@ProjectBot peux-tu me résumer où en est le sprint en cours ?",
+            reactions=[],
+        ),
+        dict(
+            sender=U_SOPHIE, lang="fr", hour=9, minute=3, is_agentic=True,
+            content=(
+                "Bonjour Sophie ! Sprint 14 : 18 tickets terminés sur 23 (78 %). "
+                "Trois sont en revue de code, deux bloqués sur dépendance externe. "
+                "Le jalon Q4 reste planifié au 15 novembre. Voulez-vous le détail par épopée ?"
+            ),
+            reactions=[],
+        ),
+    ],
+    C_DM_TRANSBOT: [
+        dict(
+            sender=U_SOPHIE, lang="fr", hour=8, minute=30, is_agentic=True,
+            content=(
+                "Mode veille. Je traduis automatiquement les messages dès qu'un membre "
+                "n'a pas la langue de l'expéditeur dans son profil. Activez les déclencheurs "
+                "dans la configuration pour me solliciter manuellement."
+            ),
+            reactions=[],
+        ),
+    ],
 }
 
 
@@ -344,6 +413,20 @@ async def seed() -> None:
             users[u["id"]] = user
         await db.flush()
         print(f"  ✓ {len(users)} users created")
+
+        # Agents
+        for a in DEMO_AGENTS:
+            agent = Agent(
+                id=a["id"],
+                name=a["name"],
+                description=a.get("description"),
+                agent_type=a["agent_type"],
+                persona=a.get("persona"),
+                is_active=a.get("is_active", True),
+            )
+            db.add(agent)
+        await db.flush()
+        print(f"  ✓ {len(DEMO_AGENTS)} agents created")
 
         # Channels + memberships
         for ch_def in CHANNEL_DEFS:

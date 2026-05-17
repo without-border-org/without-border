@@ -53,6 +53,34 @@ import { MessageBubbleComponent } from '../components/message-bubble.component';
             </div>
           </div>
 
+          <!-- Tab bar agent : Conversation | Configuration -->
+          <div *ngIf="isAgentChannel()" class="flex items-center gap-1 p-1 rounded-[10px]
+                      dark:bg-white/4 bg-slate-100/80">
+            <button (click)="agentTab.set('chat')"
+              class="tab-btn px-3.5 py-1.5 rounded-[7px] text-[12px] font-semibold flex items-center gap-1.5 border-0 cursor-pointer transition-all"
+              [class]="agentTab() === 'chat'
+                ? 'bg-brand-orange text-white shadow-[0_1px_4px_rgba(249,115,22,0.3)]'
+                : 'dark:text-zinc-400 text-slate-500 bg-transparent hover:opacity-80'">
+              <!-- Feather message-circle icon, stroke 1.75 -->
+              <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+              </svg>
+              Conversation
+            </button>
+            <button (click)="agentTab.set('config')"
+              class="tab-btn px-3.5 py-1.5 rounded-[7px] text-[12px] font-semibold flex items-center gap-1.5 border-0 cursor-pointer transition-all"
+              [class]="agentTab() === 'config'
+                ? 'bg-brand-orange text-white shadow-[0_1px_4px_rgba(249,115,22,0.3)]'
+                : 'dark:text-zinc-400 text-slate-500 bg-transparent hover:opacity-80'">
+              <!-- Feather settings icon, stroke 1.75 -->
+              <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="3"/>
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+              </svg>
+              Configuration
+            </button>
+          </div>
+
           <!-- Groupe d'avatars participants → toggle sidebar droite -->
           <button (click)="toggleParticipants()"
                   class="flex -space-x-2.5 hover:opacity-80 transition-ui p-1.5 rounded-xl
@@ -73,161 +101,170 @@ import { MessageBubbleComponent } from '../components/message-bubble.component';
           </button>
         </header>
 
-        <!-- ── Messages ── -->
-        <div #messagesEl
-             class="flex-1 overflow-y-auto custom-scrollbar px-6 pt-24 pb-4 space-y-6"
-             (scroll)="onScroll($event)">
+        <!-- ── Messages (visible en mode chat uniquement) ── -->
+        <ng-container *ngIf="!isAgentChannel() || agentTab() === 'chat'">
+          <div #messagesEl
+               class="flex-1 overflow-y-auto custom-scrollbar px-6 pt-24 pb-4 space-y-6"
+               (scroll)="onScroll($event)">
 
-          <!-- Load more -->
-          <div *ngIf="hasMore()" class="text-center py-2">
-            <button (click)="loadMore()"
-              class="text-xs text-brand-orange hover:text-brand-orangeHover
-                     bg-brand-orange/10 hover:bg-brand-orange/20 px-4 py-2 rounded-full transition-ui">
-              Charger les messages précédents
-            </button>
+            <!-- Load more -->
+            <div *ngIf="hasMore()" class="text-center py-2">
+              <button (click)="loadMore()"
+                class="text-xs text-brand-orange hover:text-brand-orangeHover
+                       bg-brand-orange/10 hover:bg-brand-orange/20 px-4 py-2 rounded-full transition-ui">
+                Charger les messages précédents
+              </button>
+            </div>
+
+            <!-- Skeleton loading -->
+            <div *ngIf="loading()">
+              <div *ngFor="let i of [1,2,3,4]" class="flex gap-4 animate-pulse">
+                <div class="w-9 h-9 rounded-xl dark:bg-zinc-800 bg-zinc-200 flex-shrink-0"></div>
+                <div class="flex-1">
+                  <div class="h-3 w-24 dark:bg-zinc-800 bg-zinc-200 rounded mb-2"></div>
+                  <div class="h-12 dark:bg-zinc-800 bg-zinc-200 rounded-2xl w-3/4"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Empty state -->
+            <div *ngIf="!loading() && messages().length === 0"
+                 class="flex flex-col items-center justify-center h-full text-center py-20">
+              <div class="text-5xl mb-4">💬</div>
+              <h3 class="text-base font-semibold dark:text-white text-zinc-900 mb-2">
+                Démarrez la conversation
+              </h3>
+              <p class="text-zinc-500 text-sm max-w-xs">
+                Les messages seront automatiquement traduits pour chaque membre dans sa langue.
+              </p>
+            </div>
+
+            <!-- Messages list -->
+            <wb-message-bubble
+              *ngFor="let msg of messages(); trackBy: trackById"
+              [message]="msg"
+              [currentUserLang]="currentUserLang()"
+              [id]="'msg-' + msg.id"
+              (react)="onReact(msg.id, $event)" />
           </div>
 
-          <!-- Skeleton loading -->
-          <div *ngIf="loading()">
-            <div *ngFor="let i of [1,2,3,4]" class="flex gap-4 animate-pulse">
-              <div class="w-9 h-9 rounded-xl dark:bg-zinc-800 bg-zinc-200 flex-shrink-0"></div>
-              <div class="flex-1">
-                <div class="h-3 w-24 dark:bg-zinc-800 bg-zinc-200 rounded mb-2"></div>
-                <div class="h-12 dark:bg-zinc-800 bg-zinc-200 rounded-2xl w-3/4"></div>
+          <!-- ── Compositeur (Rich Text) ── -->
+          <div class="px-4 pb-4 pt-2 border-t dark:border-brand-darkBorder border-brand-lightBorder
+                      dark:bg-brand-darkBg bg-brand-lightBg">
+            <div class="dark:bg-brand-darkPanel bg-zinc-100 border dark:border-brand-darkBorder
+                        border-zinc-200 rounded-2xl transition-ui focus-within:border-brand-orange/30 overflow-hidden">
+
+              <!-- Toolbar formatage (haut) -->
+              <div class="flex items-center gap-0.5 px-3 pt-2.5 pb-2
+                          border-b dark:border-white/[0.05] border-zinc-200/80">
+                <button class="editor-tool font-bold text-xs dark:text-zinc-300 text-zinc-700"
+                        (click)="applyFormat('bold')" title="Gras">B</button>
+                <button class="editor-tool text-xs dark:text-zinc-300 text-zinc-700 italic"
+                        (click)="applyFormat('italic')" title="Italique">I</button>
+                <button class="editor-tool text-xs dark:text-zinc-300 text-zinc-700 underline"
+                        (click)="applyFormat('underline')" title="Souligné">U</button>
+                <button class="editor-tool text-xs dark:text-zinc-300 text-zinc-700 line-through"
+                        (click)="applyFormat('strikethrough')" title="Barré">S</button>
+                <div class="w-px h-3.5 dark:bg-white/10 bg-zinc-300 mx-1.5 flex-shrink-0"></div>
+                <button class="editor-tool dark:text-zinc-300 text-zinc-700" title="Lien">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101
+                         m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/>
+                  </svg>
+                </button>
+                <div class="w-px h-3.5 dark:bg-white/10 bg-zinc-300 mx-1.5 flex-shrink-0"></div>
+                <button class="editor-tool dark:text-zinc-300 text-zinc-700" title="Liste ordonnée">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M4 6h16M4 10h16M4 14h16M4 18h16"/>
+                  </svg>
+                </button>
+                <button class="editor-tool dark:text-zinc-300 text-zinc-700" title="Liste à puces">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/>
+                  </svg>
+                </button>
+                <div class="w-px h-3.5 dark:bg-white/10 bg-zinc-300 mx-1.5 flex-shrink-0"></div>
+                <button class="editor-tool dark:text-zinc-300 text-zinc-700" title="Code">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/>
+                  </svg>
+                </button>
+                <button class="editor-tool dark:text-zinc-300 text-zinc-700" title="Citation">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/>
+                  </svg>
+                </button>
+              </div>
+
+              <!-- Zone de saisie -->
+              <textarea #textareaEl [(ngModel)]="messageText"
+                (input)="onInput()"
+                (keydown)="onKeydown($event)"
+                rows="3"
+                class="w-full bg-transparent text-sm focus:outline-none resize-none px-4 py-3
+                       dark:placeholder-zinc-600 placeholder-zinc-400 dark:text-zinc-200 text-zinc-800"
+                placeholder="Envoyer un message..."></textarea>
+
+              <!-- Toolbar actions (bas) -->
+              <div class="flex items-center gap-0.5 px-3 pb-2.5 pt-1">
+                <button class="editor-tool dark:text-zinc-400 text-zinc-500" title="Joindre un fichier">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                  </svg>
+                </button>
+                <button class="editor-tool text-[10px] font-semibold dark:text-zinc-400 text-zinc-500"
+                        title="Format">Aa</button>
+                <button class="editor-tool dark:text-zinc-400 text-zinc-500" title="Emoji">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                  </svg>
+                </button>
+                <button class="editor-tool text-[11px] font-bold dark:text-zinc-400 text-zinc-500"
+                        title="Mentionner">@</button>
+                <div class="w-px h-3.5 dark:bg-white/10 bg-zinc-300 mx-1.5 flex-shrink-0"></div>
+                <button class="editor-tool dark:text-zinc-400 text-zinc-500" title="Clip vidéo">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M15 10l4.553-2.069A1 1 0 0121 8.82v6.36a1 1 0 01-1.447.894L15 14
+                         M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                  </svg>
+                </button>
+                <button class="editor-tool dark:text-zinc-400 text-zinc-500" title="Message vocal">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/>
+                  </svg>
+                </button>
+                <button class="editor-tool text-[11px] font-bold dark:text-zinc-400 text-zinc-500"
+                        title="Commandes">/</button>
+                <div class="flex-1"></div>
+                <!-- Bouton envoi -->
+                <button (click)="sendMessage()"
+                        class="editor-tool rounded-lg"
+                        [class]="messageText.trim() ? 'send-btn-active' : 'send-btn-inactive'"
+                        title="Envoyer (Entrée)">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
+                      d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
+                  </svg>
+                </button>
               </div>
             </div>
           </div>
+        </ng-container>
 
-          <!-- Empty state -->
-          <div *ngIf="!loading() && messages().length === 0"
-               class="flex flex-col items-center justify-center h-full text-center py-20">
-            <div class="text-5xl mb-4">💬</div>
-            <h3 class="text-base font-semibold dark:text-white text-zinc-900 mb-2">
-              Démarrez la conversation
-            </h3>
-            <p class="text-zinc-500 text-sm max-w-xs">
-              Les messages seront automatiquement traduits pour chaque membre dans sa langue.
-            </p>
-          </div>
-
-          <!-- Messages list -->
-          <wb-message-bubble
-            *ngFor="let msg of messages(); trackBy: trackById"
-            [message]="msg"
-            [currentUserLang]="currentUserLang()"
-            [id]="'msg-' + msg.id"
-            (react)="onReact(msg.id, $event)" />
+        <!-- ── Vue configuration (placeholder) ── -->
+        <div *ngIf="isAgentChannel() && agentTab() === 'config'"
+             class="flex-1 flex items-center justify-center text-zinc-500 text-sm">
+          Vue configuration (à implémenter)
         </div>
 
-        <!-- ── Compositeur (Rich Text) ── -->
-        <div class="px-4 pb-4 pt-2 border-t dark:border-brand-darkBorder border-brand-lightBorder
-                    dark:bg-brand-darkBg bg-brand-lightBg">
-          <div class="dark:bg-brand-darkPanel bg-zinc-100 border dark:border-brand-darkBorder
-                      border-zinc-200 rounded-2xl transition-ui focus-within:border-brand-orange/30 overflow-hidden">
-
-            <!-- Toolbar formatage (haut) -->
-            <div class="flex items-center gap-0.5 px-3 pt-2.5 pb-2
-                        border-b dark:border-white/[0.05] border-zinc-200/80">
-              <button class="editor-tool font-bold text-xs dark:text-zinc-300 text-zinc-700"
-                      (click)="applyFormat('bold')" title="Gras">B</button>
-              <button class="editor-tool text-xs dark:text-zinc-300 text-zinc-700 italic"
-                      (click)="applyFormat('italic')" title="Italique">I</button>
-              <button class="editor-tool text-xs dark:text-zinc-300 text-zinc-700 underline"
-                      (click)="applyFormat('underline')" title="Souligné">U</button>
-              <button class="editor-tool text-xs dark:text-zinc-300 text-zinc-700 line-through"
-                      (click)="applyFormat('strikethrough')" title="Barré">S</button>
-              <div class="w-px h-3.5 dark:bg-white/10 bg-zinc-300 mx-1.5 flex-shrink-0"></div>
-              <button class="editor-tool dark:text-zinc-300 text-zinc-700" title="Lien">
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101
-                       m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/>
-                </svg>
-              </button>
-              <div class="w-px h-3.5 dark:bg-white/10 bg-zinc-300 mx-1.5 flex-shrink-0"></div>
-              <button class="editor-tool dark:text-zinc-300 text-zinc-700" title="Liste ordonnée">
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M4 6h16M4 10h16M4 14h16M4 18h16"/>
-                </svg>
-              </button>
-              <button class="editor-tool dark:text-zinc-300 text-zinc-700" title="Liste à puces">
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/>
-                </svg>
-              </button>
-              <div class="w-px h-3.5 dark:bg-white/10 bg-zinc-300 mx-1.5 flex-shrink-0"></div>
-              <button class="editor-tool dark:text-zinc-300 text-zinc-700" title="Code">
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/>
-                </svg>
-              </button>
-              <button class="editor-tool dark:text-zinc-300 text-zinc-700" title="Citation">
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/>
-                </svg>
-              </button>
-            </div>
-
-            <!-- Zone de saisie -->
-            <textarea #textareaEl [(ngModel)]="messageText"
-              (input)="onInput()"
-              (keydown)="onKeydown($event)"
-              rows="3"
-              class="w-full bg-transparent text-sm focus:outline-none resize-none px-4 py-3
-                     dark:placeholder-zinc-600 placeholder-zinc-400 dark:text-zinc-200 text-zinc-800"
-              placeholder="Envoyer un message..."></textarea>
-
-            <!-- Toolbar actions (bas) -->
-            <div class="flex items-center gap-0.5 px-3 pb-2.5 pt-1">
-              <button class="editor-tool dark:text-zinc-400 text-zinc-500" title="Joindre un fichier">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-                </svg>
-              </button>
-              <button class="editor-tool text-[10px] font-semibold dark:text-zinc-400 text-zinc-500"
-                      title="Format">Aa</button>
-              <button class="editor-tool dark:text-zinc-400 text-zinc-500" title="Emoji">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                </svg>
-              </button>
-              <button class="editor-tool text-[11px] font-bold dark:text-zinc-400 text-zinc-500"
-                      title="Mentionner">@</button>
-              <div class="w-px h-3.5 dark:bg-white/10 bg-zinc-300 mx-1.5 flex-shrink-0"></div>
-              <button class="editor-tool dark:text-zinc-400 text-zinc-500" title="Clip vidéo">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M15 10l4.553-2.069A1 1 0 0121 8.82v6.36a1 1 0 01-1.447.894L15 14
-                       M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
-                </svg>
-              </button>
-              <button class="editor-tool dark:text-zinc-400 text-zinc-500" title="Message vocal">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/>
-                </svg>
-              </button>
-              <button class="editor-tool text-[11px] font-bold dark:text-zinc-400 text-zinc-500"
-                      title="Commandes">/</button>
-              <div class="flex-1"></div>
-              <!-- Bouton envoi -->
-              <button (click)="sendMessage()"
-                      class="editor-tool rounded-lg"
-                      [class]="messageText.trim() ? 'send-btn-active' : 'send-btn-inactive'"
-                      title="Envoyer (Entrée)">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
-                    d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
-                </svg>
-              </button>
-            </div>
-          </div>
-        </div>
       </div>
 
       <!-- ═══════════════ SIDEBAR DROITE (PARTICIPANTS) ═══════════════ -->
@@ -270,11 +307,21 @@ import { MessageBubbleComponent } from '../components/message-bubble.component';
               <p class="text-xs font-bold truncate dark:text-zinc-100 text-zinc-900">{{ m.username }}</p>
               <p class="text-[10px] text-zinc-500 font-medium">{{ memberRoleLabel(m) }}</p>
             </div>
-            <!-- Agentic badge -->
+            <!-- Status badges -->
             <span *ngIf="m.status === 'agentic'"
                   class="text-[8px] px-1.5 py-0.5 bg-brand-orange/20 text-brand-orange
-                         rounded font-bold uppercase tracking-tight flex-shrink-0">
+                         rounded font-bold uppercase tracking-tight flex-shrink-0 dot-agentic">
               Agentic
+            </span>
+            <span *ngIf="m.status === 'absent'"
+                  class="text-[8px] px-1.5 py-0.5 bg-amber-400/20 text-amber-500
+                         rounded font-bold uppercase tracking-tight flex-shrink-0">
+              Absent
+            </span>
+            <span *ngIf="m.status === 'communication'"
+                  class="text-[8px] px-1.5 py-0.5 bg-blue-500/20 text-blue-500
+                         rounded font-bold uppercase tracking-tight flex-shrink-0">
+              En com.
             </span>
           </div>
         </div>
@@ -302,6 +349,7 @@ export class ConversationComponent implements OnInit, OnChanges, OnDestroy, Afte
   hasMore        = signal(false);
   currentPage    = signal(1);
   showParticipants = signal(false);
+  agentTab       = signal<'chat' | 'config'>('chat');
   messageText    = '';
   typingText     = signal('');
 
@@ -310,6 +358,11 @@ export class ConversationComponent implements OnInit, OnChanges, OnDestroy, Afte
 
   participantsPreview = computed(() => this.members().slice(0, 3));
   participantsOverflow = computed(() => Math.max(0, this.members().length - 3));
+
+  isAgentChannel = computed(() => {
+    const ch = this.channel();
+    return ch?.type === 'pair' && (ch.name === 'ProjectBot' || ch.name === 'TransBot');
+  });
 
   private subs: Subscription[] = [];
   private shouldScroll = true;
@@ -511,7 +564,14 @@ export class ConversationComponent implements OnInit, OnChanges, OnDestroy, Afte
   }
 
   memberStatusDot(status: string): string {
-    return status === 'agentic' ? 'bg-brand-orange' : status === 'inactive' ? 'bg-zinc-400' : 'bg-green-500';
+    switch (status) {
+      case 'active':        return 'bg-green-500';
+      case 'absent':        return 'bg-amber-400';
+      case 'communication': return 'bg-blue-500';
+      case 'agentic':       return 'bg-brand-orange dot-agentic';
+      case 'inactive':      return 'bg-zinc-400';
+      default:              return 'bg-zinc-400';
+    }
   }
 
   memberRoleLabel(m: ChannelMember): string {
