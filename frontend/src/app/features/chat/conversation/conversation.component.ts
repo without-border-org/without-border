@@ -10,6 +10,7 @@ import { ChatWebSocketService } from '../../../core/services/chat-ws.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { Message, Channel, ChannelMember, LANGUAGE_MAP, getUserColor, getInitials } from '../../../core/models';
 import { MessageBubbleComponent } from '../components/message-bubble.component';
+import { AgentService } from '../../../core/services/agent.service';
 
 @Component({
   selector: 'wb-conversation',
@@ -259,10 +260,186 @@ import { MessageBubbleComponent } from '../components/message-bubble.component';
           </div>
         </ng-container>
 
-        <!-- ── Vue configuration (placeholder) ── -->
+        <!-- ── Vue configuration agent ── -->
         <div *ngIf="isAgentChannel() && agentTab() === 'config'"
-             class="flex-1 flex items-center justify-center text-zinc-500 text-sm">
-          Vue configuration (à implémenter)
+             class="flex-1 overflow-y-auto custom-scrollbar pt-20 px-5 pb-5">
+          <div class="grid gap-4" style="grid-template-columns:340px 1fr; max-width:1060px; margin:0 auto">
+
+            <!-- ═══ Colonne gauche ═══ -->
+            <div class="flex flex-col gap-4">
+
+              <!-- Agent Setup -->
+              <div class="dark:bg-brand-darkPanel bg-white rounded-[14px] border dark:border-brand-darkBorder border-zinc-200 overflow-hidden shadow-sm">
+                <div class="px-[18px] py-[14px] border-b dark:border-brand-darkBorder border-zinc-200 flex items-center gap-2.5">
+                  <div class="w-[30px] h-[30px] rounded-[7px] bg-brand-orange/10 text-brand-orange flex items-center justify-center flex-shrink-0">
+                    <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+                  </div>
+                  <div>
+                    <div class="text-[13px] font-semibold dark:text-zinc-100 text-zinc-900 tracking-tight">Agent Setup</div>
+                    <div class="text-[11px] dark:text-zinc-500 text-zinc-400 mt-px">Identity &amp; model configuration</div>
+                  </div>
+                </div>
+                <div class="p-[18px]">
+                  <!-- Status row -->
+                  <div class="flex items-center gap-2.5 px-[13px] py-2.5 rounded-[9px] dark:bg-zinc-900 bg-zinc-50 border dark:border-brand-darkBorder border-zinc-200 mb-[14px]">
+                    <div class="w-[30px] h-[30px] rounded-[7px] bg-brand-orange/10 text-brand-orange flex items-center justify-center flex-shrink-0">
+                      <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+                    </div>
+                    <div class="flex-1">
+                      <div class="text-[12.5px] font-semibold dark:text-zinc-200 text-zinc-700">Agent Status</div>
+                      <div class="text-[11px] dark:text-zinc-500 text-zinc-400 mt-px">
+                        {{ currentAgent()?.isActive ? 'Active — responding to messages' : 'Inactive' }}
+                      </div>
+                    </div>
+                    <div class="flex items-center gap-1.5">
+                      <div class="w-2 h-2 rounded-full" [class]="currentAgent()?.isActive ? 'bg-green-500' : 'bg-zinc-400'"></div>
+                      <span class="text-[11px] font-medium" [class]="currentAgent()?.isActive ? 'text-green-500' : 'dark:text-zinc-400 text-zinc-500'">
+                        {{ currentAgent()?.isActive ? 'Active' : 'Off' }}
+                      </span>
+                    </div>
+                  </div>
+                  <!-- Fields -->
+                  <div class="mb-[14px]">
+                    <label class="block text-[10.5px] font-semibold uppercase tracking-wider dark:text-zinc-500 text-zinc-400 mb-[5px]">Agent Name</label>
+                    <div class="w-full px-[11px] py-[9px] dark:bg-zinc-950 bg-zinc-50 border dark:border-white/10 border-zinc-300 rounded-lg dark:text-zinc-200 text-zinc-800 text-[13.5px]">
+                      {{ currentAgent()?.name ?? '—' }}
+                    </div>
+                  </div>
+                  <div class="mb-[14px]">
+                    <label class="block text-[10.5px] font-semibold uppercase tracking-wider dark:text-zinc-500 text-zinc-400 mb-[5px]">Type</label>
+                    <div class="w-full px-[11px] py-[9px] dark:bg-zinc-950 bg-zinc-50 border dark:border-white/10 border-zinc-300 rounded-lg dark:text-zinc-200 text-zinc-800 text-[13.5px] capitalize">
+                      {{ currentAgent()?.agentType?.replace('_', ' ') ?? '—' }}
+                    </div>
+                  </div>
+                  <div>
+                    <label class="block text-[10.5px] font-semibold uppercase tracking-wider dark:text-zinc-500 text-zinc-400 mb-[5px]">AI Model</label>
+                    <div class="w-full px-[11px] py-[9px] dark:bg-zinc-950 bg-zinc-50 border dark:border-white/10 border-zinc-300 rounded-lg dark:text-zinc-200 text-zinc-800 text-[13.5px]">
+                      Gemma 4 · 27B — High Accuracy
+                    </div>
+                  </div>
+                  <div class="mt-3 flex gap-1.5 items-start p-[8px_11px] rounded-lg dark:bg-zinc-900 bg-zinc-50 border dark:border-brand-darkBorder border-zinc-200">
+                    <svg class="w-3.5 h-3.5 text-brand-orange flex-shrink-0 mt-px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                    <span class="text-[12px] dark:text-zinc-400 text-zinc-500">Using <strong class="dark:text-zinc-200 text-zinc-700">Gemma 4 · 27B</strong> in multilingual mode. Auto-translates across 50+ languages.</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Context Documents -->
+              <div class="dark:bg-brand-darkPanel bg-white rounded-[14px] border dark:border-brand-darkBorder border-zinc-200 overflow-hidden shadow-sm">
+                <div class="px-[18px] py-[14px] border-b dark:border-brand-darkBorder border-zinc-200 flex items-center gap-2.5">
+                  <div class="w-[30px] h-[30px] rounded-[7px] bg-brand-orange/10 text-brand-orange flex items-center justify-center flex-shrink-0">
+                    <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+                  </div>
+                  <div class="flex-1">
+                    <div class="text-[13px] font-semibold dark:text-zinc-100 text-zinc-900 tracking-tight">Context Documents</div>
+                    <div class="text-[11px] dark:text-zinc-500 text-zinc-400 mt-px">Agent knowledge base</div>
+                  </div>
+                  <span class="text-[11px] dark:text-zinc-400 text-zinc-500 dark:bg-zinc-800 bg-zinc-100 border dark:border-brand-darkBorder border-zinc-200 px-2 py-0.5 rounded-full">0 files</span>
+                </div>
+                <div class="p-[18px]">
+                  <button class="flex items-center gap-1.5 w-full px-[13px] py-[9px] rounded-lg border-[1.5px] border-dashed dark:border-white/10 border-zinc-300 dark:text-zinc-400 text-zinc-500 text-[12.5px] hover:border-brand-orange hover:text-brand-orange transition-colors cursor-pointer bg-transparent">
+                    <svg class="w-3.5 h-3.5 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                    + Add context documents
+                  </button>
+                  <div class="mt-3 px-[10px] py-[8px] rounded-lg dark:bg-zinc-900 bg-zinc-50 border dark:border-brand-darkBorder border-zinc-200 border-l-[3px] border-l-brand-orange">
+                    <div class="text-[10px] font-bold uppercase tracking-[0.07em] text-brand-orange mb-1.5">Last AI Response</div>
+                    <div class="text-[12px] dark:text-zinc-300 text-zinc-600 leading-[1.65]">
+                      {{ currentAgent()?.name === 'ProjectBot'
+                        ? 'Bonjour @Sophie — le jalon Q4 est prévu le 15 nov. Je peux organiser une réunion de synchronisation cette semaine si vous le souhaitez.'
+                        : 'Mode veille. Activation automatique dès qu\'un message nécessite une traduction.' }}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+
+            <!-- ═══ Colonne droite ═══ -->
+            <div class="dark:bg-brand-darkPanel bg-white rounded-[14px] border dark:border-brand-darkBorder border-zinc-200 overflow-hidden shadow-sm flex flex-col">
+              <div class="px-[18px] py-[14px] border-b dark:border-brand-darkBorder border-zinc-200 flex items-center gap-2.5 flex-shrink-0">
+                <div class="w-[30px] h-[30px] rounded-[7px] bg-brand-orange/10 text-brand-orange flex items-center justify-center flex-shrink-0">
+                  <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                </div>
+                <div class="flex-1">
+                  <div class="text-[13px] font-semibold dark:text-zinc-100 text-zinc-900 tracking-tight">Behaviour Configuration</div>
+                  <div class="text-[11px] dark:text-zinc-500 text-zinc-400 mt-px">Tone, response settings &amp; system prompt</div>
+                </div>
+              </div>
+
+              <div class="flex-1 overflow-y-auto custom-scrollbar p-[18px]">
+
+                <!-- Tone -->
+                <div class="flex items-center gap-2 my-4">
+                  <div class="flex-1 h-px dark:bg-brand-darkBorder bg-zinc-200"></div>
+                  <span class="text-[10px] font-bold uppercase tracking-[0.08em] dark:text-zinc-500 text-zinc-400">Tone</span>
+                  <div class="flex-1 h-px dark:bg-brand-darkBorder bg-zinc-200"></div>
+                </div>
+                <div class="grid grid-cols-2 gap-2 mb-[14px]">
+                  <div *ngFor="let t of ['Professional','Friendly','Formal','Casual']; let i = index"
+                       class="flex items-center gap-1.5 px-[11px] py-[8px] rounded-lg border text-[13px] font-medium cursor-pointer transition-colors"
+                       [class]="i === 0
+                         ? 'border-brand-orange bg-brand-orange/10 dark:text-zinc-100 text-zinc-900'
+                         : 'dark:border-white/10 border-zinc-200 dark:bg-zinc-900 bg-zinc-50 dark:text-zinc-400 text-zinc-500'">
+                    <div class="w-[13px] h-[13px] rounded-full border-[1.5px] flex items-center justify-center flex-shrink-0"
+                         [class]="i === 0 ? 'border-brand-orange' : 'dark:border-zinc-500 border-zinc-400'">
+                      <div *ngIf="i === 0" class="w-[5px] h-[5px] rounded-full bg-brand-orange"></div>
+                    </div>
+                    {{ t }}
+                  </div>
+                </div>
+
+                <!-- Response Settings -->
+                <div class="flex items-center gap-2 my-4">
+                  <div class="flex-1 h-px dark:bg-brand-darkBorder bg-zinc-200"></div>
+                  <span class="text-[10px] font-bold uppercase tracking-[0.08em] dark:text-zinc-500 text-zinc-400">Response Settings</span>
+                  <div class="flex-1 h-px dark:bg-brand-darkBorder bg-zinc-200"></div>
+                </div>
+                <div class="mb-[14px]">
+                  <div class="flex items-center justify-between py-2.5 border-b dark:border-brand-darkBorder border-zinc-100">
+                    <div>
+                      <div class="text-[13px] font-medium dark:text-zinc-200 text-zinc-700">Auto-respond to @mentions</div>
+                      <div class="text-[11px] dark:text-zinc-500 text-zinc-400 mt-0.5">Agent replies when tagged in any conversation</div>
+                    </div>
+                    <div class="relative w-[36px] h-[20px] flex-shrink-0">
+                      <div class="absolute inset-0 rounded-full bg-brand-orange"></div>
+                      <div class="absolute top-[3px] left-[19px] w-[13px] h-[13px] rounded-full bg-white shadow"></div>
+                    </div>
+                  </div>
+                  <div class="flex items-center justify-between py-2.5">
+                    <div>
+                      <div class="text-[13px] font-medium dark:text-zinc-200 text-zinc-700">Auto-respond to direct messages</div>
+                      <div class="text-[11px] dark:text-zinc-500 text-zinc-400 mt-0.5">Handles DMs automatically without supervision</div>
+                    </div>
+                    <div class="relative w-[36px] h-[20px] flex-shrink-0">
+                      <div class="absolute inset-0 rounded-full dark:bg-zinc-700 bg-zinc-300"></div>
+                      <div class="absolute top-[3px] left-[3px] w-[13px] h-[13px] rounded-full dark:bg-zinc-400 bg-zinc-500 shadow"></div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- System Prompt -->
+                <div class="flex items-center gap-2 my-4">
+                  <div class="flex-1 h-px dark:bg-brand-darkBorder bg-zinc-200"></div>
+                  <span class="text-[10px] font-bold uppercase tracking-[0.08em] dark:text-zinc-500 text-zinc-400">System Prompt</span>
+                  <div class="flex-1 h-px dark:bg-brand-darkBorder bg-zinc-200"></div>
+                </div>
+                <div>
+                  <div class="flex justify-between items-center mb-1.5">
+                    <label class="text-[10.5px] font-semibold uppercase tracking-wider dark:text-zinc-500 text-zinc-400">Instructions</label>
+                    <span class="text-[11px] dark:text-zinc-500 text-zinc-400">
+                      <span class="font-semibold text-brand-orange">{{ (currentAgent()?.persona ?? '').length }}</span> / 500
+                    </span>
+                  </div>
+                  <div class="w-full px-[11px] py-[9px] dark:bg-zinc-950 bg-zinc-50 border dark:border-white/10 border-zinc-300 rounded-lg dark:text-zinc-300 text-zinc-600 text-[13px] leading-[1.65] min-h-[120px] whitespace-pre-wrap">
+                    {{ currentAgent()?.persona ?? '—' }}
+                  </div>
+                  <div class="text-[11px] dark:text-zinc-500 text-zinc-400 text-right mt-1">Max 500 characters · Included in every AI response</div>
+                </div>
+
+              </div>
+            </div>
+
+          </div>
         </div>
 
       </div>
@@ -338,6 +515,7 @@ export class ConversationComponent implements OnInit, OnChanges, OnDestroy, Afte
   private msgSvc     = inject(MessageService);
   private wsSvc      = inject(ChatWebSocketService);
   private authSvc    = inject(AuthService);
+  private agentSvc   = inject(AgentService);
 
   // Expose helpers to template
   getInitials = getInitials;
@@ -362,6 +540,12 @@ export class ConversationComponent implements OnInit, OnChanges, OnDestroy, Afte
   isAgentChannel = computed(() => {
     const ch = this.channel();
     return ch?.type === 'pair' && (ch.name === 'ProjectBot' || ch.name === 'TransBot');
+  });
+
+  currentAgent = computed(() => {
+    const ch = this.channel();
+    if (!ch) return null;
+    return this.agentSvc.agents().find(a => a.name === ch.name) ?? null;
   });
 
   private subs: Subscription[] = [];
