@@ -1,303 +1,1340 @@
-<!DOCTYPE html>
-<html lang="en">
+<!doctype html>
+<html lang="en" data-theme="light">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>WithoutBorder — Real-Time Multilingual Collaboration</title>
-  <meta name="description" content="WithoutBorder is a real-time multilingual collaboration platform powered by local AI. Communicate across languages instantly, without sending your data to the cloud." />
-  <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>WithoutBorder — Collaborate in your language. Own your data.</title>
+<style>
+  :root {
+    /* ===== LIGHT THEME (default) — warm-cool paper ===== */
+    --bg:         #F5F6F9;
+    --bg-2:       #EDEFF4;
+    --bg-3:       #FFFFFF;
 
-    :root {
-      --brand:     #2563eb;
-      --brand-dk:  #1d4ed8;
-      --brand-lt:  #eff6ff;
-      --text:      #0f172a;
-      --muted:     #64748b;
-      --border:    #e2e8f0;
-      --white:     #ffffff;
-      --radius:    0.75rem;
-      --shadow:    0 4px 24px rgba(15,23,42,.08);
-    }
+    --surface:    #FFFFFF;
+    --surface-2:  #FBFBFD;
 
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-      color: var(--text);
-      background: var(--white);
-      line-height: 1.6;
-    }
+    --hairline:   rgba(15, 20, 35, 0.08);
+    --hairline-2: rgba(15, 20, 35, 0.16);
 
-    /* ── NAV ── */
-    nav {
-      position: sticky; top: 0; z-index: 100;
-      background: rgba(255,255,255,.92);
-      backdrop-filter: blur(8px);
-      border-bottom: 1px solid var(--border);
-      padding: 0 1.5rem;
-      height: 60px;
-      display: flex; align-items: center; justify-content: space-between;
-    }
-    .nav-logo {
-      font-weight: 700; font-size: 1.15rem; color: var(--brand);
-      text-decoration: none; letter-spacing: -.3px;
-    }
-    .nav-cta {
-      background: var(--brand); color: var(--white);
-      padding: .45rem 1.1rem; border-radius: 0.5rem;
-      text-decoration: none; font-size: .9rem; font-weight: 600;
-      transition: background .15s;
-    }
-    .nav-cta:hover { background: var(--brand-dk); }
+    /* Theme-aware tints (overlay surfaces) */
+    --rise-1:     rgba(15, 20, 35, 0.025);
+    --rise-2:     rgba(15, 20, 35, 0.045);
+    --rise-3:     rgba(15, 20, 35, 0.07);
+    --well:       rgba(15, 20, 35, 0.045);
 
-    /* ── HERO ── */
-    .hero {
-      text-align: center;
-      padding: 6rem 1.5rem 5rem;
-      background: linear-gradient(160deg, var(--brand-lt) 0%, var(--white) 60%);
-    }
-    .hero-badge {
-      display: inline-block;
-      background: var(--brand-lt); color: var(--brand);
-      border: 1px solid #bfdbfe;
-      font-size: .78rem; font-weight: 600; letter-spacing: .05em;
-      text-transform: uppercase; padding: .3rem .85rem; border-radius: 99px;
-      margin-bottom: 1.5rem;
-    }
-    .hero h1 {
-      font-size: clamp(2rem, 5vw, 3.4rem);
-      font-weight: 800; line-height: 1.15; letter-spacing: -.03em;
-      max-width: 780px; margin: 0 auto .75rem;
-    }
-    .hero h1 span { color: var(--brand); }
-    .hero p {
-      font-size: clamp(1rem, 2vw, 1.2rem);
-      color: var(--muted); max-width: 560px; margin: 0 auto 2.5rem;
-    }
-    .cta-group { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
-    .btn-primary {
-      background: var(--brand); color: var(--white);
-      padding: .8rem 2rem; border-radius: var(--radius);
-      text-decoration: none; font-size: 1rem; font-weight: 700;
-      transition: background .15s, transform .1s;
-      display: inline-flex; align-items: center; gap: .5rem;
-    }
-    .btn-primary:hover { background: var(--brand-dk); transform: translateY(-1px); }
-    .btn-secondary {
-      background: var(--white); color: var(--brand);
-      border: 2px solid var(--brand);
-      padding: .8rem 2rem; border-radius: var(--radius);
-      text-decoration: none; font-size: 1rem; font-weight: 700;
-      transition: background .15s;
-    }
-    .btn-secondary:hover { background: var(--brand-lt); }
+    /* Text */
+    --fg:         #0B0C10;
+    --fg-2:       #4A4F5E;
+    --fg-3:       #7A8090;
+    --fg-4:       #B3B8C5;
 
-    /* ── SECTION WRAPPER ── */
-    section { padding: 4.5rem 1.5rem; }
-    .section-inner { max-width: 1100px; margin: 0 auto; }
-    .section-label {
-      font-size: .78rem; font-weight: 700; letter-spacing: .1em;
-      text-transform: uppercase; color: var(--brand);
-      margin-bottom: .5rem;
-    }
-    .section-title {
-      font-size: clamp(1.5rem, 3vw, 2.2rem);
-      font-weight: 800; letter-spacing: -.02em; margin-bottom: .6rem;
-    }
-    .section-sub {
-      color: var(--muted); font-size: 1.05rem; max-width: 540px;
-      margin-bottom: 3rem;
-    }
+    /* Brand accents — tuned for AA contrast on light */
+    --accent:    #EA580C;
+    --accent-2:  #FB923C;
+    --agent:     #7C3AED;
+    --agent-2:   #6D28D9;
+    --teal:      #0D9488;
 
-    /* ── FEATURES GRID ── */
-    .features { background: var(--white); }
-    .feature-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-      gap: 1.5rem;
-    }
-    .feature-card {
-      background: var(--white); border: 1px solid var(--border);
-      border-radius: var(--radius); padding: 1.75rem;
-      box-shadow: var(--shadow);
-      transition: transform .15s, box-shadow .15s;
-    }
-    .feature-card:hover { transform: translateY(-3px); box-shadow: 0 8px 32px rgba(15,23,42,.12); }
-    .feature-icon {
-      font-size: 1.8rem; margin-bottom: 1rem;
-      display: inline-block;
-    }
-    .feature-card h3 {
-      font-size: 1.05rem; font-weight: 700; margin-bottom: .45rem;
-    }
-    .feature-card p { color: var(--muted); font-size: .95rem; }
+    /* Status dots (functional — must stay recognizable across themes) */
+    --st-active: #16A34A;
+    --st-away:   #D97706;
+    --st-call:   #0284C7;
+    --st-agent:  #EA580C;
 
-    /* ── HOW IT WORKS ── */
-    .how { background: #f8fafc; }
-    .steps {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-      gap: 2rem; counter-reset: steps;
-    }
-    .step { counter-increment: steps; }
-    .step-num {
-      width: 2.4rem; height: 2.4rem; border-radius: 50%;
-      background: var(--brand); color: var(--white);
-      font-weight: 800; font-size: 1rem;
-      display: flex; align-items: center; justify-content: center;
-      margin-bottom: 1rem;
-    }
-    .step h3 { font-size: 1rem; font-weight: 700; margin-bottom: .35rem; }
-    .step p  { color: var(--muted); font-size: .92rem; }
+    --nav-bg:    rgba(255, 255, 255, 0.72);
+    --bg-tint-1: rgba(234, 88, 12, 0.06);
+    --bg-tint-2: rgba(124, 58, 237, 0.06);
+    --dot-ring:  #FFFFFF;
 
-    /* ── CTA BANNER ── */
-    .cta-banner {
-      background: linear-gradient(135deg, var(--brand) 0%, #1e40af 100%);
-      color: var(--white); text-align: center;
-      padding: 5rem 1.5rem;
-    }
-    .cta-banner h2 {
-      font-size: clamp(1.6rem, 3vw, 2.4rem);
-      font-weight: 800; margin-bottom: .75rem; letter-spacing: -.02em;
-    }
-    .cta-banner p { font-size: 1.1rem; opacity: .85; margin-bottom: 2rem; }
-    .btn-white {
-      background: var(--white); color: var(--brand);
-      padding: .85rem 2.2rem; border-radius: var(--radius);
-      text-decoration: none; font-size: 1rem; font-weight: 700;
-      transition: opacity .15s, transform .1s;
-      display: inline-block;
-    }
-    .btn-white:hover { opacity: .92; transform: translateY(-1px); }
+    --shadow-1: 0 1px 0 rgba(255,255,255,.7) inset, 0 18px 40px -25px rgba(15,20,35,.18);
+    --shadow-2: 0 30px 60px -30px rgba(15,20,35,.22), 0 1px 0 rgba(255,255,255,.85) inset;
 
-    /* ── FOOTER ── */
-    footer {
-      background: var(--text); color: #94a3b8;
-      text-align: center; padding: 2rem 1.5rem;
-      font-size: .88rem;
-    }
-    footer a { color: #93c5fd; text-decoration: none; }
-    footer a:hover { text-decoration: underline; }
+    /* Type */
+    --sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
 
-    @media (max-width: 480px) {
-      .hero { padding: 4rem 1rem 3.5rem; }
-      .btn-primary, .btn-secondary { width: 100%; justify-content: center; }
-    }
-  </style>
+    /* Radii */
+    --r-sm: 8px;
+    --r-md: 12px;
+    --r-lg: 18px;
+    --r-xl: 26px;
+  }
+
+  [data-theme="dark"] {
+    /* ===== DARK THEME — cool near-black ===== */
+    --bg:         #0B0C10;
+    --bg-2:       #101218;
+    --bg-3:       #14171F;
+
+    --surface:    rgba(255, 255, 255, 0.035);
+    --surface-2:  rgba(255, 255, 255, 0.06);
+
+    --hairline:   rgba(255, 255, 255, 0.08);
+    --hairline-2: rgba(255, 255, 255, 0.18);
+
+    --rise-1:     rgba(255, 255, 255, 0.025);
+    --rise-2:     rgba(255, 255, 255, 0.05);
+    --rise-3:     rgba(255, 255, 255, 0.08);
+    --well:       rgba(0, 0, 0, 0.28);
+
+    --fg:         #ECEEF3;
+    --fg-2:       #B6BAC6;
+    --fg-3:       #7B8090;
+    --fg-4:       #4D5260;
+
+    --accent:    #F97316;
+    --accent-2:  #FFB37A;
+    --agent:     #A78BFA;
+    --agent-2:   #C4B5FD;
+    --teal:      #2DD4BF;
+
+    --st-active: #22C55E;
+    --st-away:   #F5C249;
+    --st-call:   #38BDF8;
+    --st-agent:  #FB923C;
+
+    --nav-bg:    rgba(11, 12, 16, 0.55);
+    --bg-tint-1: rgba(249, 115, 22, 0.10);
+    --bg-tint-2: rgba(167, 139, 250, 0.09);
+    --dot-ring:  #181B23;
+
+    --shadow-1: 0 1px 0 rgba(255,255,255,.04) inset, 0 30px 60px -30px rgba(0,0,0,.6);
+    --shadow-2: 0 20px 60px -20px rgba(0,0,0,.65), 0 1px 0 rgba(255,255,255,.06) inset;
+  }
+
+  /* ===== Base ===== */
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  html { background: var(--bg); }
+  body {
+    font-family: var(--sans);
+    color: var(--fg);
+    background:
+      radial-gradient(1200px 600px at 80% -10%, var(--bg-tint-1), transparent 60%),
+      radial-gradient(900px 500px at -10% 20%, var(--bg-tint-2), transparent 60%),
+      var(--bg);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    font-feature-settings: "cv02","cv03","cv04","ss01";
+    line-height: 1.5;
+    letter-spacing: -0.01em;
+    overflow-x: hidden;
+    transition: background-color .35s ease, color .35s ease;
+  }
+  ::selection { background: rgba(234,88,12,.35); color: #fff; }
+
+  a { color: inherit; text-decoration: none; }
+  button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
+
+  .wrap {
+    max-width: 1240px;
+    margin: 0 auto;
+    padding: 0 28px;
+  }
+  @media (max-width: 640px) {
+    .wrap { padding: 0 20px; }
+  }
+
+  /* ===== Type ===== */
+  h1, h2, h3, h4 {
+    font-weight: 600;
+    letter-spacing: -0.035em;
+    line-height: 1.05;
+    margin: 0;
+  }
+  h1 { font-size: clamp(40px, 6.4vw, 76px); letter-spacing: -0.04em; }
+  h2 { font-size: clamp(30px, 3.6vw, 46px); }
+  h3 { font-size: 20px; letter-spacing: -0.02em; }
+  p  { margin: 0; color: var(--fg-2); }
+
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--fg-3);
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .eyebrow::before {
+    content: "";
+    width: 18px; height: 1px;
+    background: var(--hairline-2);
+  }
+
+  /* ===== Buttons ===== */
+  .btn {
+    display: inline-flex; align-items: center; gap: 10px;
+    padding: 12px 18px;
+    border-radius: 999px;
+    font-weight: 500;
+    font-size: 15px;
+    letter-spacing: -0.005em;
+    transition: transform .15s ease, background .2s ease, border-color .2s ease, box-shadow .2s ease;
+    white-space: nowrap;
+  }
+  .btn:focus-visible { outline: 2px solid var(--accent-2); outline-offset: 3px; }
+  .btn-primary {
+    background: var(--accent);
+    color: #1a0d04;
+    box-shadow: 0 10px 30px -10px rgba(249,115,22,.55), inset 0 1px 0 rgba(255,255,255,.35);
+  }
+  .btn-primary:hover { transform: translateY(-1px); background: #ff8429; }
+  .btn-ghost {
+    background: transparent;
+    color: var(--fg);
+    border: 1px solid var(--hairline-2);
+  }
+  .btn-ghost:hover { border-color: var(--hairline-2); background: var(--rise-1); }
+  .btn-sm { padding: 9px 14px; font-size: 14px; }
+
+  /* ===== Nav ===== */
+  .nav {
+    position: sticky; top: 0; z-index: 50;
+    backdrop-filter: blur(14px) saturate(140%);
+    -webkit-backdrop-filter: blur(14px) saturate(140%);
+    background: var(--nav-bg);
+    border-bottom: 1px solid var(--hairline);
+  }
+
+  /* Theme toggle */
+  .theme-toggle {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    border: 1px solid var(--hairline-2);
+    background: var(--rise-1);
+    display: grid; place-items: center;
+    color: var(--fg-2);
+    transition: background .2s ease, color .2s ease, border-color .2s ease, transform .2s ease;
+    margin-right: 6px;
+  }
+  .theme-toggle:hover { color: var(--fg); transform: rotate(-12deg); border-color: var(--hairline-2); background: var(--rise-2); }
+  .theme-toggle svg { width: 16px; height: 16px; display: block; }
+  .theme-toggle .icon-sun  { display: none; }
+  .theme-toggle .icon-moon { display: block; }
+  [data-theme="dark"] .theme-toggle .icon-sun  { display: block; }
+  [data-theme="dark"] .theme-toggle .icon-moon { display: none; }
+  .nav-actions { display: flex; align-items: center; gap: 10px; }
+  .nav-inner {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 0;
+  }
+  .brand {
+    display: inline-flex; align-items: center; gap: 10px;
+    font-weight: 600; letter-spacing: -0.02em; font-size: 17px;
+  }
+  .brand-mark {
+    width: 26px; height: 26px;
+    display: grid; place-items: center;
+    position: relative;
+  }
+  .brand-mark svg { width: 100%; height: 100%; display: block; }
+  .nav-links {
+    display: flex; gap: 28px;
+    font-size: 14px;
+    color: var(--fg-2);
+  }
+  .nav-links a { transition: color .15s ease; }
+  .nav-links a:hover { color: var(--fg); }
+  @media (max-width: 820px) {
+    .nav-links { display: none; }
+  }
+
+  /* ===== Hero ===== */
+  .hero {
+    padding: 90px 0 120px;
+    position: relative;
+  }
+  .hero-grid {
+    display: grid;
+    grid-template-columns: 1.05fr 0.95fr;
+    gap: 60px;
+    align-items: center;
+  }
+  @media (max-width: 980px) {
+    .hero { padding: 60px 0 80px; }
+    .hero-grid { grid-template-columns: 1fr; gap: 50px; }
+  }
+  .hero h1 .accent { color: var(--accent); }
+  .hero h1 .underline {
+    background: linear-gradient(transparent 70%, color-mix(in oklab, var(--agent) 38%, transparent) 70%);
+    padding: 0 2px;
+  }
+  .hero-sub {
+    margin-top: 22px;
+    font-size: clamp(16px, 1.45vw, 19px);
+    color: var(--fg-2);
+    max-width: 540px;
+  }
+  .hero-cta { margin-top: 32px; display: flex; gap: 12px; flex-wrap: wrap; }
+  .hero-meta {
+    margin-top: 26px;
+    display: flex; align-items: center; gap: 14px;
+    font-family: var(--mono); font-size: 12px;
+    color: var(--fg-3);
+    letter-spacing: 0.03em;
+  }
+  .hero-meta .pulse {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--st-active);
+    box-shadow: 0 0 0 0 rgba(34,197,94,.6);
+    animation: pulse 2.2s infinite;
+  }
+  @keyframes pulse {
+    0%   { box-shadow: 0 0 0 0 rgba(34,197,94,.55); }
+    70%  { box-shadow: 0 0 0 10px rgba(34,197,94,0); }
+    100% { box-shadow: 0 0 0 0 rgba(34,197,94,0); }
+  }
+
+  .fade-up { opacity: 0; transform: translateY(14px); animation: fadeUp .9s .05s ease-out forwards; }
+  .fade-up.d2 { animation-delay: .18s; }
+  .fade-up.d3 { animation-delay: .32s; }
+  .fade-up.d4 { animation-delay: .46s; }
+  @keyframes fadeUp { to { opacity: 1; transform: translateY(0); } }
+
+  /* ===== Chat mockup ===== */
+  .mock {
+    border: 1px solid var(--hairline);
+    background: var(--surface);
+    border-radius: 22px;
+    box-shadow: var(--shadow-2);
+    overflow: hidden;
+    display: grid;
+    grid-template-columns: 200px 1fr;
+    min-height: 480px;
+    position: relative;
+  }
+  .mock::before {
+    content:""; position:absolute; inset: -1px;
+    border-radius: 22px;
+    background: linear-gradient(160deg, color-mix(in oklab, var(--accent) 45%, transparent), color-mix(in oklab, var(--agent) 30%, transparent) 50%, transparent 70%);
+    z-index: -1; filter: blur(22px); opacity: .55;
+  }
+  @media (max-width: 600px) {
+    .mock { grid-template-columns: 1fr; min-height: 0; }
+    .mock-side { display: none; }
+  }
+
+  .mock-side {
+    background: var(--rise-1);
+    border-right: 1px solid var(--hairline);
+    padding: 16px 12px;
+  }
+  .mock-side-title {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--fg-3);
+    padding: 6px 8px 10px;
+  }
+  .mock-user {
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px;
+    border-radius: 10px;
+    font-size: 13px;
+  }
+  .mock-user.active { background: var(--rise-2); }
+  .mock-user .avatar {
+    width: 26px; height: 26px; border-radius: 50%;
+    display: grid; place-items: center;
+    font-size: 11px; font-weight: 600; color: #1a0d04;
+    flex: 0 0 26px;
+    position: relative;
+  }
+  .avatar.a-sm  { background: linear-gradient(135deg,#FCA66D,#F97316); }
+  .avatar.a-tl  { background: linear-gradient(135deg,#7DD3FC,#38BDF8); color:#06283b; }
+  .avatar.a-rk  { background: linear-gradient(135deg,#C4B5FD,#8B5CF6); color:#23184d; }
+  .avatar.a-bot { background: linear-gradient(135deg,#5EEAD4,#0EA5E9); color:#04263b; }
+  .avatar.a-an  { background: linear-gradient(135deg,#FDA4AF,#F472B6); color:#42112a; }
+
+  .dot {
+    position: absolute; right: -1px; bottom: -1px;
+    width: 9px; height: 9px; border-radius: 50%;
+    border: 2px solid var(--dot-ring);
+  }
+  .dot.active { background: var(--st-active); }
+  .dot.away   { background: var(--st-away);   }
+  .dot.call   { background: var(--st-call);   }
+  .dot.agent  { background: var(--st-agent);  }
+
+  .mock-user .name { color: var(--fg); font-weight: 500; }
+  .mock-user .lang { color: var(--fg-3); font-size: 11px; margin-left: auto; font-family: var(--mono); }
+
+  /* Chat pane */
+  .mock-main { padding: 18px 18px 22px; display: flex; flex-direction: column; gap: 14px; }
+  .mock-head {
+    display: flex; align-items: center; gap: 10px;
+    padding-bottom: 14px; border-bottom: 1px solid var(--hairline);
+  }
+  .mock-head .ch {
+    color: var(--fg);
+    font-weight: 600;
+    font-size: 14px;
+    letter-spacing: -0.01em;
+  }
+  .mock-head .ch-meta {
+    margin-left: auto;
+    color: var(--fg-3); font-size: 12px;
+    font-family: var(--mono);
+  }
+  .hash {
+    width: 22px; height: 22px; border-radius: 6px;
+    background: var(--rise-2);
+    display: grid; place-items: center;
+    color: var(--fg-2); font-family: var(--mono); font-size: 12px;
+  }
+
+  .msg {
+    display: grid;
+    grid-template-columns: 32px 1fr;
+    gap: 12px;
+  }
+  .msg .av {
+    width: 32px; height: 32px; border-radius: 50%;
+    display: grid; place-items: center;
+    font-size: 12px; font-weight: 700; color: #1a0d04;
+    position: relative;
+  }
+  .av.a-sm  { background: linear-gradient(135deg,#FCA66D,#F97316); }
+  .av.a-tl  { background: linear-gradient(135deg,#7DD3FC,#38BDF8); color:#06283b; }
+  .av.a-rk  { background: linear-gradient(135deg,#C4B5FD,#8B5CF6); color:#23184d; }
+  .av.a-bot { background: linear-gradient(135deg,#5EEAD4,#0EA5E9); color:#04263b; }
+  .msg .av .dot { width: 10px; height: 10px; border-width: 2px; }
+
+  .msg .body { min-width: 0; }
+  .msg .who {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 8px;
+    font-size: 13px; color: var(--fg-2);
+  }
+  .who .nm { color: var(--fg); font-weight: 600; }
+  .who .tm { color: var(--fg-4); font-size: 11px; font-family: var(--mono); }
+  .bubble {
+    margin-top: 6px;
+    padding: 10px 13px;
+    background: var(--rise-2);
+    border: 1px solid var(--hairline);
+    border-radius: 4px 12px 12px 12px;
+    font-size: 14px;
+    color: var(--fg);
+    line-height: 1.45;
+    max-width: 92%;
+  }
+  .bubble small {
+    display: block; margin-top: 6px;
+    color: var(--fg-3); font-size: 12px;
+    font-style: italic;
+  }
+
+  /* Badges */
+  .badge {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-family: var(--mono);
+    font-size: 10.5px;
+    letter-spacing: 0.04em;
+    padding: 2px 7px;
+    border-radius: 999px;
+    border: 1px solid var(--hairline);
+    color: var(--fg-2);
+    background: var(--rise-1);
+    line-height: 1.6;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+  .badge .flag {
+    width: 14px; height: 10px; border-radius: 2px; overflow: hidden;
+    display: inline-block; position: relative;
+  }
+  .flag.fr { background: linear-gradient(90deg, #003DA5 33%, #fff 33% 66%, #EF4135 66%); }
+  .flag.gb { background:
+      linear-gradient(45deg, transparent 45%, #fff 45% 55%, transparent 55%) ,
+      linear-gradient(-45deg, transparent 45%, #fff 45% 55%, transparent 55%) ,
+      #012169;
+  }
+  .flag.br { background: radial-gradient(circle at center, #FEDD00 28%, transparent 28.5%), #009C3B; }
+  .flag.cn { background: #DE2910; }
+  .flag.in { background: linear-gradient(180deg,#FF9933 33%, #fff 33% 66%, #138808 66%); }
+  .flag.ma { background: #C1272D; }
+
+  .badge.translated {
+    color: var(--teal);
+    border-color: color-mix(in oklab, var(--teal) 35%, transparent);
+    background: color-mix(in oklab, var(--teal) 10%, transparent);
+  }
+  .badge.translated::before {
+    content:"文"; font-family: var(--sans); font-weight: 700; font-size: 11px;
+  }
+  .badge.agentic {
+    color: var(--agent-2);
+    background: linear-gradient(135deg, color-mix(in oklab, var(--agent) 22%, transparent), color-mix(in oklab, var(--agent) 8%, transparent));
+    border-color: color-mix(in oklab, var(--agent) 45%, transparent);
+  }
+  .badge.agentic::before {
+    content: "";
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--agent);
+    box-shadow: 0 0 8px var(--agent);
+  }
+
+  /* AI bot bubble */
+  .msg.agent .bubble {
+    background: linear-gradient(180deg, color-mix(in oklab, var(--agent) 12%, transparent), color-mix(in oklab, var(--agent) 4%, transparent));
+    border-color: color-mix(in oklab, var(--agent) 32%, transparent);
+  }
+
+  .composer {
+    margin-top: auto;
+    border: 1px solid var(--hairline);
+    border-radius: 12px;
+    background: var(--rise-1);
+    padding: 10px 12px;
+    display: flex; align-items: center; gap: 10px;
+    color: var(--fg-3); font-size: 13px;
+  }
+  .composer .send {
+    margin-left: auto;
+    width: 28px; height: 28px; border-radius: 50%;
+    background: var(--accent); color: #1a0d04;
+    display: grid; place-items: center;
+    font-size: 13px;
+  }
+
+  /* ===== Section: Problem ===== */
+  .section { padding: 110px 0; position: relative; }
+  @media (max-width: 768px) { .section { padding: 80px 0; } }
+  .section-head { max-width: 760px; margin-bottom: 56px; }
+  .section-head h2 { margin-top: 14px; }
+  .section-head p { margin-top: 18px; font-size: 17px; color: var(--fg-2); max-width: 640px; }
+
+  .problem-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+  }
+  @media (max-width: 900px) { .problem-grid { grid-template-columns: 1fr; gap: 18px; } }
+  .problem-card {
+    padding: 28px;
+    background: var(--surface);
+    border: 1px solid var(--hairline);
+    border-radius: var(--r-lg);
+    position: relative;
+    box-shadow: var(--shadow-1);
+  }
+  .problem-card .qm {
+    font-family: var(--mono);
+    font-size: 12px; color: var(--fg-3);
+    margin-bottom: 18px;
+    display: block;
+  }
+  .problem-card h3 { font-size: 18px; margin-bottom: 10px; }
+  .problem-card p { font-size: 15px; line-height: 1.6; }
+  .problem-card .who-tag {
+    margin-top: 18px;
+    color: var(--fg-3);
+    font-size: 13px;
+    font-style: italic;
+  }
+
+  /* ===== Section: Features ===== */
+  .features {
+    display: grid;
+    grid-template-columns: 1fr 1.4fr 1fr;
+    gap: 18px;
+  }
+  @media (max-width: 1100px) {
+    .features { grid-template-columns: 1fr; }
+  }
+  .feature {
+    background: var(--surface);
+    border: 1px solid var(--hairline);
+    border-radius: var(--r-xl);
+    padding: 32px 28px 30px;
+    transition: transform .25s ease, border-color .25s ease, background .25s ease;
+    position: relative;
+    overflow: hidden;
+    min-height: 360px;
+    display: flex; flex-direction: column;
+  }
+  .feature:hover { transform: translateY(-4px); border-color: var(--hairline-2); }
+
+  .feature .icn {
+    width: 52px; height: 52px;
+    border-radius: 14px;
+    display: grid; place-items: center;
+    border: 1px solid var(--hairline-2);
+    background: var(--rise-2);
+    margin-bottom: 22px;
+  }
+  .feature .icn svg { width: 26px; height: 26px; }
+  .feature h3 { font-size: 22px; letter-spacing: -0.025em; }
+  .feature p {
+    margin-top: 14px; font-size: 15px; line-height: 1.6;
+    color: var(--fg-2);
+    max-width: 36ch;
+  }
+
+  /* Variants */
+  .feature.warm {
+    background:
+      linear-gradient(180deg, color-mix(in oklab, var(--accent) 12%, transparent), color-mix(in oklab, var(--accent) 2%, transparent) 60%, var(--surface));
+    border-color: color-mix(in oklab, var(--accent) 25%, var(--hairline));
+  }
+  .feature.warm .icn { background: color-mix(in oklab, var(--accent) 14%, transparent); border-color: color-mix(in oklab, var(--accent) 35%, transparent); color: var(--accent); }
+  .feature.purple {
+    background:
+      radial-gradient(420px 240px at 80% 0%, color-mix(in oklab, var(--agent) 18%, transparent), transparent 60%),
+      linear-gradient(180deg, color-mix(in oklab, var(--agent) 12%, transparent), color-mix(in oklab, var(--agent) 3%, transparent));
+    border-color: color-mix(in oklab, var(--agent) 32%, var(--hairline));
+  }
+  .feature.purple .icn { background: color-mix(in oklab, var(--agent) 14%, transparent); border-color: color-mix(in oklab, var(--agent) 40%, transparent); color: var(--agent); }
+  .feature.teal {
+    background:
+      linear-gradient(180deg, color-mix(in oklab, var(--teal) 12%, transparent), color-mix(in oklab, var(--teal) 2%, transparent) 60%, var(--surface));
+    border-color: color-mix(in oklab, var(--teal) 25%, var(--hairline));
+  }
+  .feature.teal .icn { background: color-mix(in oklab, var(--teal) 12%, transparent); border-color: color-mix(in oklab, var(--teal) 35%, transparent); color: var(--teal); }
+
+  /* Feature signature: small inline preview */
+  .feature .demo {
+    margin-top: 24px;
+    border: 1px solid var(--hairline);
+    border-radius: 12px;
+    padding: 14px;
+    background: var(--well);
+    font-size: 13px;
+    color: var(--fg-2);
+  }
+  .demo .row {
+    display: flex; align-items: center; gap: 10px;
+  }
+  .demo .row + .row { margin-top: 10px; }
+  .demo .av {
+    width: 24px; height: 24px; border-radius: 50%;
+    position: relative;
+    display: grid; place-items: center;
+    font-size: 10px; font-weight: 700; color:#1a0d04;
+  }
+  .demo .bubble-mini {
+    background: var(--surface);
+    border: 1px solid var(--hairline);
+    border-radius: 10px;
+    padding: 6px 10px;
+    flex: 1;
+    color: var(--fg);
+    font-size: 13px;
+  }
+  .feature.purple .bubble-mini.ai {
+    background: color-mix(in oklab, var(--agent) 12%, var(--surface));
+    border-color: color-mix(in oklab, var(--agent) 32%, transparent);
+  }
+
+  /* ===== How it works ===== */
+  .steps {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+    counter-reset: step;
+  }
+  @media (max-width: 900px) { .steps { grid-template-columns: 1fr; } }
+  .step {
+    padding: 30px 26px;
+    border: 1px solid var(--hairline);
+    border-radius: var(--r-lg);
+    background: var(--surface);
+    box-shadow: var(--shadow-1);
+    counter-increment: step;
+    position: relative;
+  }
+  .step::before {
+    content: "0" counter(step);
+    display: block;
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--accent);
+    letter-spacing: 0.1em;
+    margin-bottom: 50px;
+  }
+  .step h3 { font-size: 20px; margin-bottom: 12px; }
+  .step p { font-size: 15px; line-height: 1.6; }
+  .step .arrow {
+    position: absolute; right: 24px; top: 28px;
+    color: var(--fg-4);
+    font-family: var(--mono); font-size: 18px;
+  }
+
+  /* ===== Sovereignty ===== */
+  .sov {
+    background:
+      radial-gradient(800px 400px at 90% 50%, color-mix(in oklab, var(--teal) 10%, transparent), transparent 60%),
+      linear-gradient(180deg, var(--bg-2), var(--bg));
+    border-top: 1px solid var(--hairline);
+    border-bottom: 1px solid var(--hairline);
+  }
+  .sov-grid {
+    display: grid;
+    grid-template-columns: 1.1fr 1fr;
+    gap: 70px;
+    align-items: center;
+  }
+  @media (max-width: 900px) { .sov-grid { grid-template-columns: 1fr; gap: 40px; } }
+  .sov h2 { max-width: 12ch; }
+  .sov p.lead { margin-top: 22px; font-size: 17px; max-width: 50ch; }
+  .tech-line {
+    margin-top: 26px;
+    font-family: var(--mono); font-size: 12.5px;
+    color: var(--fg-3);
+    border-top: 1px solid var(--hairline);
+    padding-top: 18px;
+    letter-spacing: 0.02em;
+  }
+  .tech-line span { color: var(--teal); }
+
+  .usecases {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+  }
+  .usecase {
+    border: 1px solid var(--hairline);
+    border-radius: 14px;
+    padding: 22px 20px;
+    background: var(--surface);
+    transition: border-color .2s ease, background .2s ease, transform .2s ease;
+  }
+  .usecase:hover { border-color: color-mix(in oklab, var(--teal) 40%, transparent); background: color-mix(in oklab, var(--teal) 6%, var(--surface)); transform: translateY(-2px); }
+  .usecase .ic {
+    width: 32px; height: 32px;
+    border-radius: 8px;
+    background: color-mix(in oklab, var(--teal) 12%, transparent);
+    color: var(--teal);
+    display: grid; place-items: center;
+    margin-bottom: 14px;
+  }
+  .usecase h4 { font-size: 15px; margin-bottom: 4px; letter-spacing: -0.01em; }
+  .usecase p { font-size: 13px; color: var(--fg-3); }
+
+  /* ===== Quotes ===== */
+  .quotes {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 22px;
+  }
+  @media (max-width: 900px) { .quotes { grid-template-columns: 1fr; } }
+  .quote {
+    padding: 30px 28px;
+    border: 1px solid var(--hairline);
+    border-radius: var(--r-lg);
+    background: var(--surface);
+    box-shadow: var(--shadow-1);
+    display: flex; flex-direction: column; gap: 24px;
+  }
+  .quote .mark {
+    font-family: Georgia, serif;
+    font-size: 56px; line-height: .8;
+    color: var(--accent);
+    height: 24px;
+    opacity: .8;
+  }
+  .quote p { font-size: 16px; line-height: 1.55; color: var(--fg); }
+  .quote .who {
+    margin-top: auto;
+    display: flex; align-items: center; gap: 12px;
+    padding-top: 16px;
+    border-top: 1px solid var(--hairline);
+  }
+  .quote .who .av {
+    width: 36px; height: 36px; border-radius: 50%;
+    display: grid; place-items: center;
+    font-weight: 700; color: #1a0d04; font-size: 12px;
+  }
+  .quote .who .meta { font-size: 13px; }
+  .quote .who .meta .nm { color: var(--fg); font-weight: 600; }
+  .quote .who .meta .loc { color: var(--fg-3); }
+
+  /* ===== Final CTA ===== */
+  .final {
+    padding: 130px 0;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .final::before {
+    content:"";
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(600px 320px at 50% 30%, color-mix(in oklab, var(--accent) 22%, transparent), transparent 60%),
+      radial-gradient(700px 360px at 50% 80%, color-mix(in oklab, var(--agent) 18%, transparent), transparent 60%);
+    z-index: -1;
+  }
+  .final h2 { font-size: clamp(40px, 5vw, 64px); }
+  .final p { margin-top: 22px; font-size: 18px; color: var(--fg-2); }
+  .final .cta-row { margin-top: 38px; display: inline-flex; gap: 14px; }
+  .final .btn-primary { padding: 16px 24px; font-size: 16px; }
+
+  /* ===== Footer ===== */
+  footer {
+    border-top: 1px solid var(--hairline);
+    padding: 44px 0 50px;
+    color: var(--fg-3);
+    font-size: 13px;
+  }
+  .foot {
+    display: grid;
+    grid-template-columns: 1.4fr 1fr 1fr;
+    gap: 30px;
+    align-items: start;
+  }
+  @media (max-width: 700px) { .foot { grid-template-columns: 1fr; } }
+  .foot h5 {
+    font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--fg-3); margin: 0 0 14px; font-weight: 500;
+    font-family: var(--mono);
+  }
+  .foot a { display: block; color: var(--fg-2); padding: 4px 0; transition: color .15s; }
+  .foot a:hover { color: var(--fg); }
+  .foot .colophon { color: var(--fg-3); font-size: 13px; max-width: 36ch; margin-top: 14px; }
+  .foot .copyright {
+    margin-top: 36px;
+    padding-top: 22px;
+    border-top: 1px solid var(--hairline);
+    display: flex; justify-content: space-between; gap: 12px;
+    color: var(--fg-4); font-family: var(--mono); font-size: 12px;
+  }
+
+  /* Reveal-on-scroll */
+  .reveal { opacity: 0; transform: translateY(20px); transition: opacity .8s ease, transform .8s ease; }
+  .reveal.in { opacity: 1; transform: none; }
+  @media (prefers-reduced-motion: reduce) {
+    .reveal { opacity: 1; transform: none; }
+    .fade-up { opacity: 1; transform: none; animation: none; }
+  }
+</style>
 </head>
 <body>
 
-  <!-- NAV -->
-  <nav>
-    <a class="nav-logo" href="/">WithoutBorder</a>
-    <a class="nav-cta" href="/app">Open App</a>
-  </nav>
-
-  <!-- HERO -->
-  <section class="hero">
-    <span class="hero-badge">🌍 Powered by Local AI · No Cloud Required</span>
-    <h1>Collaborate Across Languages<br /><span>Without Borders</span></h1>
-    <p>Real-time multilingual messaging where every participant reads in their own language — powered by Gemma 4 running entirely on your infrastructure.</p>
-    <div class="cta-group">
-      <a class="btn-primary" href="/app">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-        Open the App
-      </a>
-      <a class="btn-secondary" href="#features">See Features</a>
+<!-- ===== NAV ===== -->
+<header class="nav" role="banner">
+  <div class="wrap nav-inner">
+    <a class="brand" href="/" aria-label="WithoutBorder home">
+      <span class="brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 32 32" fill="none">
+          <circle cx="16" cy="16" r="13" stroke="url(#g1)" stroke-width="2"/>
+          <path d="M3 16 H29 M16 3 C 22 9 22 23 16 29 C 10 23 10 9 16 3" stroke="url(#g1)" stroke-width="1.4" fill="none"/>
+          <defs>
+            <linearGradient id="g1" x1="0" y1="0" x2="32" y2="32">
+              <stop offset="0" stop-color="#F97316"/>
+              <stop offset="1" stop-color="#A78BFA"/>
+            </linearGradient>
+          </defs>
+        </svg>
+      </span>
+      WithoutBorder
+    </a>
+    <nav class="nav-links" aria-label="Main">
+      <a href="#features">Features</a>
+      <a href="#how">How it works</a>
+      <a href="#sovereignty">Sovereignty</a>
+      <a href="#agents">Agents</a>
+    </nav>
+    <div class="nav-actions">
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle color theme" title="Toggle theme">
+        <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8 8 0 1 1 9.5 4 6.5 6.5 0 0 0 20 14.5z"/></svg>
+        <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+      </button>
+      <a class="btn btn-primary btn-sm" href="/app/">Essayer maintenant</a>
     </div>
-  </section>
+  </div>
+</header>
 
-  <!-- FEATURES -->
-  <section class="features" id="features">
-    <div class="section-inner">
-      <div class="section-label">Features</div>
-      <h2 class="section-title">Everything your multilingual team needs</h2>
-      <p class="section-sub">One platform — zero language barriers, zero data sent to the cloud.</p>
-
-      <div class="feature-grid">
-
-        <div class="feature-card">
-          <span class="feature-icon">🌐</span>
-          <h3>Real-Time Translation</h3>
-          <p>Messages are automatically translated for each recipient in their preferred language the moment they are sent — no delay, no copy-paste.</p>
-        </div>
-
-        <div class="feature-card">
-          <span class="feature-icon">🤖</span>
-          <h3>AI Backup Agent</h3>
-          <p>Activate Agentic mode and let the AI reply on your behalf while you're away, keeping conversations moving around the clock.</p>
-        </div>
-
-        <div class="feature-card">
-          <span class="feature-icon">📋</span>
-          <h3>Summaries &amp; Action Plans</h3>
-          <p>Generate meeting summaries, action plans, and formal reports directly from any conversation with a single click.</p>
-        </div>
-
-        <div class="feature-card">
-          <span class="feature-icon">📄</span>
-          <h3>File Translation</h3>
-          <p>Upload PDFs and text documents — WithoutBorder translates the full content and delivers a localized copy instantly.</p>
-        </div>
-
-        <div class="feature-card">
-          <span class="feature-icon">🔒</span>
-          <h3>Privacy by Design</h3>
-          <p>All AI processing runs on-premises via Gemma 4. Your conversations and documents never leave your infrastructure.</p>
-        </div>
-
-        <div class="feature-card">
-          <span class="feature-icon">⚡</span>
-          <h3>Rich Collaboration</h3>
-          <p>@mentions, emoji reactions, pinned messages, and full-text search across the entire message history — in every language.</p>
-        </div>
-
+<!-- ===== HERO ===== -->
+<section class="hero">
+  <div class="wrap hero-grid">
+    <div>
+      <span class="eyebrow fade-up">A platform for global teams · Built in the open</span>
+      <h1 class="fade-up d2" style="margin-top:20px">
+        Collaborate in your <span class="underline">language</span>.<br/>
+        <span class="accent">Own</span> your data.
+      </h1>
+      <p class="hero-sub fade-up d3">
+        WithoutBorder runs Gemma 4 locally — real-time multilingual chat,
+        agentic backup when you step away, and zero cloud round-trips.
+        Built for teams that can't outsource their context.
+      </p>
+      <div class="hero-cta fade-up d4">
+        <a href="/app/" class="btn btn-primary">Démarrer gratuitement →</a>
+        <a href="#how" class="btn btn-ghost">Comment ça marche</a>
+      </div>
+      <div class="hero-meta fade-up d4">
+        <span class="pulse" aria-hidden="true"></span>
+        <span>LIVE · 6 LANGUAGES · 0 BYTES TO THE CLOUD</span>
       </div>
     </div>
-  </section>
 
-  <!-- HOW IT WORKS -->
-  <section class="how" id="how">
-    <div class="section-inner">
-      <div class="section-label">How It Works</div>
-      <h2 class="section-title">Up and running in minutes</h2>
-      <p class="section-sub">No external API keys, no SaaS subscriptions. Just your team and your server.</p>
+    <!-- ===== Chat Mockup ===== -->
+    <div class="fade-up d3" role="figure" aria-label="Preview of a WithoutBorder team channel">
+      <div class="mock">
+        <aside class="mock-side" aria-hidden="true">
+          <div class="mock-side-title">Équipe Dev Front</div>
 
-      <div class="steps">
-        <div class="step">
-          <div class="step-num">1</div>
-          <h3>Deploy</h3>
-          <p>Spin up the stack with Docker Compose on any Linux server. Gemma 4 loads locally.</p>
-        </div>
-        <div class="step">
-          <div class="step-num">2</div>
-          <h3>Invite</h3>
-          <p>Each team member sets their preferred language once during sign-up.</p>
-        </div>
-        <div class="step">
-          <div class="step-num">3</div>
-          <h3>Chat</h3>
-          <p>Write in your language. Everyone reads in theirs — automatically, in real time.</p>
-        </div>
-        <div class="step">
-          <div class="step-num">4</div>
-          <h3>Automate</h3>
-          <p>Enable the AI agent for async coverage and let it generate summaries on demand.</p>
+          <div class="mock-user">
+            <span class="avatar a-sm">SM<span class="dot active"></span></span>
+            <span class="name">Sophie M.</span>
+            <span class="lang">FR</span>
+          </div>
+          <div class="mock-user">
+            <span class="avatar a-tl">TL<span class="dot call"></span></span>
+            <span class="name">Thomas L.</span>
+            <span class="lang">GB</span>
+          </div>
+          <div class="mock-user active">
+            <span class="avatar a-rk">RK<span class="dot agent"></span></span>
+            <span class="name">Rahul K.</span>
+            <span class="lang">IN</span>
+          </div>
+          <div class="mock-user">
+            <span class="avatar a-an">AN<span class="dot away"></span></span>
+            <span class="name">Ana N.</span>
+            <span class="lang">BR</span>
+          </div>
+          <div class="mock-user">
+            <span class="avatar a-bot">PB<span class="dot active"></span></span>
+            <span class="name">ProjectBot</span>
+            <span class="lang">AI</span>
+          </div>
+
+          <div class="mock-side-title" style="margin-top: 22px">Binômes</div>
+          <div class="mock-user">
+            <span class="avatar a-sm">SM<span class="dot active"></span></span>
+            <span class="name">Sophie ↔ Ana</span>
+          </div>
+        </aside>
+
+        <div class="mock-main">
+          <div class="mock-head">
+            <span class="hash">#</span>
+            <span class="ch">équipe-dev-front</span>
+            <span class="ch-meta">5 members · live</span>
+          </div>
+
+          <div class="msg">
+            <span class="av a-sm">SM<span class="dot active"></span></span>
+            <div class="body">
+              <div class="who">
+                <span class="nm">Sophie Martin</span>
+                <span class="badge"><span class="flag fr"></span>FR</span>
+                <span class="tm">14:02</span>
+              </div>
+              <div class="bubble">
+                Le composant Drawer a un souci d'accessibilité — le focus
+                ne revient pas au trigger après fermeture.
+              </div>
+            </div>
+          </div>
+
+          <div class="msg">
+            <span class="av a-rk">RK<span class="dot agent"></span></span>
+            <div class="body">
+              <div class="who">
+                <span class="nm">Rahul Kumar</span>
+                <span class="badge"><span class="flag in"></span>IN</span>
+                <span class="badge translated">traduit</span>
+                <span class="tm">14:03</span>
+              </div>
+              <div class="bubble">
+                Got it — I'll wrap the trigger ref and restore focus on the
+                <code style="font-family:var(--mono);font-size:13px;color:var(--accent-2)">onClose</code> handler.
+                <small>Original (HI) · Hindi → English · context preserved</small>
+              </div>
+            </div>
+          </div>
+
+          <div class="msg agent">
+            <span class="av a-rk">RK<span class="dot agent"></span></span>
+            <div class="body">
+              <div class="who">
+                <span class="nm">Rahul Kumar</span>
+                <span class="badge agentic">Agentic</span>
+                <span class="tm">14:05</span>
+              </div>
+              <div class="bubble">
+                Patch pushed to <code style="font-family:var(--mono);font-size:13px;color:var(--agent-2)">feat/drawer-a11y</code>.
+                Tests pass locally. Sophie — could you confirm the keyboard order on Safari?
+              </div>
+            </div>
+          </div>
+
+          <div class="composer" aria-hidden="true">
+            <span>Reply to #équipe-dev-front…</span>
+            <span class="badge">/agents</span>
+            <span class="send">↑</span>
+          </div>
         </div>
       </div>
     </div>
-  </section>
+  </div>
+</section>
 
-  <!-- CTA BANNER -->
-  <section class="cta-banner">
-    <h2>Break the language barrier today</h2>
-    <p>Your team deserves to communicate freely — no matter what language they speak.</p>
-    <a class="btn-white" href="/app">Get Started — Open App</a>
-  </section>
+<!-- ===== PROBLEM ===== -->
+<section class="section" id="problem">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <span class="eyebrow">The status quo</span>
+      <h2>The cost of working in someone else's language —<br/>and someone else's cloud.</h2>
+      <p>
+        Every multilingual team pays a tax: nuance lost in translation, contributions
+        underweighted, and a chilling effect on the people closest to the work. Layer
+        AI on top, and a second tax appears: data has to leave the building before
+        it can help. We rejected both.
+      </p>
+    </div>
 
-  <!-- FOOTER -->
-  <footer>
-    <p>&copy; 2025 WithoutBorder &mdash; <a href="/app">Open App</a></p>
-  </footer>
+    <div class="problem-grid">
+      <div class="problem-card reveal">
+        <span class="qm">01 — The Language Tax</span>
+        <h3>Three rewrites before hitting send.</h3>
+        <p>
+          A senior developer in Casablanca drafts a code review in French, translates it to
+          English, then softens the tone — twice. Her precision dies somewhere between drafts.
+          The team gets a watered-down opinion that doesn't reflect what she actually saw.
+        </p>
+        <div class="who-tag">— happens every standup, on every continent.</div>
+      </div>
 
+      <div class="problem-card reveal">
+        <span class="qm">02 — The AI adoption gap</span>
+        <h3>Prompting is a privilege.</h3>
+        <p>
+          The product manager has ideas the AI could 10x — but he doesn't speak in prompts.
+          Meanwhile his intern, fresh out of an LLM bootcamp, ships 4× faster.
+          The gap isn't ability. It's vocabulary.
+        </p>
+        <div class="who-tag">— delegating to AI should not require a course.</div>
+      </div>
+
+      <div class="problem-card reveal">
+        <span class="qm">03 — The sovereignty wall</span>
+        <h3>Some data simply can't leave.</h3>
+        <p>
+          A doctor in Bangalore would love AI triage notes. Her hospital won't let her —
+          patient records cannot touch a third-party cloud. So she opts out, and the tool
+          serves only the teams that have nothing sensitive to protect.
+        </p>
+        <div class="who-tag">— the most valuable use cases are the ones excluded.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== FEATURES ===== -->
+<section class="section" id="features" style="padding-top: 40px">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <span class="eyebrow">What's inside</span>
+      <h2>Three primitives, one platform.</h2>
+      <p>Each feature solves one of the three problems above. Together, they remove every reason your team doesn't yet collaborate without borders.</p>
+    </div>
+
+    <div class="features">
+      <!-- WARM -->
+      <article class="feature warm reveal">
+        <div class="icn" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+            <circle cx="12" cy="12" r="9"/>
+            <path d="M3 12 H21 M12 3 C 16 7.5 16 16.5 12 21 C 8 16.5 8 7.5 12 3"/>
+          </svg>
+        </div>
+        <h3>Zero-latency translation</h3>
+        <p>Gemma 4 translates technical context the moment you send. Your message lands in their language with your nuance intact — verified by the 文 badge.</p>
+
+        <div class="demo" aria-hidden="true">
+          <div class="row">
+            <span class="av a-sm">SM</span>
+            <span class="bubble-mini">« Ce hook est mémoïsé trop tôt »</span>
+            <span class="badge"><span class="flag fr"></span>FR</span>
+          </div>
+          <div class="row">
+            <span class="av a-tl">TL</span>
+            <span class="bubble-mini">"This hook memoizes too early"</span>
+            <span class="badge translated">traduit</span>
+          </div>
+        </div>
+      </article>
+
+      <!-- PURPLE — signature feature -->
+      <article class="feature purple reveal">
+        <div class="icn" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+            <circle cx="12" cy="9" r="4"/>
+            <path d="M4 21 C 4 15.5 8 13.5 12 13.5 C 16 13.5 20 15.5 20 21"/>
+            <circle cx="18.5" cy="6" r="2.6" fill="currentColor" stroke="none" opacity=".7"/>
+          </svg>
+        </div>
+        <h3>Agentic backup — never miss a collaboration.</h3>
+        <p>
+          When you're offline, Gemma 4 reads the channel history and answers contextually
+          in your name. Every AI-authored message is transparently badged in purple
+          so no one mistakes the model for you.
+        </p>
+        <div class="demo" aria-hidden="true">
+          <div class="row">
+            <span class="av a-rk">RK<span class="dot agent" style="border-color: rgba(0,0,0,.5)"></span></span>
+            <span class="bubble-mini ai">"Pushed fix on feat/drawer-a11y. Tests green."</span>
+            <span class="badge agentic">Agentic</span>
+          </div>
+        </div>
+      </article>
+
+      <!-- TEAL -->
+      <article class="feature teal reveal">
+        <div class="icn" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+            <rect x="3.5" y="4" width="17" height="6" rx="2"/>
+            <rect x="3.5" y="14" width="17" height="6" rx="2"/>
+            <circle cx="7" cy="7" r=".9" fill="currentColor"/>
+            <circle cx="7" cy="17" r=".9" fill="currentColor"/>
+            <path d="M11 7 H17 M11 17 H17"/>
+          </svg>
+        </div>
+        <h3>Your data never leaves your walls.</h3>
+        <p>Deploy Gemma 4 on-premise via Ollama or LiteRT. Medical, legal, governmental teams can trust the AI because it sits inside their hardware perimeter.</p>
+
+        <div class="demo" aria-hidden="true">
+          <div class="row">
+            <span style="color:var(--teal); font-family:var(--mono); font-size:12px;">on-prem ⤴︎</span>
+            <span class="bubble-mini" style="border-color: rgba(45,212,191,.3); background: rgba(45,212,191,.06);">
+              <span style="color:var(--teal); font-family:var(--mono); font-size:12px;">0 bytes</span> sent off-network
+            </span>
+          </div>
+        </div>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- ===== HOW IT WORKS ===== -->
+<section class="section" id="how">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <span class="eyebrow">How it works</span>
+      <h2>From install to multilingual team in an afternoon.</h2>
+    </div>
+
+    <div class="steps">
+      <div class="step reveal">
+        <span class="arrow">→</span>
+        <h3>Connect your team.</h3>
+        <p>Spin up channels for projects, invite collaborators from any country,
+           and let each person declare their native language. Pairs are private 1:1 spaces
+           for direct technical work.</p>
+      </div>
+      <div class="step reveal">
+        <span class="arrow">→</span>
+        <h3>Collaborate in your language.</h3>
+        <p>Every message — including shared files — auto-translates on demand.
+           The 文 badge keeps the provenance honest. One click toggles between
+           the original and the translation.</p>
+      </div>
+      <div class="step reveal" id="agents">
+        <h3>Let AI back you up.</h3>
+        <p>Flip on Mode Agent when you leave. Gemma 4 maintains the conversation
+           in your absence, with a purple AGENTIC badge on every message so
+           collaborators always know what's you and what's the model.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== SOVEREIGNTY ===== -->
+<section class="section sov" id="sovereignty">
+  <div class="wrap sov-grid">
+    <div class="reveal">
+      <span class="eyebrow">Sovereignty</span>
+      <h2 style="margin-top:14px">Built for organizations that can't compromise.</h2>
+      <p class="lead">
+        The data that benefits most from AI is also the data that least tolerates
+        a round-trip to a third-party cloud. We resolved the contradiction by
+        making the model come to you — not the other way around.
+      </p>
+      <div class="tech-line">
+        POWERED BY GEMMA 4 · LITERT (EDGE) OR OLLAMA (26B / 31B) · <span>ZERO CLOUD DEPENDENCY</span>
+      </div>
+    </div>
+
+    <div class="usecases reveal">
+      <div class="usecase">
+        <div class="ic" aria-hidden="true">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 4 V20 M4 12 H20"/></svg>
+        </div>
+        <h4>Medical</h4>
+        <p>Patient records, triage notes, multi-language case reviews.</p>
+      </div>
+      <div class="usecase">
+        <div class="ic" aria-hidden="true">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 3 H18 V21 H6 Z M9 8 H15 M9 12 H15 M9 16 H13"/></svg>
+        </div>
+        <h4>Legal</h4>
+        <p>Privileged communications, contract review, cross-border counsel.</p>
+      </div>
+      <div class="usecase">
+        <div class="ic" aria-hidden="true">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 20 H21 M5 20 V10 L12 5 L19 10 V20 M9 20 V14 H15 V20"/></svg>
+        </div>
+        <h4>Government</h4>
+        <p>Classified workflows, civic-service teams, intergovernmental briefings.</p>
+      </div>
+      <div class="usecase">
+        <div class="ic" aria-hidden="true">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="11" cy="11" r="6"/><path d="m16 16 5 5"/></svg>
+        </div>
+        <h4>Confidential research</h4>
+        <p>Unpublished science, patent-bound R&amp;D, sensitive datasets.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== QUOTES ===== -->
+<section class="section">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <span class="eyebrow">From the field</span>
+      <h2>What teams say.</h2>
+    </div>
+    <div class="quotes">
+      <figure class="quote reveal">
+        <span class="mark">"</span>
+        <blockquote><p>I review pull requests in French now. Berlin reads them in German. Nothing about my reasoning gets flattened, and I stopped softening my code reviews to sound less direct in English.</p></blockquote>
+        <figcaption class="who">
+          <span class="av a-sm">YA</span>
+          <div class="meta">
+            <div class="nm">Yasmine A.</div>
+            <div class="loc">Senior dev · Casablanca</div>
+          </div>
+        </figcaption>
+      </figure>
+
+      <figure class="quote reveal">
+        <span class="mark">"</span>
+        <blockquote><p>Mode Agent is the first AI feature my team treats as a real coworker. The purple badge is the trick — people trust it because they always know when it's the model talking.</p></blockquote>
+        <figcaption class="who">
+          <span class="av a-rk">DC</span>
+          <div class="meta">
+            <div class="nm">Diego C.</div>
+            <div class="loc">Tech lead · São Paulo</div>
+          </div>
+        </figcaption>
+      </figure>
+
+      <figure class="quote reveal">
+        <span class="mark">"</span>
+        <blockquote><p>We finally have an AI my compliance officer signs off on. Patient context never leaves our network. The model runs in the same rack as the EHR. That sentence shouldn't be remarkable, but it is.</p></blockquote>
+        <figcaption class="who">
+          <span class="av a-bot">PR</span>
+          <div class="meta">
+            <div class="nm">Dr. Priya R.</div>
+            <div class="loc">Cardiologist · Bangalore</div>
+          </div>
+        </figcaption>
+      </figure>
+    </div>
+  </div>
+</section>
+
+<!-- ===== FINAL CTA ===== -->
+<section class="final" id="cta">
+  <div class="wrap">
+    <div class="reveal">
+      <span class="eyebrow" style="justify-content:center;">Start now · No cloud signup</span>
+      <h2 style="margin-top:18px">Start collaborating<br/>without borders.</h2>
+      <p>Deploy in minutes. Own your AI. Speak your language.</p>
+      <div class="cta-row">
+        <a class="btn btn-primary" href="/app/">Get started for free →</a>
+        <a class="btn btn-ghost" href="https://github.com/without-border-org/without-border#readme" target="_blank" rel="noopener">Read the docs</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== FOOTER ===== -->
+<footer>
+  <div class="wrap">
+    <div class="foot">
+      <div>
+        <div class="brand">
+          <span class="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 32 32" fill="none">
+              <circle cx="16" cy="16" r="13" stroke="url(#g2)" stroke-width="2"/>
+              <path d="M3 16 H29 M16 3 C 22 9 22 23 16 29 C 10 23 10 9 16 3" stroke="url(#g2)" stroke-width="1.4" fill="none"/>
+              <defs>
+                <linearGradient id="g2" x1="0" y1="0" x2="32" y2="32">
+                  <stop offset="0" stop-color="#F97316"/><stop offset="1" stop-color="#A78BFA"/>
+                </linearGradient>
+              </defs>
+            </svg>
+          </span>
+          WithoutBorder
+        </div>
+        <p class="colophon">Real-time multilingual collaboration with locally-hosted AI. Built for teams whose data has nowhere else to go.</p>
+      </div>
+      <div>
+        <h5>Project</h5>
+        <a href="https://github.com/without-border-org/without-border" target="_blank" rel="noopener">GitHub</a>
+        <a href="https://github.com/without-border-org/without-border#readme" target="_blank" rel="noopener">Docs</a>
+        <a href="https://www.kaggle.com/competitions" target="_blank" rel="noopener">Kaggle Challenge</a>
+        <a href="https://github.com/without-border-org/without-border/issues" target="_blank" rel="noopener">Contact</a>
+      </div>
+      <div>
+        <h5>Powered by</h5>
+        <a href="https://ai.google.dev/gemma" target="_blank" rel="noopener">Gemma 4</a>
+        <a href="https://deepmind.google/" target="_blank" rel="noopener">Google DeepMind</a>
+        <a href="https://ollama.ai" target="_blank" rel="noopener">Ollama · LiteRT</a>
+      </div>
+    </div>
+    <div class="copyright">
+      <span>© 2026 WITHOUTBORDER · MADE BY TEAMS FROM 14 COUNTRIES</span>
+      <span>v0.9 · BETA · ON-PREM</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+  // ===== Theme toggle =====
+  (function () {
+    const root = document.documentElement;
+    const saved = localStorage.getItem('wb-theme');
+    if (saved === 'dark' || saved === 'light') root.setAttribute('data-theme', saved);
+    const btn = document.getElementById('themeToggle');
+    btn && btn.addEventListener('click', () => {
+      const cur = root.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+      const next = cur === 'dark' ? 'light' : 'dark';
+      root.setAttribute('data-theme', next);
+      try { localStorage.setItem('wb-theme', next); } catch (e) {}
+    });
+  })();
+
+  // Reveal-on-scroll
+  const io = new IntersectionObserver((entries) => {
+    for (const e of entries) {
+      if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); }
+    }
+  }, { rootMargin: '0px 0px -10% 0px', threshold: 0.05 });
+  document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+
+  // Smooth scroll for in-page links
+  document.querySelectorAll('a[href^="#"]').forEach(a => {
+    a.addEventListener('click', (e) => {
+      const id = a.getAttribute('href');
+      if (id.length > 1) {
+        const t = document.querySelector(id);
+        if (t) {
+          e.preventDefault();
+          window.scrollTo({ top: t.getBoundingClientRect().top + window.scrollY - 70, behavior: 'smooth' });
+        }
+      }
+    });
+  });
+</script>
 </body>
 </html>

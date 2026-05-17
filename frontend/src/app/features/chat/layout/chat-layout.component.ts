@@ -139,7 +139,7 @@ import { Agent, Channel, ChannelMember, UserStatus, LANGUAGE_MAP, getUserColor, 
                       {{ dmDisplayName(ch.id) }}
                     </span>
                     <ng-container *ngIf="dmPartnerStatus(ch.id) === 'agentic'; else dmRole">
-                      <span class="text-[8px] px-1 py-0.5 bg-brand-orange/20 text-brand-orange
+                      <span class="text-[8px] px-1 py-0.5 bg-violet-500/20 text-violet-400
                                    rounded font-bold uppercase tracking-tight">Agentic</span>
                     </ng-container>
                     <ng-template #dmRole>

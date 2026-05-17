@@ -37,7 +37,7 @@ import { Message, LANGUAGE_MAP, getUserColor, getInitials } from '../../../core/
           </span>
           <span *ngIf="message.isAgentic"
                 class="text-[8px] px-1.5 py-0.5 rounded font-bold uppercase tracking-tighter
-                       bg-brand-orange/15 text-brand-orange">
+                       bg-violet-500/15 text-violet-400">
             agentic
           </span>
           <span *ngIf="message.isPinned" class="text-[9px] text-amber-400">📌</span>
