@@ -204,7 +204,7 @@ import { Agent, Channel, ChannelMember, UserStatus, LANGUAGE_MAP, getUserColor, 
         <div class="p-4 border-t dark:border-brand-darkBorder border-brand-lightBorder relative" id="user-card-wrap">
 
           <!-- Status dropdown -->
-          <div *ngIf="statusMenuOpen()"
+          <div *ngIf="statusMenuOpen() && !agentPickerOpen()"
                class="absolute bottom-full left-4 right-4 mb-2 rounded-[14px] border z-50
                       dark:bg-[#1C1C20] dark:border-white/9 bg-white border-slate-200
                       shadow-[0_12px_40px_rgba(0,0,0,0.22)]
@@ -243,7 +243,56 @@ import { Agent, Channel, ChannelMember, UserStatus, LANGUAGE_MAP, getUserColor, 
                   <span class="text-[9px] opacity-60">Déléguer à un agent IA</span>
                 </div>
                 <svg *ngIf="user()?.status === 'agentic'" class="w-3 h-3 text-brand-orange" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+                <!-- Chevron indiquant un sous-menu -->
+                <svg *ngIf="user()?.status !== 'agentic'" class="w-3 h-3 dark:text-zinc-500 text-slate-400 ml-auto" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="9 5 16 12 9 19"/></svg>
               </button>
+            </div>
+          </div>
+
+          <!-- Agent picker (affiché quand Mode Agent est sélectionné) -->
+          <div *ngIf="agentPickerOpen()"
+               class="absolute bottom-full left-4 right-4 mb-2 rounded-[14px] border z-50
+                      dark:bg-[#1C1C20] dark:border-white/9 bg-white border-slate-200
+                      shadow-[0_12px_40px_rgba(0,0,0,0.22)]
+                      animate-[statusFadeUp_0.15s_ease-out]"
+               (click)="$event.stopPropagation()">
+            <!-- Header avec retour -->
+            <div class="px-3.5 py-2.5 flex items-center gap-2
+                        border-b dark:border-white/7 border-slate-100">
+              <button (click)="backToStatusMenu(); $event.stopPropagation()"
+                      class="w-5 h-5 flex items-center justify-center rounded-md
+                             dark:text-zinc-400 text-slate-500 dark:hover:bg-white/8 hover:bg-slate-100 transition-all flex-shrink-0">
+                <svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" class="w-3 h-3">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
+                </svg>
+              </button>
+              <span class="text-[9.5px] font-bold uppercase tracking-[.09em] dark:text-zinc-500 text-slate-400">
+                Choisir un agent
+              </span>
+            </div>
+            <!-- Liste agents -->
+            <div class="p-1.5 space-y-0.5">
+              <button *ngFor="let agent of agents()"
+                (click)="selectAgentForAgentic(agent.id)"
+                class="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-[9px] text-left
+                       dark:text-zinc-300 text-slate-700 dark:hover:bg-white/6 hover:bg-slate-50 transition-all">
+                <div class="agent-avatar w-7 h-7 rounded-lg flex items-center justify-center
+                            text-[10px] font-bold border flex-shrink-0
+                            dark:bg-blue-500/10 dark:text-blue-400 dark:border-blue-500/30
+                            bg-teal-500/10 text-teal-600 border-teal-500/30">
+                  {{ getInitials(agent.name) }}
+                </div>
+                <div class="flex flex-col items-start flex-1 min-w-0 px-0.5">
+                  <span class="text-[12px] font-semibold truncate w-full">{{ agent.name }}</span>
+                  <span class="text-[10px] opacity-55 truncate w-full">{{ agent.description }}</span>
+                </div>
+                <div class="w-2 h-2 rounded-full flex-shrink-0"
+                     [class]="agent.isActive ? 'bg-green-500' : 'bg-amber-400'"></div>
+              </button>
+              <div *ngIf="agents().length === 0"
+                   class="px-3 py-3 text-[11px] dark:text-zinc-500 text-slate-400 text-center">
+                Aucun agent disponible
+              </div>
             </div>
           </div>
 
@@ -297,7 +346,10 @@ export class ChatLayoutComponent implements OnInit, OnDestroy {
   private routerSub!: Subscription;
 
   // Click-outside handler reference for proper cleanup
-  private clickOutsideHandler = () => this.statusMenuOpen.set(false);
+  private clickOutsideHandler = () => {
+    this.statusMenuOpen.set(false);
+    this.agentPickerOpen.set(false);
+  };
 
   // Expose helpers to template
   getInitials = getInitials;
@@ -310,6 +362,8 @@ export class ChatLayoutComponent implements OnInit, OnDestroy {
 
   /** Status menu open/closed state */
   statusMenuOpen = signal(false);
+  /** Agent picker sub-panel (shown inside the status menu area when 'agentic' is clicked) */
+  agentPickerOpen = signal(false);
 
   /** Map of channel ID → partner ChannelMember info (populated after loading channels). */
   dmPartnersMap = signal<Map<string, ChannelMember>>(new Map());
@@ -408,8 +462,28 @@ export class ChatLayoutComponent implements OnInit, OnDestroy {
   }
 
   setStatus(status: UserStatus) {
+    if (status === 'agentic') {
+      this.agentPickerOpen.set(true);
+      return;
+    }
     this.userSvc.updateStatus(status).subscribe();
     this.statusMenuOpen.set(false);
+  }
+
+  openAgentPicker() {
+    this.agentPickerOpen.set(true);
+  }
+
+  backToStatusMenu() {
+    this.agentPickerOpen.set(false);
+  }
+
+  selectAgentForAgentic(agentId: string) {
+    this.userSvc.updateStatus('agentic').subscribe();
+    this.statusMenuOpen.set(false);
+    this.agentPickerOpen.set(false);
+    const agent = this.agents().find(a => a.id === agentId);
+    if (agent) this.navigateToAgent(agent);
   }
 
   private syncActiveChannelFromUrl() {

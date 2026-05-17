@@ -7,11 +7,11 @@ import { Message, LANGUAGE_MAP, getUserColor, getInitials } from '../../../core/
   standalone: true,
   imports: [CommonModule],
   template: `
-    <div class="flex gap-4 group">
+    <div class="flex gap-4 group mb-6">
 
       <!-- Avatar -->
       <div class="w-9 h-9 rounded-xl flex items-center justify-center text-xs font-bold
-                  flex-shrink-0 shadow-sm"
+                  flex-shrink-0"
            [ngClass]="avatarClass()">
         {{ initials() }}
       </div>
@@ -21,25 +21,24 @@ import { Message, LANGUAGE_MAP, getUserColor, getInitials } from '../../../core/
 
         <!-- Ligne métadonnées : nom · heure · langue · traduit · agentic -->
         <div class="flex items-center gap-2 mb-1.5 flex-wrap">
-          <span class="text-xs font-bold dark:text-zinc-100 text-zinc-900">
+          <span class="text-xs font-semibold dark:text-zinc-100 text-zinc-800">
             {{ message.senderUsername }}
           </span>
-          <span class="text-[10px] text-zinc-400 font-medium">
+          <span class="text-[10px] text-zinc-400">
             {{ message.createdAt | date:'HH:mm' }}
           </span>
-          <span class="text-[9px] px-1.5 py-0.5 rounded font-bold text-zinc-500 dark:text-zinc-400
-                       dark:bg-white/10 bg-zinc-100 border dark:border-white/5 border-zinc-200">
+          <span class="text-[9px] px-1.5 py-0.5 rounded font-bold dark:text-zinc-500 text-zinc-400
+                       dark:bg-white/5 bg-zinc-100">
             {{ langBadge() }}
           </span>
           <span *ngIf="isTranslated()"
-                class="text-[9px] flex items-center text-brand-orange font-bold px-1.5 py-0.5
-                       rounded-full bg-brand-orange/10">
+                class="text-[9px] flex items-center text-brand-orange font-semibold">
             文 traduit
           </span>
           <span *ngIf="message.isAgentic"
                 class="text-[8px] px-1.5 py-0.5 rounded font-bold uppercase tracking-tighter
-                       bg-brand-orange/20 text-brand-orange">
-            AGENTIC
+                       bg-brand-orange/15 text-brand-orange">
+            agentic
           </span>
           <span *ngIf="message.isPinned" class="text-[9px] text-amber-400">📌</span>
         </div>

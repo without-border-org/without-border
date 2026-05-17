@@ -105,7 +105,7 @@ import { AgentService } from '../../../core/services/agent.service';
         <!-- ── Messages (visible en mode chat uniquement) ── -->
         <ng-container *ngIf="!isAgentChannel() || agentTab() === 'chat'">
           <div #messagesEl
-               class="flex-1 overflow-y-auto custom-scrollbar px-6 pt-24 pb-4 space-y-6"
+               class="flex-1 overflow-y-auto custom-scrollbar px-6 pt-24 pb-4"
                (scroll)="onScroll($event)">
 
             <!-- Load more -->
@@ -345,9 +345,7 @@ import { AgentService } from '../../../core/services/agent.service';
                   <div class="mt-3 px-[10px] py-[8px] rounded-lg dark:bg-zinc-900 bg-zinc-50 border dark:border-brand-darkBorder border-zinc-200 border-l-[3px] border-l-brand-orange">
                     <div class="text-[10px] font-bold uppercase tracking-[0.07em] text-brand-orange mb-1.5">Last AI Response</div>
                     <div class="text-[12px] dark:text-zinc-300 text-zinc-600 leading-[1.65]">
-                      {{ currentAgent()?.name === 'ProjectBot'
-                        ? 'Bonjour @Sophie — le jalon Q4 est prévu le 15 nov. Je peux organiser une réunion de synchronisation cette semaine si vous le souhaitez.'
-                        : 'Mode veille. Activation automatique dès qu\'un message nécessite une traduction.' }}
+                      {{ lastAgentResponse() }}
                     </div>
                   </div>
                 </div>
@@ -528,7 +526,7 @@ export class ConversationComponent implements OnInit, OnChanges, OnDestroy, Afte
   hasMore        = signal(false);
   currentPage    = signal(1);
   showParticipants = signal(false);
-  agentTab       = signal<'chat' | 'config'>('chat');
+  agentTab       = signal<'chat' | 'config'>('config');
   messageText    = '';
   typingText     = signal('');
 
@@ -549,6 +547,14 @@ export class ConversationComponent implements OnInit, OnChanges, OnDestroy, Afte
     return this.agentSvc.agents().find(a => a.name === ch.name) ?? null;
   });
 
+  lastAgentResponse = computed(() => {
+    const agent = this.currentAgent();
+    if (agent?.name === 'ProjectBot') {
+      return 'Bonjour @Sophie — le jalon Q4 est prévu le 15 nov. Je peux organiser une réunion de synchronisation cette semaine si vous le souhaitez.';
+    }
+    return "Mode veille. Activation automatique dès qu'un message nécessite une traduction.";
+  });
+
   private subs: Subscription[] = [];
   private shouldScroll = true;
   private typingTimer: ReturnType<typeof setTimeout> | null = null;
@@ -565,6 +571,7 @@ export class ConversationComponent implements OnInit, OnChanges, OnDestroy, Afte
       this.loading.set(true);
       this.shouldScroll = true;
       this.typingText.set('');
+      this.agentTab.set('config');
 
       this.loadChannel();
       this.loadMessages();
