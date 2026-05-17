@@ -27,11 +27,13 @@
       "serviceAccountsEnabled": false,
       "redirectUris": [
         "http://localhost:4200/*",
-        "http://127.0.0.1:4200/*"
+        "http://127.0.0.1:4200/*",
+        "https://wb.canadaquebec.ca/app/*"
       ],
       "webOrigins": [
         "http://localhost:4200",
-        "http://127.0.0.1:4200"
+        "http://127.0.0.1:4200",
+        "https://wb.canadaquebec.ca"
       ],
       "attributes": {
         "pkce.code.challenge.method": "S256"

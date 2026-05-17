@@ -4,11 +4,11 @@ services:
     image: postgres:16-alpine
     container_name: wb_postgres
     environment:
-      POSTGRES_DB: withoutborder
-      POSTGRES_USER: wb_user
-      POSTGRES_PASSWORD: wb_password
-    ports:
-      - "5432:5432"
+      POSTGRES_DB: ${POSTGRES_DB:-withoutborder}
+      POSTGRES_USER: ${POSTGRES_USER:-wb_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-wb_password}
+    expose:
+      - "5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -16,65 +16,87 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - app-network
+    restart: unless-stopped
 
   ollama:
     image: ollama/ollama:latest
     container_name: wb_ollama
-    ports:
-      - "11434:11434"
+    expose:
+      - "11434"
     volumes:
       - ollama_data:/root/.ollama
+    environment:
+      - OLLAMA_MODELS=/root/.ollama/models
+    networks:
+      - app-network
+    restart: unless-stopped
 
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
     container_name: wb_backend
-    ports:
-      - "8000:8000"
+    expose:
+      - "8000"
     env_file:
-      - ./backend/.env.example
+      - .env
     environment:
-      DATABASE_URL: postgresql+asyncpg://wb_user:wb_password@postgres:5432/withoutborder
+      DATABASE_URL: postgresql+asyncpg://wb_user:${POSTGRES_PASSWORD:-wb_password}@postgres:5432/${POSTGRES_DB:-withoutborder}
       OLLAMA_BASE_URL: http://ollama:11434
-      ALLOWED_ORIGINS: '["http://localhost:4200","http://localhost:3000","http://127.0.0.1:4200"]'
+      ALLOWED_ORIGINS: '["https://${DOMAIN:-localhost}"]'
       # ── Keycloak / OIDC ───────────────────────────────────────────────────
       KEYCLOAK_URL: ${KEYCLOAK_URL:-https://auth.manga-pics.com}
       KEYCLOAK_REALM: ${KEYCLOAK_REALM:-without-border}
       KEYCLOAK_AUDIENCE: ${KEYCLOAK_AUDIENCE:-without-border-frontend}
       KEYCLOAK_VERIFY_AUD: ${KEYCLOAK_VERIFY_AUD:-true}
-      # ── Auth bypass (LOCAL DEV ONLY) ─────────────────────────────────────
+      # ── Auth bypass ──────────────────────────────────────────────────────
       AUTH_DISABLED: ${AUTH_DISABLED:-false}
-      AUTH_DISABLED_USER_ID: ${AUTH_DISABLED_USER_ID:-}
+      # ── Seeding & LLM ────────────────────────────────────────────────────
+      AUTO_SEED: ${AUTO_SEED:-false}
+      LLM_PROVIDER: ${LLM_PROVIDER:-ollama}
+      LLM_MODEL: ${LLM_MODEL:-gemma3:4b}
     depends_on:
       postgres:
         condition: service_healthy
     volumes:
-      - ./backend:/app
       - uploads_data:/app/uploads
-    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000
+    networks:
+      - app-network
+    restart: unless-stopped
 
   frontend:
     build:
-      context: ./frontend
-      dockerfile: Dockerfile.dev
+      context: .
+      dockerfile: frontend/Dockerfile
     container_name: wb_frontend
-    ports:
-      - "4200:4200"
-    environment:
-      - NODE_ENV=development
-    volumes:
-      - ./frontend/src:/app/src
-      # ↑ Only mount src/, NOT the whole dir — avoids node_modules conflict
-      - ./frontend/angular.json:/app/angular.json
-      - ./frontend/tsconfig.json:/app/tsconfig.json
-      - ./frontend/tsconfig.app.json:/app/tsconfig.app.json
-      - ./frontend/tailwind.config.js:/app/tailwind.config.js
-      - ./frontend/postcss.config.js:/app/postcss.config.js
+    expose:
+      - "80"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=traefik_network"
+      - "traefik.http.services.wb.loadbalancer.server.port=80"
+      - "traefik.http.routers.wb.rule=Host(`${DOMAIN}`)"
+      - "traefik.http.routers.wb.tls=${TRAEFIK_TLS:-true}"
+      - "traefik.http.routers.wb.tls.certresolver=${TRAEFIK_CERT_RESOLVER:-myhttpchallenge}"
+      - "traefik.http.routers.wb.middlewares=wb-https-headers"
+      - "traefik.http.middlewares.wb-https-headers.headers.customRequestHeaders.X-Forwarded-Proto=https"
     depends_on:
       - backend
+    networks:
+      - app-network
+      - traefik_network
+    restart: unless-stopped
 
 volumes:
   postgres_data:
   ollama_data:
   uploads_data:
+
+networks:
+  app-network:
+    driver: bridge
+  traefik_network:
+    external: true
