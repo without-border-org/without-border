@@ -1,7 +1,7 @@
 export const environment = {
   production: true,
   apiUrl: '/app/api',
-  authDisabled: false,
+  authDisabled: true,
   keycloak: {
     url: 'https://auth.manga-pics.com',
     realm: 'without-border',
