@@ -31,3 +31,5 @@ backend/uploads/
 # Scripts secrets (never commit)
 scripts/provision_keycloak.env
 .playwright-mcp/
+frontend/test-results/
+frontend/playwright-report/

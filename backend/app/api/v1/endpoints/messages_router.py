@@ -1,5 +1,6 @@
 """Messages endpoints — REST + WebSocket real-time chat."""
 import json
+import logging
 import uuid
 from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, HTTPException, WebSocket, WebSocketDisconnect
@@ -53,11 +54,31 @@ async def get_messages(
     user_repo = UserRepository(db)
     messages, total = await msg_repo.get_paginated(channel_id, page, page_size)
     items = []
+    created_translation = False
     for msg in messages:
         sender = await user_repo.get_by_id(msg.sender_id)
         translated = await msg_repo.get_cached_translation(msg.id, current_user.preferred_language)
+        if translated is None and msg.original_language != current_user.preferred_language:
+            try:
+                translated = await translation_svc.translate_with_cache(
+                    db=db,
+                    message_id=msg.id,
+                    text=msg.original_content,
+                    target_language=current_user.preferred_language,
+                    source_language=msg.original_language,
+                )
+                created_translation = True
+            except Exception as exc:
+                logging.getLogger(__name__).warning(
+                    "Lazy translation failed for message %s and language %s: %s",
+                    msg.id,
+                    current_user.preferred_language,
+                    exc,
+                )
         reactions = await msg_repo.get_reactions_grouped(msg.id, current_user.id)
         items.append(MessageRead(**_build_message_read(msg, sender, translated, reactions)))
+    if created_translation:
+        await db.commit()
     return PaginatedMessages(
         items=items, total=total, page=page, page_size=page_size,
         has_more=total > page * page_size,
@@ -219,10 +240,10 @@ async def websocket_chat(
                         db=db, message_id=msg.id, text=content,
                         source_language=source_lang, target_languages=target_langs,
                     )
+                    await db.commit()
                 except Exception as exc:
                     # Translation service unavailable (e.g. Ollama not ready).
                     # Fall back to original content so the message is still delivered.
-                    import logging
                     logging.getLogger(__name__).warning(
                         "Translation failed for message %s, falling back to original: %s",
                         msg.id, exc,
@@ -257,7 +278,6 @@ async def websocket_chat(
                         incoming=content, msg_repo=msg_repo, notif_repo=notif_repo,
                     )
                 except Exception as exc:
-                    import logging
                     logging.getLogger(__name__).warning(
                         "Agentic reply failed for channel %s: %s", channel_id, exc
                     )

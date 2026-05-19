@@ -546,16 +546,9 @@ export class ConversationComponent implements OnInit, OnChanges, OnDestroy, Afte
   participantsPreview = computed(() => this.members().slice(0, 3));
   participantsOverflow = computed(() => Math.max(0, this.members().length - 3));
 
-  isAgentChannel = computed(() => {
-    const ch = this.channel();
-    return ch?.type === 'pair' && (ch.name === 'ProjectBot' || ch.name === 'TransBot');
-  });
+  isAgentChannel = computed(() => this.agentSvc.isAgentChannel(this.channel(), this.channelSvc.channels()));
 
-  currentAgent = computed(() => {
-    const ch = this.channel();
-    if (!ch) return null;
-    return this.agentSvc.agents().find(a => a.name === ch.name) ?? null;
-  });
+  currentAgent = computed(() => this.agentSvc.getAgentForChannel(this.channel(), this.channelSvc.channels()) ?? null);
 
   lastAgentResponse = computed(() => {
     const agent = this.currentAgent();

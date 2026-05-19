@@ -49,6 +49,11 @@ class UserRepository:
         )
         return r.scalar() or 0
 
+    async def get_all_active(self) -> list[User]:
+        """Return all active users — used by the dev user-picker."""
+        r = await self.db.execute(select(User).where(User.is_active == True).order_by(User.username))
+        return list(r.scalars().all())
+
 
 class ChannelRepository:
     def __init__(self, db: AsyncSession):

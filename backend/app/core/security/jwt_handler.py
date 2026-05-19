@@ -7,7 +7,7 @@ This module handles:
 """
 import uuid
 from datetime import datetime, timedelta, timezone
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, Header, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import JWTError, jwt
 
@@ -52,11 +52,13 @@ def decode_token(token: str) -> dict | None:
 # ─── Keycloak & Bypass Auth ─────────────────────────────────────────────
 
 
-async def _get_bypass_user() -> UserRead:
-    """Returns the first active user when AUTH_DISABLED=true.
-    
-    This is used for local development without Keycloak.
-    Raises 503 if no user exists in DB.
+async def _get_bypass_user(user_id_override: str | None = None) -> UserRead:
+    """Returns the user for AUTH_DISABLED mode.
+
+    Priority order:
+    1. user_id_override (from X-Dev-User-Id header or dev_user_id WS param)
+    2. AUTH_DISABLED_USER_ID env var
+    3. First active user in DB
     """
     from app.core.database import AsyncSessionLocal
     from app.repositories.repositories import UserRepository
@@ -65,10 +67,16 @@ async def _get_bypass_user() -> UserRead:
 
     async with AsyncSessionLocal() as db:
         repo = UserRepository(db)
-        # Use configured user id, or fall back to first active user in DB
-        if settings.AUTH_DISABLED_USER_ID:
-            user = await repo.get_by_id(uuid.UUID(settings.AUTH_DISABLED_USER_ID))
+        uid = user_id_override or settings.AUTH_DISABLED_USER_ID or None
+        if uid:
+            try:
+                user = await repo.get_by_id(uuid.UUID(uid))
+            except (ValueError, AttributeError):
+                user = None
         else:
+            user = None
+
+        if not user:
             result = await db.execute(select(User).where(User.is_active == True).limit(1))
             user = result.scalar_one_or_none()
 
@@ -82,11 +90,13 @@ async def _get_bypass_user() -> UserRead:
 
 async def get_current_user(
     credentials: HTTPAuthorizationCredentials = Depends(security),
+    x_dev_user_id: str | None = Header(default=None, alias="X-Dev-User-Id"),
 ) -> UserRead:
     """FastAPI dependency — authenticate user via Keycloak or AUTH_DISABLED bypass.
     
     Flow:
-    1. If AUTH_DISABLED=true: return bypass user (no token validation)
+    1. If AUTH_DISABLED=true: return bypass user identified by X-Dev-User-Id header
+       (or AUTH_DISABLED_USER_ID env var, or first active user)
     2. Otherwise: validate Keycloak token (RS256 via JWKS)
     3. Perform lazy-sync: create/update user in local DB
     4. Return UserRead object
@@ -96,7 +106,7 @@ async def get_current_user(
         HTTPException(503): Keycloak unreachable or no user in DB (AUTH_DISABLED=true)
     """
     if settings.AUTH_DISABLED:
-        return await _get_bypass_user()
+        return await _get_bypass_user(x_dev_user_id)
 
     if not credentials:
         raise HTTPException(

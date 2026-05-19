@@ -4,17 +4,20 @@ import { environment } from '../../../environments/environment';
 import { Message, WsEvent, PresenceUser } from '../models';
 import { AuthService } from './auth.service';
 import { MessageService } from './channel.service';
+import { DevUserService } from './dev-user.service';
 
 @Injectable({ providedIn: 'root' })
 export class ChatWebSocketService {
   private auth = inject(AuthService);
   private msgSvc = inject(MessageService);
+  private devUserSvc = inject(DevUserService);
 
   private ws: WebSocket | null = null;
   private _events$ = new Subject<WsEvent>();
   private _typingUsers = signal<Set<string>>(new Set());
   private _onlineUsers = signal<Map<string, PresenceUser>>(new Map());
   private currentChannelId: string | null = null;
+  private _pendingMessages: object[] = [];
 
   readonly typingUsers = this._typingUsers.asReadonly();
   readonly onlineUsers = this._onlineUsers.asReadonly();
@@ -45,9 +48,18 @@ export class ChatWebSocketService {
     }
 
     const tokenParam = token ? `?token=${token}` : '?token=';
-    this.ws = new WebSocket(`${wsBase}${wsApiPath}/channels/${channelId}${tokenParam}`);
+    const devUserParam = environment.authDisabled
+      ? `&dev_user_id=${this.devUserSvc.selectedId() ?? ''}`
+      : '';
+    this.ws = new WebSocket(`${wsBase}${wsApiPath}/channels/${channelId}${tokenParam}${devUserParam}`);
 
-    this.ws.onopen = () => console.log('[WS] Connected to', channelId);
+    this.ws.onopen = () => {
+      console.log('[WS] Connected to', channelId);
+      // Drain any messages queued while the connection was opening
+      while (this._pendingMessages.length > 0) {
+        this.ws!.send(JSON.stringify(this._pendingMessages.shift()));
+      }
+    };
     this.ws.onmessage = ({ data }) => {
       try {
         this._events$.next(JSON.parse(data));
@@ -58,6 +70,7 @@ export class ChatWebSocketService {
   }
 
   disconnect(): void {
+    this._pendingMessages = [];
     this.ws?.close();
     this.ws = null;
     this.currentChannelId = null;
@@ -99,6 +112,9 @@ export class ChatWebSocketService {
   private _send(payload: object): void {
     if (this.ws?.readyState === WebSocket.OPEN) {
       this.ws.send(JSON.stringify(payload));
+    } else if (this.ws?.readyState === WebSocket.CONNECTING) {
+      // Queue and flush once onopen fires
+      this._pendingMessages.push(payload);
     }
   }
 }

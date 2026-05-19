@@ -15,6 +15,16 @@ import aiofiles
 router = APIRouter(prefix="/users", tags=["users"])
 
 
+@router.get("/dev/list", response_model=list[UserPublic])
+async def list_dev_users(db: AsyncSession = Depends(get_db)):
+    """Return all active users for the dev user-picker. Only available when AUTH_DISABLED=true."""
+    if not settings.AUTH_DISABLED:
+        from fastapi import status as http_status
+        raise HTTPException(status_code=http_status.HTTP_404_NOT_FOUND, detail="Not found")
+    repo = UserRepository(db)
+    return await repo.get_all_active()
+
+
 @router.get("/me", response_model=UserRead)
 async def get_me(current_user: UserRead = Depends(get_current_user)):
     return current_user

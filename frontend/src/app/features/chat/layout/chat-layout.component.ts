@@ -11,11 +11,13 @@ import { UserService } from '../../../core/services/user.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { AgentService } from '../../../core/services/agent.service';
 import { Agent, Channel, ChannelMember, UserStatus, LANGUAGE_MAP, getUserColor, getInitials } from '../../../core/models';
+import { DevUserPickerComponent } from '../components/dev-user-picker.component';
+import { environment } from '../../../../environments/environment';
 
 @Component({
   selector: 'wb-chat-layout',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, RouterOutlet],
+  imports: [CommonModule, FormsModule, RouterLink, RouterOutlet, DevUserPickerComponent],
   template: `
     <!-- Root: dark/light toggle applied on <html>, body inherits -->
     <div class="h-screen flex overflow-hidden transition-colors duration-300
@@ -318,7 +320,18 @@ import { Agent, Channel, ChannelMember, UserStatus, LANGUAGE_MAP, getUserColor, 
               </div>
             </div>
             <div class="flex-1 min-w-0">
-              <p class="text-xs font-bold truncate dark:text-white text-zinc-900">{{ user()?.username }}</p>
+              <div class="flex items-center gap-1 min-w-0">
+                <p class="text-xs font-bold truncate dark:text-white text-zinc-900">{{ user()?.username }}</p>
+                <a routerLink="/profile"
+                   (click)="$event.stopPropagation()"
+                   class="flex-shrink-0 p-1 rounded-md dark:text-zinc-400 text-zinc-500 dark:hover:bg-white/8 hover:bg-slate-100 transition-all"
+                   title="Profil & paramètres"
+                   aria-label="Profil & paramètres">
+                  <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" class="w-3.5 h-3.5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M10 3.25a1.25 1.25 0 011.25 1.25v.34a5.32 5.32 0 011.14.47l.24-.24a1.25 1.25 0 011.77 1.77l-.24.24c.2.36.36.74.47 1.14h.34a1.25 1.25 0 010 2.5h-.34a5.32 5.32 0 01-.47 1.14l.24.24a1.25 1.25 0 11-1.77 1.77l-.24-.24a5.32 5.32 0 01-1.14.47v.34a1.25 1.25 0 01-2.5 0v-.34a5.32 5.32 0 01-1.14-.47l-.24.24a1.25 1.25 0 11-1.77-1.77l.24-.24a5.32 5.32 0 01-.47-1.14H4.5a1.25 1.25 0 010-2.5h.34c.11-.4.27-.78.47-1.14l-.24-.24a1.25 1.25 0 011.77-1.77l.24.24c.36-.2.74-.36 1.14-.47V4.5A1.25 1.25 0 0110 3.25zm0 4a2.75 2.75 0 100 5.5 2.75 2.75 0 000-5.5z"/>
+                  </svg>
+                </a>
+              </div>
               <p class="text-[9px] text-zinc-500 font-medium">{{ userStatusLabel() }}</p>
             </div>
             <!-- Status dot -->
@@ -333,6 +346,9 @@ import { Agent, Channel, ChannelMember, UserStatus, LANGUAGE_MAP, getUserColor, 
       <main class="flex-1 flex flex-col relative min-w-0">
         <router-outlet />
       </main>
+
+      <!-- Dev user picker — only in AUTH_DISABLED mode -->
+      <wb-dev-user-picker *ngIf="authDisabled" />
 
     </div>
   `,
@@ -355,11 +371,12 @@ export class ChatLayoutComponent implements OnInit, OnDestroy {
   // Expose helpers to template
   getInitials = getInitials;
 
-  isDark      = signal(true);
-  searchQuery = signal('');
-  user        = this.authSvc.user;
-  channels    = this.channelSvc.channels;
-  agents      = this.agentSvc.agents;
+  isDark        = signal(true);
+  searchQuery   = signal('');
+  user          = this.authSvc.user;
+  channels      = this.channelSvc.channels;
+  agents        = this.agentSvc.agents;
+  authDisabled  = environment.authDisabled;
 
   /** Status menu open/closed state */
   statusMenuOpen = signal(false);
@@ -391,16 +408,7 @@ export class ChatLayoutComponent implements OnInit, OnDestroy {
   );
 
   /** Maps agent.id → DM channel.id for the Agents IA section. */
-  agentChannelMap = computed(() => {
-    const map = new Map<string, string>();
-    this.channels()
-      .filter(c => c.type === 'pair' && c.description === 'Agent IA')
-      .forEach(c => {
-        const agent = this.agents().find(a => a.name === c.name);
-        if (agent) map.set(agent.id, c.id);
-      });
-    return map;
-  });
+  agentChannelMap = computed(() => this.agentSvc.buildAgentChannelMap(this.channels()));
 
   langBadge = computed(() => {
     const lang = this.user()?.preferredLanguage;
@@ -533,8 +541,43 @@ export class ChatLayoutComponent implements OnInit, OnDestroy {
   }
 
   navigateToAgent(agent: Agent) {
-    const channelId = this.agentChannelMap().get(agent.id);
-    if (channelId) this.navigate(channelId);
+    const channel = this.agentSvc.findChannelForAgent(agent, this.channels());
+    if (channel) {
+      this.agentSvc.linkChannelToAgent(channel.id, agent.id);
+      this.navigate(channel.id);
+      return;
+    }
+
+    // There is no dedicated backend endpoint to open/create an agent DM yet, so retry with a fresh
+    // channel list and log enough context to diagnose a missing server-side mapping.
+    this.channelSvc.loadChannels().subscribe({
+      next: () => {
+        const refreshedChannel = this.agentSvc.findChannelForAgent(agent, this.channels());
+        if (refreshedChannel) {
+          this.agentSvc.linkChannelToAgent(refreshedChannel.id, agent.id);
+          this.navigate(refreshedChannel.id);
+          return;
+        }
+
+        console.error('[ChatLayout] No agent channel found for agent', {
+          agentId: agent.id,
+          agentName: agent.name,
+          availableChannels: this.channels().map(channel => ({
+            id: channel.id,
+            name: channel.name,
+            type: channel.type,
+            description: channel.description,
+          })),
+        });
+      },
+      error: error => {
+        console.error('[ChatLayout] Failed to refresh channels before opening agent', {
+          agentId: agent.id,
+          agentName: agent.name,
+          error,
+        });
+      },
+    });
   }
 
   /** Fetch members for every pair channel to get partner info (name, status, role). */
