@@ -207,6 +207,9 @@ async def websocket_chat(
                     content=content, language=source_lang,
                     is_agentic=False, parent_id=parent_id,
                 )
+                # Commit immediately so the message survives even if later
+                # steps (translation, agentic replies) raise an exception.
+                await db.commit()
 
                 members = await ch_repo.get_members(channel_id)
                 target_langs = list({m.preferred_language for m in members})
@@ -235,6 +238,7 @@ async def websocket_chat(
                     })
 
                 # Check for mentions
+                has_mention = False
                 for member in members:
                     if f"@{member.username}" in content and member.id != user_id:
                         await notif_repo.create(
@@ -242,6 +246,9 @@ async def websocket_chat(
                             channel_id=channel_id, message_id=msg.id,
                             content=f"{user.username} mentioned you",
                         )
+                        has_mention = True
+                if has_mention:
+                    await db.commit()
 
                 # Trigger agentic replies (best-effort — never crash the WS)
                 try:
