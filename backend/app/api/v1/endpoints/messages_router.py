@@ -70,11 +70,11 @@ def _build_message_read(msg, sender, translated: str | None, reactions: list) ->
 @router.get("/channels/{channel_id}/messages", response_model=PaginatedMessages)
 async def get_messages(
     channel_id: uuid.UUID,
+    background_tasks: BackgroundTasks,
     page: int = 1,
     page_size: int = 50,
     current_user: UserRead = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
-    background_tasks: BackgroundTasks,
 ):
     ch_repo = ChannelRepository(db)
     if not await ch_repo.is_member(channel_id, current_user.id):
