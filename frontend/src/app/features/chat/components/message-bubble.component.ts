@@ -59,11 +59,11 @@ import { Message, LANGUAGE_MAP, getUserColor, getInitials } from '../../../core/
             </div>
 
             <!-- Contenu texte -->
-            <p *ngIf="!showOriginal()">{{ displayContent() }}</p>
-            <p *ngIf="showOriginal()" class="italic opacity-75">{{ message.originalContent }}</p>
+            <p *ngIf="!showOriginal() || !isTranslated()">{{ displayContent() }}</p>
+            <p *ngIf="showOriginal() && isTranslated()" class="italic opacity-75">{{ message.originalContent }}</p>
 
             <!-- Toggle original / traduction -->
-            <button *ngIf="message.translatedContent && message.translatedContent !== message.originalContent"
+            <button *ngIf="isTranslated()"
                     (click)="showOriginal.update(v => !v)"
                     class="mt-1.5 text-[10px] opacity-60 hover:opacity-100 transition-opacity block">
               {{ showOriginal() ? '🌍 Voir la traduction' : '📝 Voir l\'original (' + langBadge() + ')' }}
@@ -134,12 +134,17 @@ export class MessageBubbleComponent {
   }
 
   isTranslated(): boolean {
-    const originalLang = this.message.originalLanguage;
-    return !!originalLang && originalLang !== this.currentUserLang && !!this.message.translatedContent;
+    return !!this.message.originalLanguage
+      && this.message.originalLanguage !== this.currentUserLang
+      && !!this.message.translatedContent
+      && this.message.translatedContent !== this.message.originalContent;
   }
 
   displayContent(): string {
-    return this.message.translatedContent || this.message.originalContent;
+    if (this.message.translatedContent && this.message.originalLanguage !== this.currentUserLang) {
+      return this.message.translatedContent;
+    }
+    return this.message.originalContent;
   }
 
   isImage(): boolean {
