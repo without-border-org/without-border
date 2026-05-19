@@ -17,6 +17,7 @@ export class ChatWebSocketService {
   private _typingUsers = signal<Set<string>>(new Set());
   private _onlineUsers = signal<Map<string, PresenceUser>>(new Map());
   private currentChannelId: string | null = null;
+  private _pendingMessages: object[] = [];
 
   readonly typingUsers = this._typingUsers.asReadonly();
   readonly onlineUsers = this._onlineUsers.asReadonly();
@@ -52,7 +53,13 @@ export class ChatWebSocketService {
       : '';
     this.ws = new WebSocket(`${wsBase}${wsApiPath}/channels/${channelId}${tokenParam}${devUserParam}`);
 
-    this.ws.onopen = () => console.log('[WS] Connected to', channelId);
+    this.ws.onopen = () => {
+      console.log('[WS] Connected to', channelId);
+      // Drain any messages queued while the connection was opening
+      while (this._pendingMessages.length > 0) {
+        this.ws!.send(JSON.stringify(this._pendingMessages.shift()));
+      }
+    };
     this.ws.onmessage = ({ data }) => {
       try {
         this._events$.next(JSON.parse(data));
@@ -63,6 +70,7 @@ export class ChatWebSocketService {
   }
 
   disconnect(): void {
+    this._pendingMessages = [];
     this.ws?.close();
     this.ws = null;
     this.currentChannelId = null;
@@ -104,6 +112,9 @@ export class ChatWebSocketService {
   private _send(payload: object): void {
     if (this.ws?.readyState === WebSocket.OPEN) {
       this.ws.send(JSON.stringify(payload));
+    } else if (this.ws?.readyState === WebSocket.CONNECTING) {
+      // Queue and flush once onopen fires
+      this._pendingMessages.push(payload);
     }
   }
 }
