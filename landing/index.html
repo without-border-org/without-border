@@ -979,43 +979,48 @@
 
   /* ===== Why Gemma — compare ===== */
   .why-compare {
-    display: grid; grid-template-columns: 1fr 1fr; gap: 24px;
+    background: var(--surface);
+    border: 2px solid var(--hairline);
+    border-radius: var(--r-lg);
+    box-shadow: 0 4px 24px rgba(0,0,0,.07);
+    overflow: hidden;
   }
-  @media (max-width: 720px) { .why-compare { grid-template-columns: 1fr; } }
+  .why-compare-inner {
+    display: grid; grid-template-columns: 1fr 1fr 1fr;
+  }
+  @media (max-width: 720px) { .why-compare-inner { grid-template-columns: 1fr; } }
   .why-col {
     padding: 32px 28px;
-    border-radius: var(--r-lg);
-    border: 1px solid var(--hairline);
-    background: var(--surface);
-    box-shadow: var(--shadow-1);
+    border-right: 1px solid var(--hairline);
+  }
+  .why-col:last-child { border-right: none; }
+  @media (max-width: 720px) {
+    .why-col { border-right: none; border-bottom: 1px solid var(--hairline); }
+    .why-col:last-child { border-bottom: none; }
   }
   .why-col-good {
-    background: linear-gradient(170deg, color-mix(in oklab,var(--accent) 9%,transparent), var(--surface) 60%);
-    border-color: color-mix(in oklab,var(--accent) 22%,var(--hairline));
+    background: color-mix(in oklab,var(--accent) 7%,transparent);
+  }
+  .why-col-neutral {
+    background: color-mix(in oklab,var(--fg) 3%,transparent);
   }
   .why-col-head {
-    display: flex; align-items: center; gap: 10px; margin-bottom: 22px;
+    margin-bottom: 24px;
   }
-  .why-col-head h3 { font-size: 18px; margin: 0; }
-  .why-mark {
-    width: 22px; height: 22px; border-radius: 50%;
-    display: grid; place-items: center;
-    font-size: 12px; font-weight: 700; flex-shrink: 0;
-  }
-  .why-mark.bad  { background: rgba(239,68,68,.15); color:#EF4444; }
-  .why-mark.good { background: color-mix(in oklab,var(--accent) 18%,transparent); color:var(--accent); }
-  .why-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 13px; }
+  .why-col-head h3 { font-size: 16px; font-weight: 600; margin: 0; letter-spacing: .01em; }
+  .why-col-head h3.col-label-bad    { color: var(--fg-3); }
+  .why-col-head h3.col-label-neutral { color: var(--fg-2); }
+  .why-col-head h3.col-label-good   { color: var(--accent); }
+  .why-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 14px; }
   .why-list li {
-    display: flex; align-items: flex-start; gap: 10px;
-    font-size: 15px; color: var(--fg-2); line-height: 1.5;
+    display: flex; align-items: flex-start; gap: 9px;
+    font-size: 14.5px; color: var(--fg-2); line-height: 1.5;
   }
-  .why-list li .dot-i {
-    width: 18px; height: 18px; border-radius: 50%; flex-shrink: 0;
-    display: grid; place-items: center; font-size: 10px; font-weight: 700;
-    margin-top: 2px;
-  }
-  .why-list li.bad  .dot-i { background: rgba(239,68,68,.12); color:#EF4444; border:1.5px solid rgba(239,68,68,.35); }
-  .why-list li.good .dot-i { background:color-mix(in oklab,var(--accent) 12%,transparent); color:var(--accent); border:1.5px solid color-mix(in oklab,var(--accent) 35%,transparent); }
+  .why-list li.good { color: var(--fg); }
+  .why-list li svg { flex-shrink: 0; margin-top: 1px; }
+  .why-list li.bad  svg { color: #EF4444; }
+  .why-list li.good svg { color: var(--accent); }
+  .why-list li.neutral svg { color: #EF4444; }
 
   /* ===== Why Gemma — 3 cards ===== */
   .why-gemma-grid {
@@ -1444,31 +1449,88 @@
 
     <!-- Comparison -->
     <div class="why-compare reveal">
-      <div class="why-col why-col-bad">
-        <div class="why-col-head">
-          <span class="why-mark bad">✕</span>
-          <h3>Existing tools</h3>
+      <div class="why-compare-inner">
+        <div class="why-col why-col-neutral">
+          <div class="why-col-head">
+            <h3 class="col-label-neutral">Existing tools</h3>
+          </div>
+          <ul class="why-list">
+            <li class="bad">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+              Translation means copy-pasting to a separate service
+            </li>
+            <li class="bad">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+              AI features send your data to external clouds
+            </li>
+            <li class="bad">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+              Prompt engineering excludes non-technical contributors
+            </li>
+            <li class="bad">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+              AI authorship is invisible — erodes trust
+            </li>
+            <li class="bad">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+              High-reasoning AI requires cloud compute budgets
+            </li>
+          </ul>
         </div>
-        <ul class="why-list">
-          <li class="bad"><span class="dot-i">✕</span>Translation means copy-pasting to a separate service</li>
-          <li class="bad"><span class="dot-i">✕</span>AI features send your data to external clouds</li>
-          <li class="bad"><span class="dot-i">✕</span>Prompt engineering excludes non-technical contributors</li>
-          <li class="bad"><span class="dot-i">✕</span>AI authorship is invisible — erodes trust</li>
-          <li class="bad"><span class="dot-i">✕</span>High-reasoning AI requires cloud compute budgets</li>
-        </ul>
-      </div>
-      <div class="why-col why-col-good">
-        <div class="why-col-head">
-          <span class="why-mark good">✓</span>
-          <h3>WithoutBorder</h3>
+        <div class="why-col why-col-neutral">
+          <div class="why-col-head">
+            <h3 class="col-label-neutral">Cloud-based AI tools</h3>
+          </div>
+          <ul class="why-list">
+            <li class="neutral">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+              Fluent translation but outside the workflow
+            </li>
+            <li class="neutral">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+              Every message sent to a third-party server
+            </li>
+            <li class="neutral">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+              Requires crafted prompts for reliable output
+            </li>
+            <li class="neutral">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+              No signal distinguishing AI vs human authorship
+            </li>
+            <li class="neutral">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+              Per-token cost grows with team usage
+            </li>
+          </ul>
         </div>
-        <ul class="why-list">
-          <li class="good"><span class="dot-i">✓</span>Zero-latency translation built into every message</li>
-          <li class="good"><span class="dot-i">✓</span>Gemma 4 runs on your hardware — 0 bytes to the cloud</li>
-          <li class="good"><span class="dot-i">✓</span>Delegate to AI through natural language — no prompts needed</li>
-          <li class="good"><span class="dot-i">✓</span>Purple AGENTIC badge on every AI message — always transparent</li>
-          <li class="good"><span class="dot-i">✓</span>Edge E2B/E4B + local 26B/31B — MIT licensed, free forever</li>
-        </ul>
+        <div class="why-col why-col-good">
+          <div class="why-col-head">
+            <h3 class="col-label-good">WithoutBorder</h3>
+          </div>
+          <ul class="why-list">
+            <li class="good">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+              Zero-latency translation built into every message
+            </li>
+            <li class="good">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+              Gemma 4 runs on your hardware — 0 bytes to the cloud
+            </li>
+            <li class="good">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+              Delegate to AI through natural language — no prompts needed
+            </li>
+            <li class="good">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+              Purple AGENTIC badge on every AI message — always transparent
+            </li>
+            <li class="good">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+              Edge E2B/E4B + local 26B/31B — MIT licensed, free forever
+            </li>
+          </ul>
+        </div>
       </div>
     </div>
 
@@ -1606,9 +1668,9 @@
         the platform with your team, or talk about AI and linguistic equity — reach out anytime.
       </p>
       <div class="contact-links">
-        <a class="contact-email-link" href="mailto:dadi.service.ca@gmail.com">
+        <a class="contact-email-link" href="mailto:dadi.services.ca@gmail.com">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 7 10 7 10-7"/></svg>
-          dadi.service.ca@gmail.com
+          dadi.services.ca@gmail.com
         </a>
         <a class="btn btn-ghost" href="https://github.com/without-border-org/without-border" target="_blank" rel="noopener">★ Star on GitHub</a>
       </div>
@@ -1656,7 +1718,7 @@
         <h5>Project</h5>
         <a href="https://github.com/without-border-org/without-border" target="_blank" rel="noopener">GitHub</a>
         <a href="https://github.com/without-border-org/without-border#readme" target="_blank" rel="noopener">Docs</a>
-        <a href="mailto:dadi.service.ca@gmail.com">Contact</a>
+        <a href="mailto:dadi.services.ca@gmail.com">Contact</a>
       </div>
       <div>
         <h5>Powered by</h5>

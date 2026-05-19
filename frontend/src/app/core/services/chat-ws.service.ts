@@ -25,8 +25,27 @@ export class ChatWebSocketService {
 
     this.currentChannelId = channelId;
     const token = this.auth.getAccessToken();
-    const wsBase = environment.apiUrl.replace(/^https/, 'wss').replace(/^http/, 'ws');
-    this.ws = new WebSocket(`${wsBase}/api/v1/ws/channels/${channelId}?token=${token}`);
+
+    // Build an absolute WebSocket URL.
+    // - Absolute apiUrl  (local dev):  'http://localhost:8000'  → 'ws://localhost:8000'
+    //   WS path appended: '/api/v1/ws/channels/<id>'
+    // - Relative apiUrl  (production): '/app/api'
+    //   nginx proxies /app/api/v1/ → backend /api/v1/, so we resolve against window.location
+    //   and append '/v1/ws/channels/<id>' (the '/api' part is already in the relative path)
+    const apiUrl = environment.apiUrl;
+    let wsBase: string;
+    let wsApiPath: string;
+    if (/^https?:\/\//.test(apiUrl)) {
+      wsBase = apiUrl.replace(/^https/, 'wss').replace(/^http/, 'ws');
+      wsApiPath = '/api/v1/ws';
+    } else {
+      const wsProtocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
+      wsBase = `${wsProtocol}://${window.location.host}${apiUrl}`;
+      wsApiPath = '/v1/ws';
+    }
+
+    const tokenParam = token ? `?token=${token}` : '?token=';
+    this.ws = new WebSocket(`${wsBase}${wsApiPath}/channels/${channelId}${tokenParam}`);
 
     this.ws.onopen = () => console.log('[WS] Connected to', channelId);
     this.ws.onmessage = ({ data }) => {
