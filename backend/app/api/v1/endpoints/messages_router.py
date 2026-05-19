@@ -211,10 +211,21 @@ async def websocket_chat(
                 members = await ch_repo.get_members(channel_id)
                 target_langs = list({m.preferred_language for m in members})
 
-                translations = await translation_svc.translate_for_members(
-                    db=db, message_id=msg.id, text=content,
-                    source_language=source_lang, target_languages=target_langs,
-                )
+                try:
+                    translations = await translation_svc.translate_for_members(
+                        db=db, message_id=msg.id, text=content,
+                        source_language=source_lang, target_languages=target_langs,
+                    )
+                except Exception as exc:
+                    # Translation service unavailable (e.g. Ollama not ready).
+                    # Fall back to original content so the message is still delivered.
+                    import logging
+                    logging.getLogger(__name__).warning(
+                        "Translation failed for message %s, falling back to original: %s",
+                        msg.id, exc,
+                    )
+                    translations = {lang: content for lang in target_langs}
+                    translations[source_lang] = content
 
                 for member in members:
                     translated = translations.get(member.preferred_language, content)
@@ -232,11 +243,17 @@ async def websocket_chat(
                             content=f"{user.username} mentioned you",
                         )
 
-                # Trigger agentic replies
-                await _handle_agentic_replies(
-                    members=members, sender_id=user_id, channel_id=channel_id,
-                    incoming=content, msg_repo=msg_repo, notif_repo=notif_repo,
-                )
+                # Trigger agentic replies (best-effort — never crash the WS)
+                try:
+                    await _handle_agentic_replies(
+                        members=members, sender_id=user_id, channel_id=channel_id,
+                        incoming=content, msg_repo=msg_repo, notif_repo=notif_repo,
+                    )
+                except Exception as exc:
+                    import logging
+                    logging.getLogger(__name__).warning(
+                        "Agentic reply failed for channel %s: %s", channel_id, exc
+                    )
 
             elif event_type == "typing":
                 await connection_manager.broadcast_except(channel_id, user_id, {
