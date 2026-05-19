@@ -131,8 +131,9 @@ async def authenticate_websocket(websocket: WebSocket) -> dict:
         RuntimeError: If token is missing or invalid (WebSocket closed)
     """
     if settings.AUTH_DISABLED:
-        # Return a minimal claims dict for bypass mode — honour AUTH_DISABLED_USER_ID if set
-        bypass_sub = settings.AUTH_DISABLED_USER_ID or "00000000-0000-0000-0000-000000000001"
+        # Honour ?dev_user_id=<uuid> query param when in bypass mode
+        dev_user_id = websocket.query_params.get("dev_user_id")
+        bypass_sub = dev_user_id or settings.AUTH_DISABLED_USER_ID or "00000000-0000-0000-0000-000000000001"
         return {"sub": bypass_sub, "email": "bypass@test.local"}
     
     token = websocket.query_params.get("token")

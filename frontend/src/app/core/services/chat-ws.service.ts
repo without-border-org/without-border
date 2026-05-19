@@ -4,11 +4,13 @@ import { environment } from '../../../environments/environment';
 import { Message, WsEvent, PresenceUser } from '../models';
 import { AuthService } from './auth.service';
 import { MessageService } from './channel.service';
+import { DevUserService } from './dev-user.service';
 
 @Injectable({ providedIn: 'root' })
 export class ChatWebSocketService {
   private auth = inject(AuthService);
   private msgSvc = inject(MessageService);
+  private devUserSvc = inject(DevUserService);
 
   private ws: WebSocket | null = null;
   private _events$ = new Subject<WsEvent>();
@@ -45,7 +47,10 @@ export class ChatWebSocketService {
     }
 
     const tokenParam = token ? `?token=${token}` : '?token=';
-    this.ws = new WebSocket(`${wsBase}${wsApiPath}/channels/${channelId}${tokenParam}`);
+    const devUserParam = environment.authDisabled
+      ? `&dev_user_id=${this.devUserSvc.selectedId() ?? ''}`
+      : '';
+    this.ws = new WebSocket(`${wsBase}${wsApiPath}/channels/${channelId}${tokenParam}${devUserParam}`);
 
     this.ws.onopen = () => console.log('[WS] Connected to', channelId);
     this.ws.onmessage = ({ data }) => {

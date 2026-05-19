@@ -11,11 +11,13 @@ import { UserService } from '../../../core/services/user.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { AgentService } from '../../../core/services/agent.service';
 import { Agent, Channel, ChannelMember, UserStatus, LANGUAGE_MAP, getUserColor, getInitials } from '../../../core/models';
+import { DevUserPickerComponent } from '../components/dev-user-picker.component';
+import { environment } from '../../../../environments/environment';
 
 @Component({
   selector: 'wb-chat-layout',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, RouterOutlet],
+  imports: [CommonModule, FormsModule, RouterLink, RouterOutlet, DevUserPickerComponent],
   template: `
     <!-- Root: dark/light toggle applied on <html>, body inherits -->
     <div class="h-screen flex overflow-hidden transition-colors duration-300
@@ -334,6 +336,9 @@ import { Agent, Channel, ChannelMember, UserStatus, LANGUAGE_MAP, getUserColor, 
         <router-outlet />
       </main>
 
+      <!-- Dev user picker — only in AUTH_DISABLED mode -->
+      <wb-dev-user-picker *ngIf="authDisabled" />
+
     </div>
   `,
 })
@@ -355,11 +360,12 @@ export class ChatLayoutComponent implements OnInit, OnDestroy {
   // Expose helpers to template
   getInitials = getInitials;
 
-  isDark      = signal(true);
-  searchQuery = signal('');
-  user        = this.authSvc.user;
-  channels    = this.channelSvc.channels;
-  agents      = this.agentSvc.agents;
+  isDark        = signal(true);
+  searchQuery   = signal('');
+  user          = this.authSvc.user;
+  channels      = this.channelSvc.channels;
+  agents        = this.agentSvc.agents;
+  authDisabled  = environment.authDisabled;
 
   /** Status menu open/closed state */
   statusMenuOpen = signal(false);

@@ -12,6 +12,7 @@ import {
 import { environment } from '../environments/environment';
 import { routes } from './app.routes';
 import { errorInterceptor } from './core/interceptors/error.interceptor';
+import { devUserInterceptor } from './core/interceptors/dev-user.interceptor';
 
 // Only add Bearer token to requests targeting our API
 const apiUrlCondition = createInterceptorCondition<IncludeBearerTokenCondition>({
@@ -38,7 +39,7 @@ export const appConfig: ApplicationConfig = {
     },
     provideZoneChangeDetection({ eventCoalescing: true }),
     provideRouter(routes, withComponentInputBinding()),
-    provideHttpClient(withInterceptors([includeBearerTokenInterceptor, errorInterceptor])),
+    provideHttpClient(withInterceptors([devUserInterceptor, includeBearerTokenInterceptor, errorInterceptor])),
     provideAnimations(),
   ],
 };
