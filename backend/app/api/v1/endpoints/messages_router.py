@@ -74,7 +74,7 @@ async def get_messages(
     page_size: int = 50,
     current_user: UserRead = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
-    background_tasks: BackgroundTasks = BackgroundTasks(),
+    background_tasks: BackgroundTasks,
 ):
     ch_repo = ChannelRepository(db)
     if not await ch_repo.is_member(channel_id, current_user.id):
