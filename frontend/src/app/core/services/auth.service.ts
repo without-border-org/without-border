@@ -6,13 +6,19 @@ import { Observable, firstValueFrom, from, of, switchMap } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { User } from '../models';
 
-/**
- * Authentication Service
- *
- * Wraps the Keycloak instance (injected directly via DI from provideKeycloak).
- * - Normal mode: delegates all auth to Keycloak
- * - AUTH_DISABLED mode: bypasses Keycloak, direct DB access
- */
+function mapUser(raw: Record<string, unknown>): User {
+  return {
+    id: raw['id'] as string,
+    email: (raw['email'] as string) ?? '',
+    username: raw['username'] as string,
+    preferredLanguage: ((raw['preferred_language'] ?? raw['preferredLanguage']) as string) || 'fr',
+    status: ((raw['status'] as string) || 'active') as User['status'],
+    agenticEnabled: (raw['agentic_enabled'] ?? raw['agenticEnabled'] ?? false) as boolean,
+    agenticPersona: (raw['agentic_persona'] ?? raw['agenticPersona']) as string | undefined,
+    avatarUrl: (raw['avatar_url'] ?? raw['avatarUrl']) as string | undefined,
+    createdAt: (raw['created_at'] ?? raw['createdAt']) as string,
+  };
+}
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private keycloak = inject(Keycloak);
@@ -25,9 +31,10 @@ export class AuthService {
 
   async loadCurrentUser(): Promise<User | null> {
     if (environment.authDisabled) {
-      const u = await firstValueFrom(
-        this.http.get<User>(`${environment.apiUrl}/api/v1/users/me`)
+      const raw = await firstValueFrom(
+        this.http.get<Record<string, unknown>>(`${environment.apiUrl}/api/v1/users/me`)
       );
+      const u = mapUser(raw);
       this._user.set(u);
       return u;
     }
@@ -36,9 +43,10 @@ export class AuthService {
       return null;
     }
 
-    const u = await firstValueFrom(
-      this.http.get<User>(`${environment.apiUrl}/api/v1/users/me`)
+    const raw = await firstValueFrom(
+      this.http.get<Record<string, unknown>>(`${environment.apiUrl}/api/v1/users/me`)
     );
+    const u = mapUser(raw);
     this._user.set(u);
     return u;
   }

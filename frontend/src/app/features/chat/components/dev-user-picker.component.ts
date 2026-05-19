@@ -4,12 +4,7 @@ import {
 import { CommonModule } from '@angular/common';
 import { DevUserService, DevUser } from '../../../core/services/dev-user.service';
 import { AuthService } from '../../../core/services/auth.service';
-import { ChatWebSocketService } from '../../../core/services/chat-ws.service';
-import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
-import { environment } from '../../../../environments/environment';
-import { firstValueFrom } from 'rxjs';
-import { User } from '../../../core/models';
 import { ChannelService } from '../../../core/services/channel.service';
 
 /**
@@ -67,8 +62,6 @@ import { ChannelService } from '../../../core/services/channel.service';
 export class DevUserPickerComponent implements OnInit {
   private devUserSvc = inject(DevUserService);
   private authSvc    = inject(AuthService);
-  private wsSvc      = inject(ChatWebSocketService);
-  private http       = inject(HttpClient);
   private channelSvc = inject(ChannelService);
   private router     = inject(Router);
 
@@ -103,21 +96,18 @@ export class DevUserPickerComponent implements OnInit {
     this.devUserSvc.select(user.id);
     this.open.set(false);
 
-    try {
-      const me = await firstValueFrom(
-        this.http.get<User>(`${environment.apiUrl}/api/v1/users/me`)
-      );
-      this.authSvc.setUser(me);
-    } catch {
-      // Keep previous user in memory if /me refresh fails.
-    }
+    // loadCurrentUser() applies mapUser() so preferredLanguage / agenticEnabled are properly mapped
+    await this.authSvc.loadCurrentUser().catch(() => {});
 
-    this.wsSvc.disconnect();
     this.channelSvc.loadChannels().subscribe({
       next: () => {
         const firstChannel = this.channelSvc.channels()[0];
-        void this.router.navigate(firstChannel ? ['/chat', firstChannel.id] : ['/chat'], {
-          replaceUrl: true,
+        // Navigate through /chat to force the conversation component to unmount+remount,
+        // which triggers ngOnDestroy (WS disconnect) then ngOnInit (WS connect with new user).
+        void this.router.navigate(['/chat']).then(() => {
+          if (firstChannel) {
+            void this.router.navigate(['/chat', firstChannel.id]);
+          }
         });
       },
       error: () => {

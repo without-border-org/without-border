@@ -246,7 +246,8 @@ export class ProfileComponent implements OnInit, OnDestroy {
     return status ? `${status.icon} ${status.label}` : '⚫ Inactif';
   });
 
-  showAgentConfig = computed(() => this.user()?.status === 'agentic' || this.user()?.agenticEnabled === true);
+  // Always show agent config so users can configure it regardless of their current status
+  showAgentConfig = computed(() => true);
 
   constructor() {
     effect(() => {
