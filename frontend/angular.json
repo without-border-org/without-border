@@ -37,6 +37,14 @@
               "optimization": false,
               "extractLicenses": false,
               "sourceMap": true
+            },
+            "e2e": {
+              "optimization": false,
+              "extractLicenses": false,
+              "sourceMap": true,
+              "fileReplacements": [
+                { "replace": "src/environments/environment.ts", "with": "src/environments/environment.e2e.ts" }
+              ]
             }
           },
           "defaultConfiguration": "production"
@@ -45,7 +53,8 @@
           "builder": "@angular-devkit/build-angular:dev-server",
           "configurations": {
             "production": { "buildTarget": "withoutborder:build:production" },
-            "development": { "buildTarget": "withoutborder:build:development" }
+            "development": { "buildTarget": "withoutborder:build:development" },
+            "e2e": { "buildTarget": "withoutborder:build:e2e" }
           },
           "defaultConfiguration": "development"
         }

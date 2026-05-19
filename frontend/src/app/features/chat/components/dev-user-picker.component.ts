@@ -6,9 +6,11 @@ import { DevUserService, DevUser } from '../../../core/services/dev-user.service
 import { AuthService } from '../../../core/services/auth.service';
 import { ChatWebSocketService } from '../../../core/services/chat-ws.service';
 import { HttpClient } from '@angular/common/http';
+import { Router } from '@angular/router';
 import { environment } from '../../../../environments/environment';
 import { firstValueFrom } from 'rxjs';
 import { User } from '../../../core/models';
+import { ChannelService } from '../../../core/services/channel.service';
 
 /**
  * Floating picker that lets you impersonate any seeded user in AUTH_DISABLED mode.
@@ -66,6 +68,8 @@ export class DevUserPickerComponent implements OnInit {
   private authSvc    = inject(AuthService);
   private wsSvc      = inject(ChatWebSocketService);
   private http       = inject(HttpClient);
+  private channelSvc = inject(ChannelService);
+  private router     = inject(Router);
 
   open = signal(false);
   users = this.devUserSvc.users;
@@ -95,15 +99,28 @@ export class DevUserPickerComponent implements OnInit {
   async switchUser(user: DevUser): Promise<void> {
     this.devUserSvc.select(user.id);
     this.open.set(false);
-    // Reload the /me endpoint — interceptor will now send X-Dev-User-Id
+
     try {
       const me = await firstValueFrom(
         this.http.get<User>(`${environment.apiUrl}/api/v1/users/me`)
       );
       this.authSvc.setUser(me);
-    } catch { /* keep previous user */ }
-    // Reconnect WebSocket with new user
+    } catch {
+      // Keep previous user in memory if /me refresh fails.
+    }
+
     this.wsSvc.disconnect();
+    this.channelSvc.loadChannels().subscribe({
+      next: () => {
+        const firstChannel = this.channelSvc.channels()[0];
+        void this.router.navigate(firstChannel ? ['/chat', firstChannel.id] : ['/chat'], {
+          replaceUrl: true,
+        });
+      },
+      error: () => {
+        void this.router.navigate(['/chat'], { replaceUrl: true });
+      },
+    });
   }
 
   langColor(lang: string): string {
