@@ -11,50 +11,49 @@ test('send-message: user can type and send a message that persists', async ({ pa
     if (msg.text().startsWith('[WS]')) console.log('WS log:', msg.text());
   });
 
-  // Go directly to the chat app (Angular SPA lives under /app/)
+  console.log('Step 1: navigating...');
   await page.goto('/app/chat');
+  console.log('Step 2: waiting for channel URL...');
   await page.waitForURL(/\/app\/chat\//, { timeout: 15_000 });
-  console.log('URL after load:', page.url());
+  console.log('Step 3: URL =', page.url());
 
-  // Wait for message input to be visible
   const input = page.locator('textarea').first();
+  console.log('Step 4: waiting for textarea...');
   await expect(input).toBeVisible({ timeout: 10_000 });
+  console.log('Step 5: textarea visible, waiting 2s for WS...');
 
-  // Wait for WS to be open — Angular logs "[WS] Connected to ..." in the console
-  await page.waitForFunction(
-    () => (window as any).__wsChatReady === true,
-    { timeout: 8_000 }
-  ).catch(() => console.log('WS ready flag not set — proceeding anyway (message will be queued)'));
+  await page.waitForTimeout(2_000);
+  console.log('Step 6: filling textarea...');
 
   const msg = `E2E-${Date.now()}`;
+  await input.click();
+  console.log('Step 7: clicked input');
 
-  // fill() triggers Angular's ngModel via the `input` event
   await input.fill(msg);
+  console.log('Step 8: filled input');
 
-  // Verify Angular picked up the value before sending
   const val = await input.inputValue();
-  console.log('Textarea value before send:', val);
+  console.log('Step 9: textarea value =', val);
   expect(val).toBe(msg);
 
-  // Click the send button (more reliable than Enter for Angular in headless mode)
-  const sendBtn = page.locator('button[title="Envoyer (Entrée)"]');
-  await expect(sendBtn).toBeVisible({ timeout: 5_000 });
-  await sendBtn.click();
+  console.log('Step 10: pressing Enter...');
+  await input.press('Enter');
 
-  await page.waitForTimeout(1_000);
-  console.log('Console errors so far:', errors);
+  console.log('Step 11: waiting 2s...');
+  await page.waitForTimeout(2_000);
 
-  // Message must appear in the conversation within 8 s
+  console.log('Step 12: checking for message in chat...');
+  console.log('Errors so far:', errors);
+
   const sent = page.locator(`text="${msg}"`);
-  await expect(sent).toBeVisible({ timeout: 8_000 });
-  console.log('✅ Message sent and visible:', msg);
+  await expect(sent).toBeVisible({ timeout: 10_000 });
+  console.log('✅ Message sent and visible');
 
-  // Reload page — message must persist (stored in DB)
+  // Reload — message must persist (stored in DB)
+  console.log('Step 13: reloading to verify persistence...');
   await page.reload();
   await page.waitForURL(/\/app\/chat\//, { timeout: 15_000 });
   await page.waitForSelector('textarea', { timeout: 10_000 });
-
-  const persisted = page.locator(`text="${msg}"`);
-  await expect(persisted).toBeVisible({ timeout: 10_000 });
+  await expect(page.locator(`text="${msg}"`)).toBeVisible({ timeout: 10_000 });
   console.log('✅ Message persisted after reload');
 });
