@@ -278,7 +278,6 @@ async def websocket_chat(
                         incoming=content, msg_repo=msg_repo, notif_repo=notif_repo,
                     )
                 except Exception as exc:
-                    import logging
                     logging.getLogger(__name__).warning(
                         "Agentic reply failed for channel %s: %s", channel_id, exc
                     )
