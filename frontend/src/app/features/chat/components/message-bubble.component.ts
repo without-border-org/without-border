@@ -66,7 +66,7 @@ import { Message, LANGUAGE_MAP, getUserColor, getInitials } from '../../../core/
             <button *ngIf="isTranslated()"
                     (click)="showOriginal.update(v => !v)"
                     class="mt-1.5 text-[10px] opacity-60 hover:opacity-100 transition-opacity block">
-              {{ showOriginal() ? '🌍 Voir la traduction' : '📝 Voir l\'original (' + langBadge() + ')' }}
+              {{ toggleLabel() }}
             </button>
           </div>
 
@@ -145,6 +145,10 @@ export class MessageBubbleComponent {
       return this.message.translatedContent;
     }
     return this.message.originalContent;
+  }
+
+  toggleLabel(): string {
+    return this.showOriginal() ? '🌍 Voir la traduction' : `📝 Voir l'original (${this.langBadge()})`;
   }
 
   isImage(): boolean {

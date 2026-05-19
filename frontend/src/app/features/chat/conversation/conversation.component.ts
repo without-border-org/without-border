@@ -318,12 +318,12 @@ import { AgentService } from '../../../core/services/agent.service';
                   <div>
                     <label class="block text-[10.5px] font-semibold uppercase tracking-wider dark:text-zinc-500 text-zinc-400 mb-[5px]">AI Model</label>
                     <div class="w-full px-[11px] py-[9px] dark:bg-zinc-950 bg-zinc-50 border dark:border-white/10 border-zinc-300 rounded-lg dark:text-zinc-200 text-zinc-800 text-[13.5px]">
-                      Gemma 4 · 27B — High Accuracy
+                      {{ currentAgent()?.agentType ?? 'LLM' }} — Configurable via LLM_MODEL
                     </div>
                   </div>
                   <div class="mt-3 flex gap-1.5 items-start p-[8px_11px] rounded-lg dark:bg-zinc-900 bg-zinc-50 border dark:border-brand-darkBorder border-zinc-200">
                     <svg class="w-3.5 h-3.5 text-brand-orange flex-shrink-0 mt-px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-                    <span class="text-[12px] dark:text-zinc-400 text-zinc-500">Using <strong class="dark:text-zinc-200 text-zinc-700">Gemma 4 · 27B</strong> in multilingual mode. Auto-translates across 50+ languages.</span>
+                    <span class="text-[12px] dark:text-zinc-400 text-zinc-500">Using a <strong class="dark:text-zinc-200 text-zinc-700">local LLM</strong> in multilingual mode. Auto-translates across 50+ languages.</span>
                   </div>
                 </div>
               </div>
@@ -587,10 +587,15 @@ export class ConversationComponent implements OnInit, OnChanges, OnDestroy, Afte
       this.loadMembers();
       this.wsSvc.connect(this.channelId);
 
-      this.subs.push(
+    this.subs.push(
         this.wsSvc.messages$.subscribe(msg => {
           this.messages.update(list => [...list, msg]);
           this.shouldScroll = true;
+        }),
+        this.wsSvc.messageTranslated$.subscribe(({ messageId, translatedContent }) => {
+          this.messages.update(list =>
+            list.map(m => m.id === messageId ? { ...m, translatedContent } : m)
+          );
         }),
         this.wsSvc.typing$.subscribe(({ username }) => {
           this.typingText.set(`${username} écrit…`);
@@ -611,6 +616,11 @@ export class ConversationComponent implements OnInit, OnChanges, OnDestroy, Afte
       this.wsSvc.messages$.subscribe(msg => {
         this.messages.update(list => [...list, msg]);
         this.shouldScroll = true;
+      }),
+      this.wsSvc.messageTranslated$.subscribe(({ messageId, translatedContent }) => {
+        this.messages.update(list =>
+          list.map(m => m.id === messageId ? { ...m, translatedContent } : m)
+        );
       }),
       this.wsSvc.typing$.subscribe(({ username }) => {
         this.typingText.set(`${username} écrit…`);

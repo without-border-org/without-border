@@ -90,7 +90,7 @@ export interface PaginatedMessages {
 }
 
 export interface WsEvent {
-  type: 'message' | 'typing' | 'presence' | 'error';
+  type: 'message' | 'typing' | 'presence' | 'error' | 'message_translated';
   data: Record<string, unknown>;
 }
 
