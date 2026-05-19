@@ -62,10 +62,15 @@ class UserPublic(BaseModel):
     """Public user info — safe to expose to other users."""
     id: uuid.UUID
     username: str
-    preferred_language: str
+    preferred_language: str = "fr"
     status: str
     avatar_url: Optional[str]
     model_config = {"from_attributes": True}
+
+    @field_validator("preferred_language", mode="before")
+    @classmethod
+    def default_language(cls, v: Optional[str]) -> str:
+        return v or "fr"
 
 
 class UserUpdateRequest(BaseModel):

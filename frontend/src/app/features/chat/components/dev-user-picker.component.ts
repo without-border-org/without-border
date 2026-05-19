@@ -50,10 +50,11 @@ import { ChannelService } from '../../../core/services/channel.service';
                      hover:dark:bg-white/5 hover:bg-zinc-100"
               [class.font-bold]="u.id === selectedId()">
             <span class="w-6 h-6 rounded-full flex items-center justify-center text-[9px] font-bold text-white flex-shrink-0"
-                  [style.background]="langColor(u.preferred_language)">
-              {{ u.preferred_language.toUpperCase() }}
+                  [style.background]="langColor(u.preferred_language || 'fr')">
+              {{ (u.preferred_language || 'fr').toUpperCase() }}
             </span>
             <span class="truncate dark:text-zinc-200 text-zinc-800">{{ u.username }}</span>
+            <span class="ml-auto text-[9px] text-zinc-400 flex-shrink-0">{{ (u.preferred_language || 'fr').toUpperCase() }}</span>
             <svg *ngIf="u.id === selectedId()" viewBox="0 0 20 20" fill="currentColor" class="w-3 h-3 ml-auto text-amber-400 flex-shrink-0">
               <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
             </svg>
@@ -77,7 +78,9 @@ export class DevUserPickerComponent implements OnInit {
 
   currentLabel = computed(() => {
     const u = this.devUserSvc.selectedUser;
-    return u ? u.username : '…';
+    if (!u) return '…';
+    const lang = (u.preferred_language || 'fr').toUpperCase();
+    return `${u.username} · ${lang}`;
   });
 
   async ngOnInit(): Promise<void> {
