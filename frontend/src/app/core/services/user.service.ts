@@ -25,10 +25,10 @@ export class UserService {
 
   updateMe(payload: Partial<{ username: string; preferredLanguage: string; agenticEnabled: boolean; agenticPersona: string }>) {
     const body: Record<string, unknown> = {};
-    if (payload.username !== undefined) body['username'] = payload.username;
+    if (payload.username !== undefined) body['username'] = payload.username.trim();
     if (payload.preferredLanguage !== undefined) body['preferred_language'] = payload.preferredLanguage;
     if (payload.agenticEnabled !== undefined) body['agentic_enabled'] = payload.agenticEnabled;
-    if (payload.agenticPersona !== undefined) body['agentic_persona'] = payload.agenticPersona;
+    if (payload.agenticPersona !== undefined) body['agentic_persona'] = payload.agenticPersona.trim();
     return this.http.put<Record<string, unknown>>(`${this.base}/me`, body).pipe(
       tap(user => this.auth.setUser(this._mapUser(user)))
     );

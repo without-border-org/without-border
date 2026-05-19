@@ -69,10 +69,19 @@ class UserPublic(BaseModel):
 
 
 class UserUpdateRequest(BaseModel):
+    username: Optional[str] = None
     preferred_language: Optional[str] = None
     agentic_enabled: Optional[bool] = None
     agentic_persona: Optional[str] = None
 
+    @field_validator("username")
+    @classmethod
+    def username_valid(cls, v: Optional[str]) -> Optional[str]:
+        if v is None:
+            return v
+        if len(v) < 3 or len(v) > 30:
+            raise ValueError("Username must be 3-30 characters")
+        return v.lower()
 
 
 class UserStatusUpdate(BaseModel):
