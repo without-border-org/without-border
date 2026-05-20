@@ -32,7 +32,7 @@ class OllamaProvider(LLMProvider):
             "stream": False,
             "options": {"temperature": 0.3},
         }
-        async with httpx.AsyncClient(timeout=120.0) as client:
+        async with httpx.AsyncClient(timeout=30.0) as client:
             r = await client.post(f"{self.base_url}/api/chat", json=payload)
             r.raise_for_status()
             return r.json()["message"]["content"].strip()
