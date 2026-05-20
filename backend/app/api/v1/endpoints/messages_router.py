@@ -1,11 +1,12 @@
 """Messages endpoints — REST + WebSocket real-time chat."""
+import asyncio
 import json
 import logging
 import uuid
 from datetime import datetime, timezone
-from fastapi import APIRouter, Depends, HTTPException, WebSocket, WebSocketDisconnect
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, WebSocket, WebSocketDisconnect
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.core.database import get_db
+from app.core.database import get_db, AsyncSessionLocal
 from app.core.security.jwt_handler import get_current_user, decode_token
 from app.core.websocket_manager import connection_manager
 from app.repositories.repositories import (
@@ -21,6 +22,33 @@ from app.helpers.language_detector import detect_language
 router = APIRouter(tags=["messages"])
 translation_svc = TranslationService()
 agent_svc = AgentService()
+
+# Maximum background translations queued per GET /messages request to avoid Ollama overload.
+_MAX_BG_TRANSLATIONS = 5
+
+
+async def _cache_translation_bg(
+    channel_id: uuid.UUID, user_id: uuid.UUID,
+    message_id: uuid.UUID, text: str,
+    source_lang: str, target_lang: str,
+) -> None:
+    """Generates and caches a missing translation in the background, then notifies the user via WS."""
+    async with AsyncSessionLocal() as bg_db:
+        try:
+            msg_repo = MessageRepository(bg_db)
+            cached = await msg_repo.get_cached_translation(message_id, target_lang)
+            if not cached:
+                translated = await translation_svc.translate(text, target_lang, source_lang)
+                await msg_repo.save_translation(message_id, target_lang, translated)
+                await bg_db.commit()
+                await connection_manager.send_to_user(channel_id, user_id, {
+                    "type": "message_translated",
+                    "data": {"message_id": str(message_id), "translated_content": translated},
+                })
+        except Exception as exc:
+            logging.getLogger(__name__).warning(
+                "BG translation failed for msg %s lang %s: %s", message_id, target_lang, exc
+            )
 
 
 def _build_message_read(msg, sender, translated: str | None, reactions: list) -> dict:
@@ -42,6 +70,7 @@ def _build_message_read(msg, sender, translated: str | None, reactions: list) ->
 @router.get("/channels/{channel_id}/messages", response_model=PaginatedMessages)
 async def get_messages(
     channel_id: uuid.UUID,
+    background_tasks: BackgroundTasks,
     page: int = 1,
     page_size: int = 50,
     current_user: UserRead = Depends(get_current_user),
@@ -54,31 +83,30 @@ async def get_messages(
     user_repo = UserRepository(db)
     messages, total = await msg_repo.get_paginated(channel_id, page, page_size)
     items = []
-    created_translation = False
+    bg_count = 0
     for msg in messages:
         sender = await user_repo.get_by_id(msg.sender_id)
+        # Only serve from cache — never call Ollama synchronously here (CA-04).
         translated = await msg_repo.get_cached_translation(msg.id, current_user.preferred_language)
-        if translated is None and msg.original_language != current_user.preferred_language:
-            try:
-                translated = await translation_svc.translate_with_cache(
-                    db=db,
-                    message_id=msg.id,
-                    text=msg.original_content,
-                    target_language=current_user.preferred_language,
-                    source_language=msg.original_language,
-                )
-                created_translation = True
-            except Exception as exc:
-                logging.getLogger(__name__).warning(
-                    "Lazy translation failed for message %s and language %s: %s",
-                    msg.id,
-                    current_user.preferred_language,
-                    exc,
-                )
+        # Queue background translation for messages not yet cached for this user's language.
+        if (
+            not translated
+            and msg.original_language
+            and msg.original_language != current_user.preferred_language
+            and bg_count < _MAX_BG_TRANSLATIONS
+        ):
+            background_tasks.add_task(
+                _cache_translation_bg,
+                channel_id=channel_id,
+                user_id=current_user.id,
+                message_id=msg.id,
+                text=msg.original_content,
+                source_lang=msg.original_language,
+                target_lang=current_user.preferred_language,
+            )
+            bg_count += 1
         reactions = await msg_repo.get_reactions_grouped(msg.id, current_user.id)
         items.append(MessageRead(**_build_message_read(msg, sender, translated, reactions)))
-    if created_translation:
-        await db.commit()
     return PaginatedMessages(
         items=items, total=total, page=page, page_size=page_size,
         has_more=total > page * page_size,
@@ -233,30 +261,43 @@ async def websocket_chat(
                 await db.commit()
 
                 members = await ch_repo.get_members(channel_id)
-                target_langs = list({m.preferred_language for m in members})
 
-                try:
-                    translations = await translation_svc.translate_for_members(
-                        db=db, message_id=msg.id, text=content,
-                        source_language=source_lang, target_languages=target_langs,
-                    )
-                    await db.commit()
-                except Exception as exc:
-                    # Translation service unavailable (e.g. Ollama not ready).
-                    # Fall back to original content so the message is still delivered.
-                    logging.getLogger(__name__).warning(
-                        "Translation failed for message %s, falling back to original: %s",
-                        msg.id, exc,
-                    )
-                    translations = {lang: content for lang in target_langs}
-                    translations[source_lang] = content
-
+                # Broadcast immediately with original content (translated_content=None so each
+                # user sees the source text until their personal translation arrives, CA-01/CA-03).
                 for member in members:
-                    translated = translations.get(member.preferred_language, content)
                     await connection_manager.send_to_user(channel_id, member.id, {
                         "type": "message",
-                        "data": _build_message_read(msg, user, translated, []),
+                        "data": _build_message_read(msg, user, None, []),
                     })
+
+                # Translate in background — never block the WS loop.
+                target_langs = list({m.preferred_language for m in members})
+
+                async def _do_translate(
+                    msg_id=msg.id, text=content,
+                    src=source_lang, tgt_langs=target_langs,
+                    _members=members,
+                ):
+                    async with AsyncSessionLocal() as bg_db:
+                        try:
+                            translations = await translation_svc.translate_for_members(
+                                db=bg_db, message_id=msg_id, text=text,
+                                source_language=src, target_languages=tgt_langs,
+                            )
+                            await bg_db.commit()
+                            for m in _members:
+                                translated = translations.get(m.preferred_language, text)
+                                if translated != text:
+                                    await connection_manager.send_to_user(channel_id, m.id, {
+                                        "type": "message_translated",
+                                        "data": {"message_id": str(msg_id), "translated_content": translated},
+                                    })
+                        except Exception as exc:
+                            logging.getLogger(__name__).warning(
+                                "Background translation failed for message %s: %s", msg_id, exc
+                            )
+
+                asyncio.create_task(_do_translate())
 
                 # Check for mentions
                 has_mention = False

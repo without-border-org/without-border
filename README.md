@@ -72,7 +72,7 @@ All demo accounts share password `demo1234`. Each account is configured for a di
 
 ## Quick Start
 
-**Prerequisites:** Docker and Docker Compose installed. [Ollama](https://ollama.com) running locally with `gemma4:9b` pulled.
+**Prerequisites:** Docker and Docker Compose installed. [Ollama](https://ollama.com) running locally with the model specified in `LLM_MODEL` pulled.
 
 ```bash
 git clone https://github.com/without-border-org/without-border
@@ -108,7 +108,7 @@ The `start.sh` script builds both containers, runs database migrations, and seed
 |    |- Ollama  (local, default)                    |
 |    +- Vertex AI  (optional, cloud)                |
 |         |                                         |
-|      Gemma 4  (9B or 27B)                         |
+|      Gemma (configurable via LLM_MODEL)           |
 |      translation / agent / summaries              |
 +---------------------------------------------------+
 ```
@@ -119,7 +119,7 @@ The `start.sh` script builds both containers, runs database migrations, and seed
 | Backend | FastAPI, Python 3.12, SQLAlchemy (async) |
 | Database | PostgreSQL 16 |
 | AI Runtime | Ollama (local) or Vertex AI |
-| AI Model | Gemma 4 — `gemma4:9b` or `gemma4:27b` |
+| AI Model | Gemma (configurable via `LLM_MODEL` in `.env`) |
 | Auth | JWT — python-jose + bcrypt |
 | Containers | Docker, Docker Compose |
 
@@ -139,7 +139,7 @@ AUTH_DISABLED=false          # Set to true for local dev only — never in produ
 
 # AI
 LLM_PROVIDER=ollama          # ollama | vertexai
-LLM_MODEL=gemma4:9b          # gemma4:9b or gemma4:27b
+LLM_MODEL=                   # Set to the model configured in your Ollama instance (see .env.example)
 OLLAMA_BASE_URL=http://localhost:11434
 
 # Seed (optional)
@@ -153,10 +153,11 @@ AUTO_SEED=true               # Creates demo accounts on first start
 ### 1. Pull the AI model
 
 ```bash
-ollama pull gemma4:9b
+# Pull the model defined in LLM_MODEL in your .env file
+ollama pull $(grep LLM_MODEL .env | cut -d= -f2)
 ```
 
-For higher translation quality at the cost of more VRAM, use `gemma4:27b`.
+See `.env.example` for the recommended model for your hardware.
 
 ### 2. Configure environment
 

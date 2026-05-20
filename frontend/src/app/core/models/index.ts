@@ -90,7 +90,7 @@ export interface PaginatedMessages {
 }
 
 export interface WsEvent {
-  type: 'message' | 'typing' | 'presence' | 'error';
+  type: 'message' | 'typing' | 'presence' | 'error' | 'message_translated';
   data: Record<string, unknown>;
 }
 
@@ -112,7 +112,7 @@ export interface Agent {
 /** Language metadata including UI badge code (country code used in message headers). */
 export const LANGUAGE_MAP: Record<string, { name: string; flag: string; badge: string }> = {
   fr: { name: 'Français',   flag: '🇫🇷', badge: 'FR' },
-  en: { name: 'English',    flag: '🇬🇧', badge: 'GB' },
+  en: { name: 'English',    flag: '🇬🇧', badge: 'EN' },
   es: { name: 'Español',    flag: '🇪🇸', badge: 'ES' },
   de: { name: 'Deutsch',    flag: '🇩🇪', badge: 'DE' },
   zh: { name: '中文',        flag: '🇨🇳', badge: 'CN' },

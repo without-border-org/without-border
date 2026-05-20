@@ -92,6 +92,16 @@ export class ChatWebSocketService {
     );
   }
 
+  get messageTranslated$(): Observable<{ messageId: string; translatedContent: string }> {
+    return this._events$.pipe(
+      filter(e => e.type === 'message_translated'),
+      map(e => {
+        const d = e.data as Record<string, string>;
+        return { messageId: d['message_id'], translatedContent: d['translated_content'] };
+      })
+    );
+  }
+
   get typing$(): Observable<{ userId: string; username: string }> {
     return this._events$.pipe(
       filter(e => e.type === 'typing'),
