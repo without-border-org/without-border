@@ -24,7 +24,10 @@ translation_svc = TranslationService()
 agent_svc = AgentService()
 
 # Maximum background translations queued per GET /messages request to avoid Ollama overload.
-_MAX_BG_TRANSLATIONS = 5
+_MAX_BG_TRANSLATIONS = 10
+
+# Semaphore to cap concurrent Ollama calls from background translation tasks.
+_bg_translation_sem = asyncio.Semaphore(5)
 
 
 async def _cache_translation_bg(
@@ -32,23 +35,41 @@ async def _cache_translation_bg(
     message_id: uuid.UUID, text: str,
     source_lang: str, target_lang: str,
 ) -> None:
-    """Generates and caches a missing translation in the background, then notifies the user via WS."""
+    """Generates and caches a missing translation in the background, then notifies the user via WS.
+
+    DB sessions are intentionally short: one read-only check, then closed before the
+    Ollama call (which can take several seconds), then a new session to persist the result.
+    This prevents holding DB connections while waiting for LLM responses.
+    """
+    # 1. Check cache without holding a connection during the LLM call.
     async with AsyncSessionLocal() as bg_db:
-        try:
-            msg_repo = MessageRepository(bg_db)
-            cached = await msg_repo.get_cached_translation(message_id, target_lang)
-            if not cached:
-                translated = await translation_svc.translate(text, target_lang, source_lang)
-                await msg_repo.save_translation(message_id, target_lang, translated)
-                await bg_db.commit()
-                await connection_manager.send_to_user(channel_id, user_id, {
-                    "type": "message_translated",
-                    "data": {"message_id": str(message_id), "translated_content": translated},
-                })
-        except Exception as exc:
-            logging.getLogger(__name__).warning(
-                "BG translation failed for msg %s lang %s: %s", message_id, target_lang, exc
-            )
+        cached = await MessageRepository(bg_db).get_cached_translation(message_id, target_lang)
+    if cached:
+        return
+
+    # 2. Translate — rate-limited, no DB connection held.
+    try:
+        async with _bg_translation_sem:
+            translated = await translation_svc.translate(text, target_lang, source_lang)
+    except Exception as exc:
+        logging.getLogger(__name__).warning(
+            "BG translation failed for msg %s lang %s: %s", message_id, target_lang, exc
+        )
+        return
+
+    # 3. Persist result and notify.
+    try:
+        async with AsyncSessionLocal() as bg_db:
+            await MessageRepository(bg_db).save_translation(message_id, target_lang, translated)
+            await bg_db.commit()
+        await connection_manager.send_to_user(channel_id, user_id, {
+            "type": "message_translated",
+            "data": {"message_id": str(message_id), "translated_content": translated},
+        })
+    except Exception as exc:
+        logging.getLogger(__name__).warning(
+            "BG translation persist failed for msg %s lang %s: %s", message_id, target_lang, exc
+        )
 
 
 def _build_message_read(msg, sender, translated: str | None, reactions: list) -> dict:

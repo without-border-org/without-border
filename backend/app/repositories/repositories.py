@@ -189,11 +189,14 @@ class MessageRepository:
         )
         return r.scalar_one_or_none()
 
-    async def save_translation(self, message_id: uuid.UUID, language: str, content: str) -> MessageTranslation:
-        t = MessageTranslation(message_id=message_id, target_language=language, translated_content=content)
-        self.db.add(t)
-        await self.db.flush()
-        return t
+    async def save_translation(self, message_id: uuid.UUID, language: str, content: str) -> None:
+        from sqlalchemy.dialects.postgresql import insert as pg_insert
+        stmt = (
+            pg_insert(MessageTranslation)
+            .values(id=uuid.uuid4(), message_id=message_id, target_language=language, translated_content=content)
+            .on_conflict_do_nothing(index_elements=["message_id", "target_language"])
+        )
+        await self.db.execute(stmt)
 
     async def soft_delete(self, message_id: uuid.UUID) -> None:
         from datetime import datetime, timezone
