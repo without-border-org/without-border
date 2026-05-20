@@ -24,7 +24,8 @@ translation_svc = TranslationService()
 agent_svc = AgentService()
 
 # Maximum background translations queued per GET /messages request to avoid Ollama overload.
-_MAX_BG_TRANSLATIONS = 5
+# Set to 50 to ensure all messages on a standard page get translated on first load (WB-10).
+_MAX_BG_TRANSLATIONS = 50
 
 
 async def _cache_translation_bg(

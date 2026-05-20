@@ -18,6 +18,7 @@ export class ChatWebSocketService {
   private _onlineUsers = signal<Map<string, PresenceUser>>(new Map());
   private currentChannelId: string | null = null;
   private _pendingMessages: object[] = [];
+  private _connected$ = new Subject<void>();
 
   readonly typingUsers = this._typingUsers.asReadonly();
   readonly onlineUsers = this._onlineUsers.asReadonly();
@@ -59,6 +60,7 @@ export class ChatWebSocketService {
       while (this._pendingMessages.length > 0) {
         this.ws!.send(JSON.stringify(this._pendingMessages.shift()));
       }
+      this._connected$.next();
     };
     this.ws.onmessage = ({ data }) => {
       try {
@@ -83,6 +85,10 @@ export class ChatWebSocketService {
 
   sendTyping(): void {
     this._send({ type: 'typing' });
+  }
+
+  get connected$(): Observable<void> {
+    return this._connected$.asObservable();
   }
 
   get messages$(): Observable<Message> {
