@@ -652,7 +652,7 @@ export class ConversationComponent implements OnInit, OnChanges, OnDestroy, Afte
     this.loading.set(true);
     this.msgSvc.getMessages(this.channelId, this.currentPage()).subscribe({
       next: data => {
-        this.messages.set(data.items.slice().reverse());
+        this.messages.set(data.items);
         this.hasMore.set(data.has_more ?? data.hasMore ?? false);
         this.loading.set(false);
         this.shouldScroll = true;
