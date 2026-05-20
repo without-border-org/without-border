@@ -64,7 +64,7 @@ class KeycloakUserSyncService:
         # Check if user exists
         existing = await self.repo.get_by_id(user_id)
         if existing:
-            # Soft update: only sync email and active status.
+            # Soft update: sync email, active status, and locale from Keycloak.
             # Username is preserved from the seed / user profile — Keycloak preferred_username
             # is a login handle and should not overwrite the display name.
             changed = False
@@ -73,6 +73,9 @@ class KeycloakUserSyncService:
                 changed = True
             if existing.is_active != is_enabled:
                 existing.is_active = is_enabled
+                changed = True
+            if locale and existing.preferred_language != locale:
+                existing.preferred_language = locale
                 changed = True
 
             if changed:
