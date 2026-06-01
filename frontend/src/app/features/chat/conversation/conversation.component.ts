@@ -5,6 +5,7 @@ import {
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Subscription } from 'rxjs';
+import { take } from 'rxjs/operators';
 import { ChannelService, MessageService } from '../../../core/services/channel.service';
 import { ChatWebSocketService } from '../../../core/services/chat-ws.service';
 import { AuthService } from '../../../core/services/auth.service';
@@ -602,6 +603,11 @@ export class ConversationComponent implements OnInit, OnChanges, OnDestroy, Afte
           if (this.typingTimer) clearTimeout(this.typingTimer);
           this.typingTimer = setTimeout(() => this.typingText.set(''), 2500);
         }),
+        this.wsSvc.connected$.pipe(take(1)).subscribe(() => {
+          if (this.messages().some(m => m.translatedContent === null)) {
+            this.loadMessages();
+          }
+        }),
       );
     }
   }
@@ -626,6 +632,11 @@ export class ConversationComponent implements OnInit, OnChanges, OnDestroy, Afte
         this.typingText.set(`${username} écrit…`);
         if (this.typingTimer) clearTimeout(this.typingTimer);
         this.typingTimer = setTimeout(() => this.typingText.set(''), 2500);
+      }),
+      this.wsSvc.connected$.pipe(take(1)).subscribe(() => {
+        if (this.messages().some(m => m.translatedContent === null)) {
+          this.loadMessages();
+        }
       }),
     );
   }
@@ -652,7 +663,7 @@ export class ConversationComponent implements OnInit, OnChanges, OnDestroy, Afte
     this.loading.set(true);
     this.msgSvc.getMessages(this.channelId, this.currentPage()).subscribe({
       next: data => {
-        this.messages.set(data.items.slice().reverse());
+        this.messages.set(data.items);
         this.hasMore.set(data.has_more ?? data.hasMore ?? false);
         this.loading.set(false);
         this.shouldScroll = true;
