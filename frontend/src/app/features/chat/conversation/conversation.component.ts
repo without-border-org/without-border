@@ -683,6 +683,14 @@ export class ConversationComponent implements OnInit, OnChanges, OnDestroy, Afte
     this.msgSvc.getMessages(this.channelId, this.currentPage()).subscribe({
       next: data => {
         this.messages.set(data.items);
+        // Mark messages needing translation
+        const translating = new Set<string>();
+        for (const msg of data.items) {
+          if (msg.originalLanguage && msg.originalLanguage !== this.currentUserLang() && !msg.translatedContent) {
+            translating.add(msg.id);
+          }
+        }
+        this.translatingMessages.set(translating);
         this.hasMore.set(data.has_more ?? data.hasMore ?? false);
         this.loading.set(false);
         this.shouldScroll = true;
@@ -695,6 +703,12 @@ export class ConversationComponent implements OnInit, OnChanges, OnDestroy, Afte
     const next = this.currentPage() + 1;
     this.msgSvc.getMessages(this.channelId, next).subscribe(data => {
       this.messages.update(list => [...data.items, ...list]);
+      // Mark newly loaded messages needing translation
+      for (const msg of data.items) {
+        if (msg.originalLanguage && msg.originalLanguage !== this.currentUserLang() && !msg.translatedContent) {
+          this.translatingMessages.update(set => new Set(set).add(msg.id));
+        }
+      }
       this.hasMore.set(data.has_more ?? data.hasMore ?? false);
       this.currentPage.set(next);
     });
