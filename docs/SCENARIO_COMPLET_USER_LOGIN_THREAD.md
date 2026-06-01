@@ -426,24 +426,39 @@ HTTP 200 OK
 
 ### 4.7 Frontend : Afficher les Messages Immédiatement
 
-**Lieu** : `frontend/src/app/features/chat/message-list.component.ts`
+**Lieu** : `frontend/src/app/features/chat/conversation/conversation.component.ts` → `loadMessages()`
 
 ```typescript
 // Mise à jour du signal:
-private _messages = signal<Message[]>([]);
-this._messages.set(messages);
+private messages = signal<Message[]>([]);
+this.messages.set(data.items);
 
-// Template (chat.component.html):
-@for (msg of messages(); track msg.id) {
-  <app-message-bubble 
-    [message]="msg"
-    [translator]="translationService">
-  </app-message-bubble>
+// Marquer les messages non traduits pour afficher le spinner:
+const translating = new Set<string>();
+for (const msg of data.items) {
+  if (msg.originalLanguage && msg.originalLanguage !== this.currentUserLang() && !msg.translatedContent) {
+    translating.add(msg.id);
+  }
 }
+this.translatingMessages.set(translating);
+```
 
-// Component affiche:
-// Si message.translatedContent → affiche la traduction
-// Si message.translatedContent === null → affiche l'original + spinner
+**Template** : `frontend/src/app/features/chat/components/message-bubble.component.ts`
+
+```html
+<!-- Contenu texte + spinner traduction -->
+<div class="flex items-end gap-2">
+  <div class="flex-1">
+    <p *ngIf="!showOriginal() || !isTranslated()">{{ displayContent() }}</p>
+    <p *ngIf="showOriginal() && isTranslated()" class="italic opacity-75">{{ message.originalContent }}</p>
+  </div>
+  <!-- Spinner si traduction en cours et pas en mode original -->
+  <div *ngIf="isTranslating && !showOriginal() && message.originalLanguage !== currentUserLang"
+       class="flex items-center gap-1.5 text-[10px] text-zinc-400 dark:text-zinc-500">
+    <div class="w-1.5 h-1.5 rounded-full bg-current animate-pulse"></div>
+    <span class="opacity-60">traduction…</span>
+  </div>
+</div>
 ```
 
 **Écran affiché à Marie à t=14:00 UTC** :
@@ -451,13 +466,23 @@ this._messages.set(messages);
 ┌─────────────────────────────────────────┐
 │  Projet Q3  (4 membres)                 │
 ├─────────────────────────────────────────┤
-│ [EN] john: Bonjour à tous               │  ← En cache
-│ [ES] carlos: ¿Cómo estás? ⟳            │  ← Traduction en cours
-│ [ZH] wei: 很高兴认识你 ⟳                │  ← Traduction en cours
-│ [EN] john: Quelque chose d'autre        │  ← En cache
-│ [ES] carlos: Hola nuevamente ⟳          │  ← Traduction en cours
+│ [EN] john: Bonjour à tous               │  ← En cache (no spinner)
+│ [ES] carlos: ¿Cómo estás? ⟳            │  ← Spinner visible, traduction en cours
+│ [ZH] wei: 很高兴认识你 ⟳                │  ← Spinner visible, traduction en cours
+│ [EN] john: Quelque chose d'autre        │  ← En cache (no spinner)
+│ [ES] carlos: Hola nuevamente ⟳          │  ← Spinner visible, traduction en cours
 └─────────────────────────────────────────┘
 ```
+
+**Spinner Flow** :
+1. Frontend charge les messages via `GET /channels/{id}/messages`
+2. Backend retourne les messages avec ou sans `translatedContent`
+3. Pour chaque message sans `translatedContent` (original_language ≠ user lang), frontend ajoute le message_id au Set `translatingMessages`
+4. Le spinner s'affiche via la condition `[isTranslating]="translatingMessages().has(msg.id)"`
+5. Backend lance en arrière-plan la traduction des messages non cachés
+6. Quand la traduction est prête, elle est envoyée via WebSocket avec type `message_translated`
+7. Frontend reçoit l'événement, met à jour `translatedContent`, et supprime le message_id du Set `translatingMessages`
+8. Le spinner disparaît et la traduction s'affiche
 
 ### 4.8 Tâche d'Arrière-Plan : Traduire les Messages
 
