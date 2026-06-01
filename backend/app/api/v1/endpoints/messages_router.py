@@ -228,24 +228,45 @@ async def websocket_chat(
     token: str,
     db: AsyncSession = Depends(get_db),
 ):
-    # Authenticate WebSocket via Keycloak token
+    # Authenticate WebSocket — Keycloak token, or AUTH_DISABLED bypass.
+    from app.core.config.settings import settings
     from app.core.security.keycloak import authenticate_websocket
     from app.services.keycloak_sync_service import KeycloakUserSyncService
-    
-    try:
-        claims = await authenticate_websocket(websocket)
-    except RuntimeError:
-        return
-    
-    # Lazy-sync user
-    sync_service = KeycloakUserSyncService(db)
-    user = await sync_service.upsert_from_token(claims)
-    user_id = user.id
-    
+
     user_repo = UserRepository(db)
     ch_repo = ChannelRepository(db)
     msg_repo = MessageRepository(db)
     notif_repo = NotificationRepository(db)
+
+    if settings.AUTH_DISABLED:
+        # Bypass mode: resolve the impersonated user by id WITHOUT upserting.
+        # The previous code ran upsert_from_token() with stub claims (no locale,
+        # email="bypass@test.local"), which silently reset every seeded user's
+        # preferred_language to "fr" and clobbered their email on each WS connect —
+        # collapsing the whole multilingual translation demo. We must only READ here.
+        dev_user_id = websocket.query_params.get("dev_user_id") or settings.AUTH_DISABLED_USER_ID
+        user = None
+        if dev_user_id:
+            try:
+                user = await user_repo.get_by_id(uuid.UUID(dev_user_id))
+            except (ValueError, AttributeError):
+                user = None
+        if not user:
+            actives = await user_repo.get_all_active()
+            user = actives[0] if actives else None
+        if not user:
+            await websocket.close(code=1008)
+            return
+    else:
+        try:
+            claims = await authenticate_websocket(websocket)
+        except RuntimeError:
+            return
+        # Lazy-sync user
+        sync_service = KeycloakUserSyncService(db)
+        user = await sync_service.upsert_from_token(claims)
+
+    user_id = user.id
 
     # Verify channel membership
     if not await ch_repo.is_member(channel_id, user_id):
@@ -272,7 +293,9 @@ async def websocket_chat(
                 if not content:
                     continue
 
-                source_lang = await detect_language(content)
+                # Fall back to the sender's own language when detection is
+                # uncertain (short messages) instead of a hard-coded constant.
+                source_lang = await detect_language(content, default=user.preferred_language)
 
                 msg = await msg_repo.create(
                     channel_id=channel_id, sender_id=user_id,
