@@ -29,13 +29,17 @@ if ! command -v docker &> /dev/null; then
 fi
 
 echo -e "${YELLOW}Step 1/3${NC} — Starting services (PostgreSQL + Ollama + Backend + Frontend)..."
-docker compose up -d --build
+# Profil local-llm : lance un Ollama conteneurisé (CPU) pour le dev local.
+# En demo/dev sur OCI, Ollama vient du Studio Lightning via le tunnel SSH (WB-11).
+# On pointe le backend vers le conteneur ollama (et non l'hôte) pour ce mode local.
+export OLLAMA_BASE_URL="http://ollama:11434"
+docker compose --profile local-llm up -d --build
 
 echo ""
-echo -e "${YELLOW}Step 2/3${NC} — Pulling Gemma 4 model (this may take a few minutes)..."
-echo "  Model: gemma4:9b (~5GB)"
+echo -e "${YELLOW}Step 2/3${NC} — Pulling Gemma model (this may take a few minutes)..."
+echo "  Model: gemma4:e4b"
 sleep 5
-docker exec wb_ollama ollama pull gemma4:9b || echo "  ⚠️  Ollama GPU not available — trying CPU mode..."
+docker exec wb_ollama ollama pull gemma4:e4b || echo "  ⚠️  Ollama GPU not available — trying CPU mode..."
 
 echo ""
 echo -e "${YELLOW}Step 3/3${NC} — Waiting for services to be ready..."
