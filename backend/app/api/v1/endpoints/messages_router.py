@@ -25,7 +25,7 @@ agent_svc = AgentService()
 
 # Safety bound on how many page messages we batch-translate per GET request
 # (one Ollama call covers the whole batch, so this only caps the prompt size).
-_MAX_BG_TRANSLATIONS = 50
+_MAX_BG_TRANSLATIONS = 10000
 
 # Semaphore to cap concurrent Ollama calls from background translation tasks.
 _bg_translation_sem = asyncio.Semaphore(5)
