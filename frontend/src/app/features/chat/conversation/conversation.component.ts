@@ -147,6 +147,7 @@ import { AgentService } from '../../../core/services/agent.service';
               [message]="msg"
               [currentUserLang]="currentUserLang()"
               [isOwn]="msg.senderId === currentUserId()"
+              [isTranslating]="translatingMessages().has(msg.id)"
               [id]="'msg-' + msg.id"
               (react)="onReact(msg.id, $event)" />
           </div>
@@ -540,6 +541,7 @@ export class ConversationComponent implements OnInit, OnChanges, OnDestroy, Afte
   editAgentPersona = signal('');
   messageText    = '';
   typingText     = signal('');
+  translatingMessages = signal<Set<string>>(new Set());
 
   currentUserLang = computed(() => this.authSvc.user()?.preferredLanguage ?? 'fr');
   currentUserId   = computed(() => this.authSvc.user()?.id);
@@ -582,6 +584,7 @@ export class ConversationComponent implements OnInit, OnChanges, OnDestroy, Afte
       this.shouldScroll = true;
       this.typingText.set('');
       this.agentTab.set('config');
+      this.translatingMessages.set(new Set());
 
       this.loadChannel();
       this.loadMessages();
@@ -591,12 +594,20 @@ export class ConversationComponent implements OnInit, OnChanges, OnDestroy, Afte
     this.subs.push(
         this.wsSvc.messages$.subscribe(msg => {
           this.messages.update(list => [...list, msg]);
+          if (msg.originalLanguage && msg.originalLanguage !== this.currentUserLang() && !msg.translatedContent) {
+            this.translatingMessages.update(set => new Set(set).add(msg.id));
+          }
           this.shouldScroll = true;
         }),
         this.wsSvc.messageTranslated$.subscribe(({ messageId, translatedContent }) => {
           this.messages.update(list =>
             list.map(m => m.id === messageId ? { ...m, translatedContent } : m)
           );
+          this.translatingMessages.update(set => {
+            const newSet = new Set(set);
+            newSet.delete(messageId);
+            return newSet;
+          });
         }),
         this.wsSvc.typing$.subscribe(({ username }) => {
           this.typingText.set(`${username} écrit…`);
@@ -621,12 +632,20 @@ export class ConversationComponent implements OnInit, OnChanges, OnDestroy, Afte
     this.subs.push(
       this.wsSvc.messages$.subscribe(msg => {
         this.messages.update(list => [...list, msg]);
+        if (msg.originalLanguage && msg.originalLanguage !== this.currentUserLang() && !msg.translatedContent) {
+          this.translatingMessages.update(set => new Set(set).add(msg.id));
+        }
         this.shouldScroll = true;
       }),
       this.wsSvc.messageTranslated$.subscribe(({ messageId, translatedContent }) => {
         this.messages.update(list =>
           list.map(m => m.id === messageId ? { ...m, translatedContent } : m)
         );
+        this.translatingMessages.update(set => {
+          const newSet = new Set(set);
+          newSet.delete(messageId);
+          return newSet;
+        });
       }),
       this.wsSvc.typing$.subscribe(({ username }) => {
         this.typingText.set(`${username} écrit…`);
