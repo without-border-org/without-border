@@ -23,53 +23,76 @@ router = APIRouter(tags=["messages"])
 translation_svc = TranslationService()
 agent_svc = AgentService()
 
-# Maximum background translations queued per GET /messages request to avoid Ollama overload.
-_MAX_BG_TRANSLATIONS = 10
+# Safety bound on how many page messages we batch-translate per GET request
+# (one Ollama call covers the whole batch, so this only caps the prompt size).
+_MAX_BG_TRANSLATIONS = 50
 
 # Semaphore to cap concurrent Ollama calls from background translation tasks.
 _bg_translation_sem = asyncio.Semaphore(5)
 
 
-async def _cache_translation_bg(
+async def _cache_translations_batch_bg(
     channel_id: uuid.UUID, user_id: uuid.UUID,
-    message_id: uuid.UUID, text: str,
-    source_lang: str, target_lang: str,
+    target_lang: str, items: list[tuple[uuid.UUID, str]],
 ) -> None:
-    """Generates and caches a missing translation in the background, then notifies the user via WS.
+    """Translate every still-uncached message on a page to ``target_lang`` in a single
+    batched Ollama call, cache the results, and push each one to the reader via WS.
 
-    DB sessions are intentionally short: one read-only check, then closed before the
-    Ollama call (which can take several seconds), then a new session to persist the result.
-    This prevents holding DB connections while waiting for LLM responses.
+    This replaces the previous per-message tasks that were capped at 10 per request —
+    on channels with more than 10 untranslated messages the reader was left staring at
+    the original language (e.g. an English reader seeing Spanish messages forever).
+
+    DB sessions are kept short: a read-only re-check, then closed before the LLM call,
+    then a fresh session to persist — never holding a connection during inference.
     """
-    # 1. Check cache without holding a connection during the LLM call.
-    async with AsyncSessionLocal() as bg_db:
-        cached = await MessageRepository(bg_db).get_cached_translation(message_id, target_lang)
-    if cached:
+    if not items:
         return
 
-    # 2. Translate — rate-limited, no DB connection held.
+    # 1. Re-check cache to skip anything translated since the request was built.
+    async with AsyncSessionLocal() as bg_db:
+        repo = MessageRepository(bg_db)
+        pending: list[tuple[uuid.UUID, str]] = []
+        for mid, text in items:
+            if not await repo.get_cached_translation(mid, target_lang):
+                pending.append((mid, text))
+    if not pending:
+        return
+
+    # 2. Translate the whole batch in one call — rate-limited, no DB connection held.
     try:
         async with _bg_translation_sem:
-            translated = await translation_svc.translate(text, target_lang, source_lang)
+            translations = await translation_svc.translate_batch(
+                [text for _, text in pending],
+                target_language=target_lang,
+                source_language="",  # mixed/unknown sources — never short-circuits
+            )
     except Exception as exc:
         logging.getLogger(__name__).warning(
-            "BG translation failed for msg %s lang %s: %s", message_id, target_lang, exc
+            "BG batch translation failed for %d msgs lang %s: %s", len(pending), target_lang, exc
         )
         return
 
-    # 3. Persist result and notify.
+    if len(translations) != len(pending):
+        return
+
+    # 3. Persist results, then notify the reader for each message.
     try:
         async with AsyncSessionLocal() as bg_db:
-            await MessageRepository(bg_db).save_translation(message_id, target_lang, translated)
+            repo = MessageRepository(bg_db)
+            for (mid, _), translated in zip(pending, translations):
+                await repo.save_translation(mid, target_lang, translated)
             await bg_db.commit()
-        await connection_manager.send_to_user(channel_id, user_id, {
-            "type": "message_translated",
-            "data": {"message_id": str(message_id), "translated_content": translated},
-        })
     except Exception as exc:
         logging.getLogger(__name__).warning(
-            "BG translation persist failed for msg %s lang %s: %s", message_id, target_lang, exc
+            "BG batch translation persist failed lang %s: %s", target_lang, exc
         )
+        return
+
+    for (mid, _), translated in zip(pending, translations):
+        await connection_manager.send_to_user(channel_id, user_id, {
+            "type": "message_translated",
+            "data": {"message_id": str(mid), "translated_content": translated},
+        })
 
 
 def _build_message_read(msg, sender, translated: str | None, reactions: list) -> dict:
@@ -104,30 +127,30 @@ async def get_messages(
     user_repo = UserRepository(db)
     messages, total = await msg_repo.get_paginated(channel_id, page, page_size)
     items = []
-    bg_count = 0
+    to_translate: list[tuple[uuid.UUID, str]] = []
     for msg in messages:
         sender = await user_repo.get_by_id(msg.sender_id)
         # Only serve from cache — never call Ollama synchronously here (CA-04).
         translated = await msg_repo.get_cached_translation(msg.id, current_user.preferred_language)
-        # Queue background translation for messages not yet cached for this user's language.
+        # Collect every message not yet cached in the reader's language; they are all
+        # translated together in one batched background call below.
         if (
             not translated
             and msg.original_language
             and msg.original_language != current_user.preferred_language
-            and bg_count < _MAX_BG_TRANSLATIONS
         ):
-            background_tasks.add_task(
-                _cache_translation_bg,
-                channel_id=channel_id,
-                user_id=current_user.id,
-                message_id=msg.id,
-                text=msg.original_content,
-                source_lang=msg.original_language,
-                target_lang=current_user.preferred_language,
-            )
-            bg_count += 1
+            to_translate.append((msg.id, msg.original_content))
         reactions = await msg_repo.get_reactions_grouped(msg.id, current_user.id)
         items.append(MessageRead(**_build_message_read(msg, sender, translated, reactions)))
+
+    if to_translate:
+        background_tasks.add_task(
+            _cache_translations_batch_bg,
+            channel_id=channel_id,
+            user_id=current_user.id,
+            target_lang=current_user.preferred_language,
+            items=to_translate[:_MAX_BG_TRANSLATIONS],
+        )
     return PaginatedMessages(
         items=items, total=total, page=page, page_size=page_size,
         has_more=total > page * page_size,
