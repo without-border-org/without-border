@@ -52,9 +52,21 @@ async def _cache_translations_batch_bg(
 
     _log.info(f"[BG-TRANSLATE-START] channel={channel_id} user={user_id} target_lang={target_lang} items_count={len(items)}")
 
-    # Skip cache check — always translate all items
-    pending = items
-    _log.debug(f"[BG-ALWAYS-TRANSLATE] Will translate all {len(pending)} messages (cache disabled)")
+    # Re-check cache in case another user/request cached these meanwhile
+    db = AsyncSessionLocal()
+    msg_repo_bg = MessageRepository(db)
+    pending = []
+    for msg_id, text in items:
+        cached = await msg_repo_bg.get_cached_translation(msg_id, target_lang)
+        if not cached:
+            pending.append((msg_id, text))
+    await db.close()
+
+    if not pending:
+        _log.info(f"[BG-ALL-CACHED] All {len(items)} messages were cached by another request, skipping")
+        return
+
+    _log.info(f"[BG-TRANSLATE-PENDING] {len(items)} requested, {len(pending)} pending after cache check")
 
     # 2. Translate the whole batch in one call — rate-limited, no DB connection held.
     _log.info(f"[BG-OLLAMA-CALL] About to translate {len(pending)} messages to {target_lang}")
@@ -80,8 +92,18 @@ async def _cache_translations_batch_bg(
         )
         return
 
-    # 3. Skip persist (cache is not used since we always retranslate), just notify
-    _log.info(f"[BG-SKIP-PERSIST] Skipping DB persist (always retranslate) for {len(translations)} translations to {target_lang}")
+    # 3. Persist translations to cache
+    _log.info(f"[BG-PERSIST-START] Saving {len(translations)} translations to cache for {target_lang}")
+    db = AsyncSessionLocal()
+    msg_repo_persist = MessageRepository(db)
+    for i, ((msg_id, _), translated_content) in enumerate(zip(pending, translations)):
+        try:
+            await msg_repo_persist.save_translation(msg_id, target_lang, translated_content)
+        except Exception as exc:
+            _log.warning(f"[BG-PERSIST-FAIL] Failed to cache message {msg_id}: {exc}")
+    await db.commit()
+    await db.close()
+    _log.info(f"[BG-PERSIST-OK] Cached {len(translations)} translations")
 
     # 4. Send notifications via WebSocket
     _log.info(f"[BG-WS-NOTIFY] Sending {len(translations)} messages via WS to user {user_id}")
@@ -132,23 +154,28 @@ async def get_messages(
     to_translate: list[tuple[uuid.UUID, str]] = []
     for msg in messages:
         sender = await user_repo.get_by_id(msg.sender_id)
-        # ALWAYS retranslate (don't use cache) — every display should get fresh translations
-        translated = None  # Force retranslation, ignore cache
-        # Collect every message that needs translation in the reader's language; they are all
-        # translated together in one batched background call below.
+        translated = None
+        # Collect every message that needs translation in the reader's language
         if (
             msg.original_language
             and msg.original_language != current_user.preferred_language
         ):
-            preview = (msg.original_content or "")[:100].replace("\n", " ")
-            _log.info(
-                "Scheduling background translation: message_id=%s source_lang=%s target_lang=%s preview=%r",
-                msg.id,
-                msg.original_language,
-                current_user.preferred_language,
-                preview,
-            )
-            to_translate.append((msg.id, msg.original_content))
+            # Check cache first
+            cached = await msg_repo.get_cached_translation(msg.id, current_user.preferred_language)
+            if cached:
+                translated = cached
+                _log.debug(f"[GET-MESSAGES-CACHE-HIT] message_id={msg.id} lang={current_user.preferred_language}")
+            else:
+                # Not in cache, add to background translation queue
+                preview = (msg.original_content or "")[:100].replace("\n", " ")
+                _log.info(
+                    "Scheduling background translation: message_id=%s source_lang=%s target_lang=%s preview=%r",
+                    msg.id,
+                    msg.original_language,
+                    current_user.preferred_language,
+                    preview,
+                )
+                to_translate.append((msg.id, msg.original_content))
         reactions = await msg_repo.get_reactions_grouped(msg.id, current_user.id)
         items.append(MessageRead(**_build_message_read(msg, sender, translated, reactions)))
 
