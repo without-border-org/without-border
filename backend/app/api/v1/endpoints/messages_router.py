@@ -22,6 +22,7 @@ from app.helpers.language_detector import detect_language
 router = APIRouter(tags=["messages"])
 translation_svc = TranslationService()
 agent_svc = AgentService()
+_log = logging.getLogger(__name__)
 
 # Safety bound on how many page messages we batch-translate per GET request
 # (one Ollama call covers the whole batch, so this only caps the prompt size).
@@ -46,7 +47,10 @@ async def _cache_translations_batch_bg(
     then a fresh session to persist — never holding a connection during inference.
     """
     if not items:
+        _log.debug("_cache_translations_batch_bg: empty items list, skipping")
         return
+
+    _log.info(f"[BG-TRANSLATE-START] channel={channel_id} user={user_id} target_lang={target_lang} items_count={len(items)}")
 
     # 1. Re-check cache to skip anything translated since the request was built.
     async with AsyncSessionLocal() as bg_db:
@@ -55,10 +59,14 @@ async def _cache_translations_batch_bg(
         for mid, text in items:
             if not await repo.get_cached_translation(mid, target_lang):
                 pending.append((mid, text))
+
+    _log.info(f"[BG-RECHECK-CACHE] After recheck: {len(pending)}/{len(items)} messages still pending for {target_lang}")
     if not pending:
+        _log.debug(f"[BG-SKIP] All {len(items)} messages already cached for {target_lang}")
         return
 
     # 2. Translate the whole batch in one call — rate-limited, no DB connection held.
+    _log.info(f"[BG-OLLAMA-CALL] About to translate {len(pending)} messages to {target_lang}")
     try:
         async with _bg_translation_sem:
             translations = await translation_svc.translate_batch(
@@ -66,33 +74,48 @@ async def _cache_translations_batch_bg(
                 target_language=target_lang,
                 source_language="",  # mixed/unknown sources — never short-circuits
             )
+        _log.info(f"[BG-OLLAMA-OK] Got {len(translations)} translations back")
     except Exception as exc:
-        logging.getLogger(__name__).warning(
-            "BG batch translation failed for %d msgs lang %s: %s", len(pending), target_lang, exc
+        _log.error(
+            "[BG-OLLAMA-FAIL] Translation service error for %d msgs to %s: %s",
+            len(pending), target_lang, exc, exc_info=True
         )
         return
 
     if len(translations) != len(pending):
+        _log.error(
+            "[BG-LENGTH-MISMATCH] Expected %d translations but got %d for lang %s",
+            len(pending), len(translations), target_lang
+        )
         return
 
     # 3. Persist results, then notify the reader for each message.
+    _log.info(f"[BG-PERSIST-START] Saving {len(translations)} translations to DB for {target_lang}")
     try:
         async with AsyncSessionLocal() as bg_db:
             repo = MessageRepository(bg_db)
             for (mid, _), translated in zip(pending, translations):
                 await repo.save_translation(mid, target_lang, translated)
             await bg_db.commit()
+        _log.info(f"[BG-PERSIST-OK] Successfully saved {len(translations)} translations for {target_lang}")
     except Exception as exc:
-        logging.getLogger(__name__).warning(
-            "BG batch translation persist failed lang %s: %s", target_lang, exc
+        _log.error(
+            "[BG-PERSIST-FAIL] Failed to save translations to DB for %s: %s",
+            target_lang, exc, exc_info=True
         )
         return
 
-    for (mid, _), translated in zip(pending, translations):
-        await connection_manager.send_to_user(channel_id, user_id, {
-            "type": "message_translated",
-            "data": {"message_id": str(mid), "translated_content": translated},
-        })
+    # 4. Send notifications via WebSocket
+    _log.info(f"[BG-WS-NOTIFY] Sending {len(translations)} messages via WS to user {user_id}")
+    for i, ((mid, _), translated) in enumerate(zip(pending, translations)):
+        try:
+            await connection_manager.send_to_user(channel_id, user_id, {
+                "type": "message_translated",
+                "data": {"message_id": str(mid), "translated_content": translated},
+            })
+        except Exception as exc:
+            _log.warning(f"[BG-WS-FAIL] Failed to notify message {i+1}/{len(translations)}: {exc}")
+    _log.info(f"[BG-TRANSLATE-END] Completed translation batch for {target_lang}")
 
 
 def _build_message_read(msg, sender, translated: str | None, reactions: list) -> dict:
@@ -126,6 +149,7 @@ async def get_messages(
     msg_repo = MessageRepository(db)
     user_repo = UserRepository(db)
     messages, total = await msg_repo.get_paginated(channel_id, page, page_size)
+    _log.info(f"[GET-MESSAGES] user={current_user.id} channel={channel_id} page={page} page_size={page_size} total={total} max_bg={_MAX_BG_TRANSLATIONS}")
     items = []
     to_translate: list[tuple[uuid.UUID, str]] = []
     for msg in messages:
@@ -139,11 +163,29 @@ async def get_messages(
             and msg.original_language
             and msg.original_language != current_user.preferred_language
         ):
+            preview = (msg.original_content or "")[:100].replace("\n", " ")
+            _log.info(
+                "Scheduling background translation: message_id=%s source_lang=%s target_lang=%s preview=%r",
+                msg.id,
+                msg.original_language,
+                current_user.preferred_language,
+                preview,
+            )
             to_translate.append((msg.id, msg.original_content))
         reactions = await msg_repo.get_reactions_grouped(msg.id, current_user.id)
         items.append(MessageRead(**_build_message_read(msg, sender, translated, reactions)))
 
     if to_translate:
+        _log.info(
+            "Queueing background translation batch: channel_id=%s user_id=%s page=%d page_size=%d requested=%d queued=%d target_lang=%s",
+            channel_id,
+            current_user.id,
+            page,
+            page_size,
+            len(to_translate),
+            min(len(to_translate), _MAX_BG_TRANSLATIONS),
+            current_user.preferred_language,
+        )
         background_tasks.add_task(
             _cache_translations_batch_bg,
             channel_id=channel_id,
@@ -319,6 +361,7 @@ async def websocket_chat(
                 # Fall back to the sender's own language when detection is
                 # uncertain (short messages) instead of a hard-coded constant.
                 source_lang = await detect_language(content, default=user.preferred_language)
+                _log.info(f"[WS-NEW-MSG] message_id={msg.id} sender={user.username} lang={source_lang} len={len(content)}")
 
                 msg = await msg_repo.create(
                     channel_id=channel_id, sender_id=user_id,
@@ -341,19 +384,23 @@ async def websocket_chat(
 
                 # Translate in background — never block the WS loop.
                 target_langs = list({m.preferred_language for m in members})
+                _log.info(f"[WS-TRANSLATE-START] message_id={msg.id} source_lang={source_lang} target_langs={target_langs}")
 
                 async def _do_translate(
                     msg_id=msg.id, text=content,
                     src=source_lang, tgt_langs=target_langs,
                     _members=members,
                 ):
+                    _log.info(f"[WS-TRANSLATE-BG] Starting bg translation for msg {msg_id} to {len(tgt_langs)} languages")
                     async with AsyncSessionLocal() as bg_db:
                         try:
                             translations = await translation_svc.translate_for_members(
                                 db=bg_db, message_id=msg_id, text=text,
                                 source_language=src, target_languages=tgt_langs,
                             )
+                            _log.info(f"[WS-TRANSLATE-SAVE] Got {len(translations)} translations, saving to DB")
                             await bg_db.commit()
+                            _log.info(f"[WS-TRANSLATE-NOTIFY] Sending notifications for {len(translations)} translations")
                             for m in _members:
                                 translated = translations.get(m.preferred_language, text)
                                 if translated != text:
@@ -361,9 +408,11 @@ async def websocket_chat(
                                         "type": "message_translated",
                                         "data": {"message_id": str(msg_id), "translated_content": translated},
                                     })
+                            _log.info(f"[WS-TRANSLATE-OK] Completed translation for msg {msg_id}")
                         except Exception as exc:
-                            logging.getLogger(__name__).warning(
-                                "Background translation failed for message %s: %s", msg_id, exc
+                            _log.error(
+                                "[WS-TRANSLATE-FAIL] Background translation failed for message %s: %s",
+                                msg_id, exc, exc_info=True
                             )
 
                 asyncio.create_task(_do_translate())

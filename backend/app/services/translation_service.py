@@ -48,26 +48,37 @@ class TranslationService:
         Falls back to individual translation on parse error.
         """
         if not texts:
+            _log.debug("[TRANSLATE-BATCH] Empty texts list")
             return []
         if source_language == target_language:
+            _log.debug(f"[TRANSLATE-BATCH] Source and target same ({source_language}), returning original")
             return list(texts)
 
+        _log.info(f"[TRANSLATE-BATCH] Translating {len(texts)} texts from {source_language} to {target_language}")
         system = BATCH_TRANSLATE_SYSTEM.format(target_language=target_language)
         payload = json.dumps(texts, ensure_ascii=False)
         try:
+            _log.debug(f"[TRANSLATE-BATCH-CALL] Calling LLM with {len(texts)} texts, payload_size={len(payload)}")
             raw = await self.llm.complete(system_prompt=system, user_prompt=payload)
+            _log.debug(f"[TRANSLATE-BATCH-RESPONSE] Got response length={len(raw)}")
             results = json.loads(raw)
             if isinstance(results, list) and len(results) == len(texts):
+                _log.info(f"[TRANSLATE-BATCH-OK] Successfully translated {len(results)} texts")
                 return [str(r) for r in results]
+            else:
+                _log.warning(f"[TRANSLATE-BATCH-MISMATCH] Expected {len(texts)} results but got {len(results) if isinstance(results, list) else 'non-list'}")
         except Exception as exc:
-            _log.warning("Batch translation parse failed (%s), falling back to sequential.", exc)
+            _log.error(f"[TRANSLATE-BATCH-ERROR] Batch translation parse failed: {exc}, falling back to sequential.", exc_info=True)
 
         # Fallback: translate one by one
+        _log.info(f"[TRANSLATE-BATCH-FALLBACK] Falling back to sequential translation for {len(texts)} texts")
         out = []
-        for text in texts:
+        for i, text in enumerate(texts):
             try:
-                out.append(await self.translate(text, target_language, source_language))
-            except Exception:
+                translated = await self.translate(text, target_language, source_language)
+                out.append(translated)
+            except Exception as exc:
+                _log.warning(f"[TRANSLATE-BATCH-FALLBACK-FAIL] Failed to translate text {i+1}/{len(texts)}: {exc}")
                 out.append(text)
         return out
 
@@ -96,18 +107,23 @@ class TranslationService:
 
         Uses translate_batch() for uncached languages to minimise Ollama round-trips.
         """
+        _log.info(f"[TRANSLATE-FOR-MEMBERS] msg_id={message_id} src_lang={source_language} target_langs={target_languages}")
         results: dict[str, str] = {source_language: text}
         unique = list(set(target_languages) - {source_language})
         msg_repo = MessageRepository(db)
 
         # Separate cached from uncached to minimise LLM calls.
         uncached_langs: list[str] = []
+        cached_count = 0
         for lang in unique:
             cached = await msg_repo.get_cached_translation(message_id, lang)
             if cached:
                 results[lang] = cached
+                cached_count += 1
             else:
                 uncached_langs.append(lang)
+
+        _log.info(f"[TRANSLATE-FOR-MEMBERS-CACHE] msg_id={message_id} cached={cached_count}/{len(unique)} uncached={len(uncached_langs)}")
 
         if uncached_langs:
             # Group uncached languages by target language for batch call.
@@ -115,9 +131,15 @@ class TranslationService:
             # but groups multiple *messages* — here we handle a single message
             # across multiple languages sequentially, using translate_batch for
             # the texts when called from a multi-message context.)
+            _log.info(f"[TRANSLATE-FOR-MEMBERS-TRANSLATE] Translating to {len(uncached_langs)} uncached languages: {uncached_langs}")
             for lang in uncached_langs:
-                translated = await self.translate(text, lang, source_language)
-                await msg_repo.save_translation(message_id, lang, translated)
-                results[lang] = translated
+                try:
+                    translated = await self.translate(text, lang, source_language)
+                    await msg_repo.save_translation(message_id, lang, translated)
+                    results[lang] = translated
+                    _log.debug(f"[TRANSLATE-FOR-MEMBERS-SAVED] msg_id={message_id} lang={lang} OK")
+                except Exception as exc:
+                    _log.error(f"[TRANSLATE-FOR-MEMBERS-FAIL] msg_id={message_id} lang={lang} failed: {exc}", exc_info=True)
 
+        _log.info(f"[TRANSLATE-FOR-MEMBERS-END] msg_id={message_id} returned {len(results)} languages")
         return results
