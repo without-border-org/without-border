@@ -1,4 +1,5 @@
 """Translation service using Gemma 4 with PostgreSQL cache."""
+import asyncio
 import json
 import logging
 import uuid
@@ -45,6 +46,7 @@ class TranslationService:
         """Translates a list of texts in a single Ollama call (CA-05).
 
         Sends all texts as a JSON array and parses the JSON array response.
+        Extracts JSON from Ollama response (which may contain markdown/text wrapper).
         Falls back to individual translation on parse error.
         """
         if not texts:
@@ -60,8 +62,12 @@ class TranslationService:
         try:
             _log.debug(f"[TRANSLATE-BATCH-CALL] Calling LLM with {len(texts)} texts, payload_size={len(payload)}")
             raw = await self.llm.complete(system_prompt=system, user_prompt=payload)
-            _log.debug(f"[TRANSLATE-BATCH-RESPONSE] Got response length={len(raw)}")
-            results = json.loads(raw)
+            _log.debug(f"[TRANSLATE-BATCH-RESPONSE] Got response length={len(raw)}, first 200 chars={raw[:200]!r}")
+
+            # Extract JSON array from response (Ollama may wrap it in markdown or text)
+            cleaned = self._extract_json_array(raw)
+            results = json.loads(cleaned)
+
             if isinstance(results, list) and len(results) == len(texts):
                 _log.info(f"[TRANSLATE-BATCH-OK] Successfully translated {len(results)} texts")
                 return [str(r) for r in results]
@@ -70,17 +76,41 @@ class TranslationService:
         except Exception as exc:
             _log.error(f"[TRANSLATE-BATCH-ERROR] Batch translation parse failed: {exc}, falling back to sequential.", exc_info=True)
 
-        # Fallback: translate one by one
-        _log.info(f"[TRANSLATE-BATCH-FALLBACK] Falling back to sequential translation for {len(texts)} texts")
-        out = []
+        # Fallback: translate in parallel (instead of sequential)
+        _log.info(f"[TRANSLATE-BATCH-FALLBACK] Falling back to parallel translation for {len(texts)} texts")
+        tasks = []
         for i, text in enumerate(texts):
-            try:
-                translated = await self.translate(text, target_language, source_language)
-                out.append(translated)
-            except Exception as exc:
-                _log.warning(f"[TRANSLATE-BATCH-FALLBACK-FAIL] Failed to translate text {i+1}/{len(texts)}: {exc}")
-                out.append(text)
-        return out
+            tasks.append(self._translate_with_fallback(i, text, target_language, source_language, len(texts)))
+        results = await asyncio.gather(*tasks, return_exceptions=False)
+        return results
+
+    async def _translate_with_fallback(self, index: int, text: str, target_language: str, source_language: str, total: int) -> str:
+        """Translate a single text with fallback to original on error."""
+        try:
+            return await self.translate(text, target_language, source_language)
+        except Exception as exc:
+            _log.warning(f"[TRANSLATE-BATCH-FALLBACK-FAIL] Failed to translate text {index+1}/{total}: {exc}")
+            return text
+
+    def _extract_json_array(self, text: str) -> str:
+        """Extract JSON array from response that may contain markdown or text wrapper.
+
+        Handles patterns like:
+        - ```json\n[...]\n```
+        - ```\n[...]\n```
+        - Just [...] without wrapper
+        """
+        text = text.strip()
+
+        # Try to find JSON array markers
+        start_idx = text.find('[')
+        end_idx = text.rfind(']')
+
+        if start_idx >= 0 and end_idx > start_idx:
+            return text[start_idx:end_idx + 1]
+
+        # No array found, return as-is (will fail in json.loads with clear error)
+        return text
 
     async def translate_with_cache(
         self, db: AsyncSession, message_id: uuid.UUID,
