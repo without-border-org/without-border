@@ -170,11 +170,18 @@ async def get_messages(
             msg.original_language
             and msg.original_language != current_user.preferred_language
         ):
+            _log.info(f"[GET-MESSAGES-NEEDS-TRANSLATION] msg_id={msg.id} will check cache")
             # Check cache first
-            cached = await msg_repo.get_cached_translation(msg.id, current_user.preferred_language)
+            try:
+                cached = await msg_repo.get_cached_translation(msg.id, current_user.preferred_language)
+                _log.info(f"[GET-MESSAGES-CACHE-CHECK] msg_id={msg.id} cached={cached is not None} value={cached[:50] if cached else None}")
+            except Exception as exc:
+                _log.error(f"[GET-MESSAGES-CACHE-ERROR] msg_id={msg.id} error: {exc}", exc_info=True)
+                cached = None
+
             if cached:
                 translated = cached
-                _log.debug(f"[GET-MESSAGES-CACHE-HIT] message_id={msg.id} lang={current_user.preferred_language}")
+                _log.info(f"[GET-MESSAGES-CACHE-HIT] message_id={msg.id} lang={current_user.preferred_language} value_len={len(cached)}")
             else:
                 # Not in cache, add to background translation queue
                 preview = (msg.original_content or "")[:100].replace("\n", " ")
