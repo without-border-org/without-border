@@ -53,20 +53,25 @@ async def _cache_translations_batch_bg(
     _log.info(f"[BG-TRANSLATE-START] channel={channel_id} user={user_id} target_lang={target_lang} items_count={len(items)}")
 
     # Re-check cache in case another user/request cached these meanwhile
-    db = AsyncSessionLocal()
-    msg_repo_bg = MessageRepository(db)
-    pending = []
-    for msg_id, text in items:
-        cached = await msg_repo_bg.get_cached_translation(msg_id, target_lang)
-        if not cached:
-            pending.append((msg_id, text))
-    await db.close()
+    async with AsyncSessionLocal() as db:
+        msg_repo_bg = MessageRepository(db)
+        pending = []
+        for msg_id, text in items:
+            try:
+                cached = await msg_repo_bg.get_cached_translation(msg_id, target_lang)
+                if not cached:
+                    pending.append((msg_id, text))
+                else:
+                    _log.debug(f"[BG-CACHE-RECHECK-HIT] msg_id={msg_id} lang={target_lang} already cached")
+            except Exception as exc:
+                _log.warning(f"[BG-CACHE-RECHECK-ERROR] Failed to check cache for msg_id={msg_id}: {exc}")
+                pending.append((msg_id, text))  # Assume not cached on error
 
     if not pending:
         _log.info(f"[BG-ALL-CACHED] All {len(items)} messages were cached by another request, skipping")
         return
 
-    _log.info(f"[BG-TRANSLATE-PENDING] {len(items)} requested, {len(pending)} pending after cache check")
+    _log.info(f"[BG-TRANSLATE-PENDING] {len(items)} requested, {len(pending)} still pending after cache recheck")
 
     # 2. Translate the whole batch in one call — rate-limited, no DB connection held.
     _log.info(f"[BG-OLLAMA-CALL] About to translate {len(pending)} messages to {target_lang}")
@@ -94,16 +99,19 @@ async def _cache_translations_batch_bg(
 
     # 3. Persist translations to cache
     _log.info(f"[BG-PERSIST-START] Saving {len(translations)} translations to cache for {target_lang}")
-    db = AsyncSessionLocal()
-    msg_repo_persist = MessageRepository(db)
-    for i, ((msg_id, _), translated_content) in enumerate(zip(pending, translations)):
-        try:
-            await msg_repo_persist.save_translation(msg_id, target_lang, translated_content)
-        except Exception as exc:
-            _log.warning(f"[BG-PERSIST-FAIL] Failed to cache message {msg_id}: {exc}")
-    await db.commit()
-    await db.close()
-    _log.info(f"[BG-PERSIST-OK] Cached {len(translations)} translations")
+    try:
+        async with AsyncSessionLocal() as db:
+            msg_repo_persist = MessageRepository(db)
+            for i, ((msg_id, _), translated_content) in enumerate(zip(pending, translations)):
+                try:
+                    await msg_repo_persist.save_translation(msg_id, target_lang, translated_content)
+                    _log.debug(f"[BG-PERSIST-ITEM] Saved msg_id={msg_id} lang={target_lang}")
+                except Exception as exc:
+                    _log.warning(f"[BG-PERSIST-FAIL] Failed to cache message {msg_id}: {exc}")
+            await db.commit()
+        _log.info(f"[BG-PERSIST-OK] Committed {len(translations)} translations to cache")
+    except Exception as exc:
+        _log.error(f"[BG-PERSIST-ERROR] Failed to commit translations: {exc}", exc_info=True)
 
     # 4. Send notifications via WebSocket
     _log.info(f"[BG-WS-NOTIFY] Sending {len(translations)} messages via WS to user {user_id}")
