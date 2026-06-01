@@ -200,6 +200,7 @@ class MessageRepository:
             )
         )
         await self.db.execute(stmt)
+        await self.db.flush()
 
     async def soft_delete(self, message_id: uuid.UUID) -> None:
         from datetime import datetime, timezone

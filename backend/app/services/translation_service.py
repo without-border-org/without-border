@@ -137,7 +137,7 @@ class TranslationService:
 
         Uses translate_batch() for uncached languages to minimise Ollama round-trips.
         """
-        _log.info(f"[TRANSLATE-FOR-MEMBERS] msg_id={message_id} src_lang={source_language} target_langs={target_languages}")
+        _log.info(f"[TRANSLATE-FOR-MEMBERS-START] msg_id={message_id} src_lang={source_language} target_langs={target_languages} text_len={len(text)}")
         results: dict[str, str] = {source_language: text}
         unique = list(set(target_languages) - {source_language})
         msg_repo = MessageRepository(db)
