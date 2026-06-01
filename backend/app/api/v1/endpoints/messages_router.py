@@ -158,11 +158,13 @@ async def get_messages(
     user_repo = UserRepository(db)
     messages, total = await msg_repo.get_paginated(channel_id, page, page_size)
     _log.info(f"[GET-MESSAGES] user={current_user.id} channel={channel_id} page={page} page_size={page_size} total={total} max_bg={_MAX_BG_TRANSLATIONS}")
+    _log.info(f"[GET-MESSAGES-USER-LANG] current_user.preferred_language={current_user.preferred_language}")
     items = []
     to_translate: list[tuple[uuid.UUID, str]] = []
     for msg in messages:
         sender = await user_repo.get_by_id(msg.sender_id)
         translated = None
+        _log.info(f"[GET-MESSAGES-MSG] msg_id={msg.id} original_lang={msg.original_language} user_lang={current_user.preferred_language} match={msg.original_language == current_user.preferred_language}")
         # Collect every message that needs translation in the reader's language
         if (
             msg.original_language
