@@ -52,18 +52,9 @@ async def _cache_translations_batch_bg(
 
     _log.info(f"[BG-TRANSLATE-START] channel={channel_id} user={user_id} target_lang={target_lang} items_count={len(items)}")
 
-    # 1. Re-check cache to skip anything translated since the request was built.
-    async with AsyncSessionLocal() as bg_db:
-        repo = MessageRepository(bg_db)
-        pending: list[tuple[uuid.UUID, str]] = []
-        for mid, text in items:
-            if not await repo.get_cached_translation(mid, target_lang):
-                pending.append((mid, text))
-
-    _log.info(f"[BG-RECHECK-CACHE] After recheck: {len(pending)}/{len(items)} messages still pending for {target_lang}")
-    if not pending:
-        _log.debug(f"[BG-SKIP] All {len(items)} messages already cached for {target_lang}")
-        return
+    # Skip cache check — always translate all items
+    pending = items
+    _log.debug(f"[BG-ALWAYS-TRANSLATE] Will translate all {len(pending)} messages (cache disabled)")
 
     # 2. Translate the whole batch in one call — rate-limited, no DB connection held.
     _log.info(f"[BG-OLLAMA-CALL] About to translate {len(pending)} messages to {target_lang}")
@@ -89,21 +80,8 @@ async def _cache_translations_batch_bg(
         )
         return
 
-    # 3. Persist results, then notify the reader for each message.
-    _log.info(f"[BG-PERSIST-START] Saving {len(translations)} translations to DB for {target_lang}")
-    try:
-        async with AsyncSessionLocal() as bg_db:
-            repo = MessageRepository(bg_db)
-            for (mid, _), translated in zip(pending, translations):
-                await repo.save_translation(mid, target_lang, translated)
-            await bg_db.commit()
-        _log.info(f"[BG-PERSIST-OK] Successfully saved {len(translations)} translations for {target_lang}")
-    except Exception as exc:
-        _log.error(
-            "[BG-PERSIST-FAIL] Failed to save translations to DB for %s: %s",
-            target_lang, exc, exc_info=True
-        )
-        return
+    # 3. Skip persist (cache is not used since we always retranslate), just notify
+    _log.info(f"[BG-SKIP-PERSIST] Skipping DB persist (always retranslate) for {len(translations)} translations to {target_lang}")
 
     # 4. Send notifications via WebSocket
     _log.info(f"[BG-WS-NOTIFY] Sending {len(translations)} messages via WS to user {user_id}")
@@ -154,13 +132,12 @@ async def get_messages(
     to_translate: list[tuple[uuid.UUID, str]] = []
     for msg in messages:
         sender = await user_repo.get_by_id(msg.sender_id)
-        # Only serve from cache — never call Ollama synchronously here (CA-04).
-        translated = await msg_repo.get_cached_translation(msg.id, current_user.preferred_language)
-        # Collect every message not yet cached in the reader's language; they are all
+        # ALWAYS retranslate (don't use cache) — every display should get fresh translations
+        translated = None  # Force retranslation, ignore cache
+        # Collect every message that needs translation in the reader's language; they are all
         # translated together in one batched background call below.
         if (
-            not translated
-            and msg.original_language
+            msg.original_language
             and msg.original_language != current_user.preferred_language
         ):
             preview = (msg.original_content or "")[:100].replace("\n", " ")
