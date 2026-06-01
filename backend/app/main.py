@@ -4,6 +4,15 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 import os
+import logging
+import sys
+
+# Configure logging to show INFO level (important for debugging)
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    stream=sys.stdout,
+)
 
 from app.api.v1.endpoints.users_router import router as users_router
 from app.api.v1.endpoints.channels_router import router as channels_router

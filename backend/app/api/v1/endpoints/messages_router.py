@@ -22,54 +22,108 @@ from app.helpers.language_detector import detect_language
 router = APIRouter(tags=["messages"])
 translation_svc = TranslationService()
 agent_svc = AgentService()
+_log = logging.getLogger(__name__)
 
-# Maximum background translations queued per GET /messages request to avoid Ollama overload.
-_MAX_BG_TRANSLATIONS = 10
+# Safety bound on how many page messages we batch-translate per GET request
+# (one Ollama call covers the whole batch, so this only caps the prompt size).
+_MAX_BG_TRANSLATIONS = 10000
 
 # Semaphore to cap concurrent Ollama calls from background translation tasks.
 _bg_translation_sem = asyncio.Semaphore(5)
 
 
-async def _cache_translation_bg(
+async def _cache_translations_batch_bg(
     channel_id: uuid.UUID, user_id: uuid.UUID,
-    message_id: uuid.UUID, text: str,
-    source_lang: str, target_lang: str,
+    target_lang: str, items: list[tuple[uuid.UUID, str]],
 ) -> None:
-    """Generates and caches a missing translation in the background, then notifies the user via WS.
+    """Translate every still-uncached message on a page to ``target_lang`` in a single
+    batched Ollama call, cache the results, and push each one to the reader via WS.
 
-    DB sessions are intentionally short: one read-only check, then closed before the
-    Ollama call (which can take several seconds), then a new session to persist the result.
-    This prevents holding DB connections while waiting for LLM responses.
+    This replaces the previous per-message tasks that were capped at 10 per request —
+    on channels with more than 10 untranslated messages the reader was left staring at
+    the original language (e.g. an English reader seeing Spanish messages forever).
+
+    DB sessions are kept short: a read-only re-check, then closed before the LLM call,
+    then a fresh session to persist — never holding a connection during inference.
     """
-    # 1. Check cache without holding a connection during the LLM call.
-    async with AsyncSessionLocal() as bg_db:
-        cached = await MessageRepository(bg_db).get_cached_translation(message_id, target_lang)
-    if cached:
+    if not items:
+        _log.debug("_cache_translations_batch_bg: empty items list, skipping")
         return
 
-    # 2. Translate — rate-limited, no DB connection held.
+    _log.info(f"[BG-TRANSLATE-START] channel={channel_id} user={user_id} target_lang={target_lang} items_count={len(items)}")
+
+    # Re-check cache in case another user/request cached these meanwhile
+    async with AsyncSessionLocal() as db:
+        msg_repo_bg = MessageRepository(db)
+        pending = []
+        for msg_id, text in items:
+            try:
+                cached = await msg_repo_bg.get_cached_translation(msg_id, target_lang)
+                if not cached:
+                    pending.append((msg_id, text))
+                else:
+                    _log.debug(f"[BG-CACHE-RECHECK-HIT] msg_id={msg_id} lang={target_lang} already cached")
+            except Exception as exc:
+                _log.warning(f"[BG-CACHE-RECHECK-ERROR] Failed to check cache for msg_id={msg_id}: {exc}")
+                pending.append((msg_id, text))  # Assume not cached on error
+
+    if not pending:
+        _log.info(f"[BG-ALL-CACHED] All {len(items)} messages were cached by another request, skipping")
+        return
+
+    _log.info(f"[BG-TRANSLATE-PENDING] {len(items)} requested, {len(pending)} still pending after cache recheck")
+
+    # 2. Translate the whole batch in one call — rate-limited, no DB connection held.
+    _log.info(f"[BG-OLLAMA-CALL] About to translate {len(pending)} messages to {target_lang}")
     try:
         async with _bg_translation_sem:
-            translated = await translation_svc.translate(text, target_lang, source_lang)
+            translations = await translation_svc.translate_batch(
+                [text for _, text in pending],
+                target_language=target_lang,
+                source_language="",  # mixed/unknown sources — never short-circuits
+            )
+        _log.info(f"[BG-OLLAMA-OK] Got {len(translations)} translations back")
     except Exception as exc:
-        logging.getLogger(__name__).warning(
-            "BG translation failed for msg %s lang %s: %s", message_id, target_lang, exc
+        _log.error(
+            "[BG-OLLAMA-FAIL] Translation service error for %d msgs to %s: %s",
+            len(pending), target_lang, exc, exc_info=True
         )
         return
 
-    # 3. Persist result and notify.
-    try:
-        async with AsyncSessionLocal() as bg_db:
-            await MessageRepository(bg_db).save_translation(message_id, target_lang, translated)
-            await bg_db.commit()
-        await connection_manager.send_to_user(channel_id, user_id, {
-            "type": "message_translated",
-            "data": {"message_id": str(message_id), "translated_content": translated},
-        })
-    except Exception as exc:
-        logging.getLogger(__name__).warning(
-            "BG translation persist failed for msg %s lang %s: %s", message_id, target_lang, exc
+    if len(translations) != len(pending):
+        _log.error(
+            "[BG-LENGTH-MISMATCH] Expected %d translations but got %d for lang %s",
+            len(pending), len(translations), target_lang
         )
+        return
+
+    # 3. Persist translations to cache
+    _log.info(f"[BG-PERSIST-START] Saving {len(translations)} translations to cache for {target_lang}")
+    try:
+        async with AsyncSessionLocal() as db:
+            msg_repo_persist = MessageRepository(db)
+            for i, ((msg_id, _), translated_content) in enumerate(zip(pending, translations)):
+                try:
+                    await msg_repo_persist.save_translation(msg_id, target_lang, translated_content)
+                    _log.debug(f"[BG-PERSIST-ITEM] Saved msg_id={msg_id} lang={target_lang}")
+                except Exception as exc:
+                    _log.warning(f"[BG-PERSIST-FAIL] Failed to cache message {msg_id}: {exc}")
+            await db.commit()
+        _log.info(f"[BG-PERSIST-OK] Committed {len(translations)} translations to cache")
+    except Exception as exc:
+        _log.error(f"[BG-PERSIST-ERROR] Failed to commit translations: {exc}", exc_info=True)
+
+    # 4. Send notifications via WebSocket
+    _log.info(f"[BG-WS-NOTIFY] Sending {len(translations)} messages via WS to user {user_id}")
+    for i, ((mid, _), translated) in enumerate(zip(pending, translations)):
+        try:
+            await connection_manager.send_to_user(channel_id, user_id, {
+                "type": "message_translated",
+                "data": {"message_id": str(mid), "translated_content": translated},
+            })
+        except Exception as exc:
+            _log.warning(f"[BG-WS-FAIL] Failed to notify message {i+1}/{len(translations)}: {exc}")
+    _log.info(f"[BG-TRANSLATE-END] Completed translation batch for {target_lang}")
 
 
 def _build_message_read(msg, sender, translated: str | None, reactions: list) -> dict:
@@ -103,31 +157,63 @@ async def get_messages(
     msg_repo = MessageRepository(db)
     user_repo = UserRepository(db)
     messages, total = await msg_repo.get_paginated(channel_id, page, page_size)
+    _log.info(f"[GET-MESSAGES] user={current_user.id} channel={channel_id} page={page} page_size={page_size} total={total} max_bg={_MAX_BG_TRANSLATIONS}")
+    _log.info(f"[GET-MESSAGES-USER-LANG] current_user.preferred_language={current_user.preferred_language}")
     items = []
-    bg_count = 0
+    to_translate: list[tuple[uuid.UUID, str]] = []
     for msg in messages:
         sender = await user_repo.get_by_id(msg.sender_id)
-        # Only serve from cache — never call Ollama synchronously here (CA-04).
-        translated = await msg_repo.get_cached_translation(msg.id, current_user.preferred_language)
-        # Queue background translation for messages not yet cached for this user's language.
+        translated = None
+        _log.info(f"[GET-MESSAGES-MSG] msg_id={msg.id} original_lang={msg.original_language} user_lang={current_user.preferred_language} match={msg.original_language == current_user.preferred_language}")
+        # Collect every message that needs translation in the reader's language
         if (
-            not translated
-            and msg.original_language
+            msg.original_language
             and msg.original_language != current_user.preferred_language
-            and bg_count < _MAX_BG_TRANSLATIONS
         ):
-            background_tasks.add_task(
-                _cache_translation_bg,
-                channel_id=channel_id,
-                user_id=current_user.id,
-                message_id=msg.id,
-                text=msg.original_content,
-                source_lang=msg.original_language,
-                target_lang=current_user.preferred_language,
-            )
-            bg_count += 1
+            _log.info(f"[GET-MESSAGES-NEEDS-TRANSLATION] msg_id={msg.id} will check cache")
+            # Check cache first
+            try:
+                cached = await msg_repo.get_cached_translation(msg.id, current_user.preferred_language)
+                _log.info(f"[GET-MESSAGES-CACHE-CHECK] msg_id={msg.id} cached={cached is not None} value={cached[:50] if cached else None}")
+            except Exception as exc:
+                _log.error(f"[GET-MESSAGES-CACHE-ERROR] msg_id={msg.id} error: {exc}", exc_info=True)
+                cached = None
+
+            if cached:
+                translated = cached
+                _log.info(f"[GET-MESSAGES-CACHE-HIT] message_id={msg.id} lang={current_user.preferred_language} value_len={len(cached)}")
+            else:
+                # Not in cache, add to background translation queue
+                preview = (msg.original_content or "")[:100].replace("\n", " ")
+                _log.info(
+                    "Scheduling background translation: message_id=%s source_lang=%s target_lang=%s preview=%r",
+                    msg.id,
+                    msg.original_language,
+                    current_user.preferred_language,
+                    preview,
+                )
+                to_translate.append((msg.id, msg.original_content))
         reactions = await msg_repo.get_reactions_grouped(msg.id, current_user.id)
         items.append(MessageRead(**_build_message_read(msg, sender, translated, reactions)))
+
+    if to_translate:
+        _log.info(
+            "Queueing background translation batch: channel_id=%s user_id=%s page=%d page_size=%d requested=%d queued=%d target_lang=%s",
+            channel_id,
+            current_user.id,
+            page,
+            page_size,
+            len(to_translate),
+            min(len(to_translate), _MAX_BG_TRANSLATIONS),
+            current_user.preferred_language,
+        )
+        background_tasks.add_task(
+            _cache_translations_batch_bg,
+            channel_id=channel_id,
+            user_id=current_user.id,
+            target_lang=current_user.preferred_language,
+            items=to_translate[:_MAX_BG_TRANSLATIONS],
+        )
     return PaginatedMessages(
         items=items, total=total, page=page, page_size=page_size,
         has_more=total > page * page_size,
@@ -228,24 +314,45 @@ async def websocket_chat(
     token: str,
     db: AsyncSession = Depends(get_db),
 ):
-    # Authenticate WebSocket via Keycloak token
+    # Authenticate WebSocket — Keycloak token, or AUTH_DISABLED bypass.
+    from app.core.config.settings import settings
     from app.core.security.keycloak import authenticate_websocket
     from app.services.keycloak_sync_service import KeycloakUserSyncService
-    
-    try:
-        claims = await authenticate_websocket(websocket)
-    except RuntimeError:
-        return
-    
-    # Lazy-sync user
-    sync_service = KeycloakUserSyncService(db)
-    user = await sync_service.upsert_from_token(claims)
-    user_id = user.id
-    
+
     user_repo = UserRepository(db)
     ch_repo = ChannelRepository(db)
     msg_repo = MessageRepository(db)
     notif_repo = NotificationRepository(db)
+
+    if settings.AUTH_DISABLED:
+        # Bypass mode: resolve the impersonated user by id WITHOUT upserting.
+        # The previous code ran upsert_from_token() with stub claims (no locale,
+        # email="bypass@test.local"), which silently reset every seeded user's
+        # preferred_language to "fr" and clobbered their email on each WS connect —
+        # collapsing the whole multilingual translation demo. We must only READ here.
+        dev_user_id = websocket.query_params.get("dev_user_id") or settings.AUTH_DISABLED_USER_ID
+        user = None
+        if dev_user_id:
+            try:
+                user = await user_repo.get_by_id(uuid.UUID(dev_user_id))
+            except (ValueError, AttributeError):
+                user = None
+        if not user:
+            actives = await user_repo.get_all_active()
+            user = actives[0] if actives else None
+        if not user:
+            await websocket.close(code=1008)
+            return
+    else:
+        try:
+            claims = await authenticate_websocket(websocket)
+        except RuntimeError:
+            return
+        # Lazy-sync user
+        sync_service = KeycloakUserSyncService(db)
+        user = await sync_service.upsert_from_token(claims)
+
+    user_id = user.id
 
     # Verify channel membership
     if not await ch_repo.is_member(channel_id, user_id):
@@ -272,13 +379,16 @@ async def websocket_chat(
                 if not content:
                     continue
 
-                source_lang = await detect_language(content)
+                # Fall back to the sender's own language when detection is
+                # uncertain (short messages) instead of a hard-coded constant.
+                source_lang = await detect_language(content, default=user.preferred_language)
 
                 msg = await msg_repo.create(
                     channel_id=channel_id, sender_id=user_id,
                     content=content, language=source_lang,
                     is_agentic=False, parent_id=parent_id,
                 )
+                _log.info(f"[WS-NEW-MSG] message_id={msg.id} sender={user.username} lang={source_lang} len={len(content)}")
                 # Commit immediately so the message survives even if later
                 # steps (translation, agentic replies) raise an exception.
                 await db.commit()
@@ -295,19 +405,23 @@ async def websocket_chat(
 
                 # Translate in background — never block the WS loop.
                 target_langs = list({m.preferred_language for m in members})
+                _log.info(f"[WS-TRANSLATE-START] message_id={msg.id} source_lang={source_lang} target_langs={target_langs}")
 
                 async def _do_translate(
                     msg_id=msg.id, text=content,
                     src=source_lang, tgt_langs=target_langs,
                     _members=members,
                 ):
+                    _log.info(f"[WS-TRANSLATE-BG] Starting bg translation for msg {msg_id} to {len(tgt_langs)} languages")
                     async with AsyncSessionLocal() as bg_db:
                         try:
                             translations = await translation_svc.translate_for_members(
                                 db=bg_db, message_id=msg_id, text=text,
                                 source_language=src, target_languages=tgt_langs,
                             )
+                            _log.info(f"[WS-TRANSLATE-SAVE] Got {len(translations)} translations, saving to DB")
                             await bg_db.commit()
+                            _log.info(f"[WS-TRANSLATE-NOTIFY] Sending notifications for {len(translations)} translations")
                             for m in _members:
                                 translated = translations.get(m.preferred_language, text)
                                 if translated != text:
@@ -315,9 +429,11 @@ async def websocket_chat(
                                         "type": "message_translated",
                                         "data": {"message_id": str(msg_id), "translated_content": translated},
                                     })
+                            _log.info(f"[WS-TRANSLATE-OK] Completed translation for msg {msg_id}")
                         except Exception as exc:
-                            logging.getLogger(__name__).warning(
-                                "Background translation failed for message %s: %s", msg_id, exc
+                            _log.error(
+                                "[WS-TRANSLATE-FAIL] Background translation failed for message %s: %s",
+                                msg_id, exc, exc_info=True
                             )
 
                 asyncio.create_task(_do_translate())

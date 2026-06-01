@@ -58,9 +58,19 @@ import { Message, LANGUAGE_MAP, getUserColor, getInitials } from '../../../core/
               </a>
             </div>
 
-            <!-- Contenu texte -->
-            <p *ngIf="!showOriginal() || !isTranslated()">{{ displayContent() }}</p>
-            <p *ngIf="showOriginal() && isTranslated()" class="italic opacity-75">{{ message.originalContent }}</p>
+            <!-- Contenu texte + spinner traduction -->
+            <div class="flex items-end gap-2">
+              <div class="flex-1">
+                <p *ngIf="!showOriginal() || !isTranslated()">{{ displayContent() }}</p>
+                <p *ngIf="showOriginal() && isTranslated()" class="italic opacity-75">{{ message.originalContent }}</p>
+              </div>
+              <!-- Spinner discret si traduction en cours et pas en mode original -->
+              <div *ngIf="isTranslating && !showOriginal() && message.originalLanguage !== currentUserLang"
+                   class="flex items-center gap-1.5 text-[10px] text-zinc-400 dark:text-zinc-500 flex-shrink-0 whitespace-nowrap">
+                <div class="w-1.5 h-1.5 rounded-full bg-current animate-pulse"></div>
+                <span class="opacity-60">traduction…</span>
+              </div>
+            </div>
 
             <!-- Toggle original / traduction -->
             <button *ngIf="isTranslated()"
@@ -103,6 +113,7 @@ export class MessageBubbleComponent {
   @Input() message!: Message;
   @Input() currentUserLang = 'fr';
   @Input() isOwn = false;
+  @Input() isTranslating = false;
   @Output() react = new EventEmitter<string>();
 
   hover       = signal(false);

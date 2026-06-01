@@ -30,7 +30,7 @@ class Settings(BaseSettings):
 
     # ── LLM ──────────────────────────────────────────────────────────────────
     LLM_PROVIDER: str = "ollama"
-    LLM_MODEL: str = "gemma3:4b"
+    LLM_MODEL: str = "gemma4:e4b"
     OLLAMA_BASE_URL: str = "http://localhost:11434"
     VERTEXAI_PROJECT: str = ""
     VERTEXAI_LOCATION: str = "us-central1"

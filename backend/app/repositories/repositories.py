@@ -194,9 +194,13 @@ class MessageRepository:
         stmt = (
             pg_insert(MessageTranslation)
             .values(id=uuid.uuid4(), message_id=message_id, target_language=language, translated_content=content)
-            .on_conflict_do_nothing(index_elements=["message_id", "target_language"])
+            .on_conflict_do_update(
+                index_elements=["message_id", "target_language"],
+                set_={"translated_content": content}
+            )
         )
         await self.db.execute(stmt)
+        await self.db.flush()
 
     async def soft_delete(self, message_id: uuid.UUID) -> None:
         from datetime import datetime, timezone

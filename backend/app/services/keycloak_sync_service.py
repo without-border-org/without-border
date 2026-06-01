@@ -58,7 +58,9 @@ class KeycloakUserSyncService:
             username = f"{given} {family}".strip() if (given or family) else full_name
         else:
             username = claims.get("preferred_username", email)
-        locale = claims.get("locale", "fr")
+        # Keep locale as None when the token carries no locale claim, so we never
+        # overwrite a user's chosen preferred_language with a hard-coded default.
+        locale = claims.get("locale")
         is_enabled = bool(claims.get("enabled", True))
 
         # Check if user exists
@@ -68,7 +70,7 @@ class KeycloakUserSyncService:
             # Username is preserved from the seed / user profile — Keycloak preferred_username
             # is a login handle and should not overwrite the display name.
             changed = False
-            if existing.email != email:
+            if email and existing.email != email:
                 existing.email = email
                 changed = True
             if existing.is_active != is_enabled:
@@ -89,7 +91,7 @@ class KeycloakUserSyncService:
             id=user_id,
             email=email,
             username=username,
-            preferred_language=locale,
+            preferred_language=locale or "fr",
             status="active",
             agentic_enabled=False,
             is_active=is_enabled,
