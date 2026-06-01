@@ -1181,6 +1181,36 @@ Affichage final en français
 
 ---
 
+## 10. Dépannage : Utilisateurs Dev Corrompus (Bug AUTH_DISABLED)
+
+### 10.1 Symptôme : Traductions qui ne se déclenchent pas
+
+Si vous remarquez que :
+- Les messages n'affichent pas de spinner ⟳ lors du chargement d'une discussion
+- Aucun log `[BG-TRANSLATE-START]` n'apparaît dans les logs du backend
+- Tous les utilisateurs semblent avoir la même langue préférée (généralement "fr")
+
+**Cause** : Bug antérieur dans `websocket_chat()` où chaque connexion WebSocket en mode `AUTH_DISABLED` relançait `upsert_from_token()` avec des stub claims, reset `preferred_language` de tous les utilisateurs à "fr".
+
+### 10.2 Solution : Exécuter le script de réparation
+
+```bash
+cd backend
+python -m scripts.repair_dev_users
+```
+
+**Cela fait** :
+1. Restaure `email`, `username`, `preferred_language`, `status` pour tous les utilisateurs seedés
+2. Vide la table `message_translations` pour régénérer le cache avec les bonnes langues
+3. Reconnectez-vous — les utilisateurs conserveront maintenant leur langue
+
+**Après réparation** :
+- John (EN) verra les messages français traduits en anglais
+- Marie (FR) verra les messages anglais/espagnols/chinois traduits en français
+- Le spinner s'affichera pendant la traduction (si implémenté côté frontend)
+
+---
+
 ## Résumé
 
 **Flux complet de bout en bout (Mode AUTH_DISABLED)** :
