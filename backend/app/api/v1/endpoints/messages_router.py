@@ -150,7 +150,8 @@ async def get_pinned(
     for msg in messages:
         sender = await user_repo.get_by_id(msg.sender_id)
         reactions = await msg_repo.get_reactions_grouped(msg.id, current_user.id)
-        result.append(MessageRead(**_build_message_read(msg, sender, None, reactions)))
+        translated = await msg_repo.get_cached_translation(msg.id, current_user.preferred_language)
+        result.append(MessageRead(**_build_message_read(msg, sender, translated, reactions)))
     return result
 
 
@@ -170,7 +171,8 @@ async def search_messages(
     for msg in messages:
         sender = await user_repo.get_by_id(msg.sender_id)
         reactions = await msg_repo.get_reactions_grouped(msg.id, current_user.id)
-        result.append(MessageRead(**_build_message_read(msg, sender, None, reactions)))
+        translated = await msg_repo.get_cached_translation(msg.id, current_user.preferred_language)
+        result.append(MessageRead(**_build_message_read(msg, sender, translated, reactions)))
     return result
 
 
