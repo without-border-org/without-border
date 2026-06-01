@@ -373,13 +373,13 @@ async def websocket_chat(
                 # Fall back to the sender's own language when detection is
                 # uncertain (short messages) instead of a hard-coded constant.
                 source_lang = await detect_language(content, default=user.preferred_language)
-                _log.info(f"[WS-NEW-MSG] message_id={msg.id} sender={user.username} lang={source_lang} len={len(content)}")
 
                 msg = await msg_repo.create(
                     channel_id=channel_id, sender_id=user_id,
                     content=content, language=source_lang,
                     is_agentic=False, parent_id=parent_id,
                 )
+                _log.info(f"[WS-NEW-MSG] message_id={msg.id} sender={user.username} lang={source_lang} len={len(content)}")
                 # Commit immediately so the message survives even if later
                 # steps (translation, agentic replies) raise an exception.
                 await db.commit()
