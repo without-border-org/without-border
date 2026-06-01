@@ -84,9 +84,13 @@ class UserUpdateRequest(BaseModel):
     def username_valid(cls, v: Optional[str]) -> Optional[str]:
         if v is None:
             return v
+        v = v.strip()
         if len(v) < 3 or len(v) > 30:
             raise ValueError("Username must be 3-30 characters")
-        return v.lower()
+        # Preserve the display name's casing — this is a display username,
+        # not a login handle. Lower-casing here turned "John Carter" into
+        # "john carter" on every profile save.
+        return v
 
 
 class UserStatusUpdate(BaseModel):
